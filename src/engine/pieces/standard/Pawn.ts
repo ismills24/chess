@@ -63,7 +63,7 @@ export class Pawn extends PieceBase implements Interceptor<MoveEvent> {
 
     intercept(ev: MoveEvent, state: GameState): EventSequenceLike {
         // Only intercept if this pawn is the mover and it reached the last rank
-        if (ev.piece.id !== this.id) return EventSequences.Continue;
+        if (!ev.piece || ev.piece.id !== this.id) return EventSequences.Continue;
 
         const lastRank = this.owner === PlayerColor.White ? state.board.height - 1 : 0;
         if (ev.to.y !== lastRank) return EventSequences.Continue;

@@ -8,6 +8,10 @@ import { StandardChessRuleSet } from "../../engine/rules/StandardChess";
 import { Move } from "../../engine/primitives/Move";
 import { PlayerColor } from "../../engine/primitives/PlayerColor";
 
+// Import prototype extensions to add dispatch and runTurn methods to GameEngine
+import "../../engine/core/EventPipeline";
+import "../../engine/core/Turns";
+
 /**
  * Small adapter to wire up engine + controllers for the UI.
  * Human plays White, AI plays Black.
@@ -35,7 +39,7 @@ export function createEngineBundle(): EngineBundle {
 
     /**
      * Human submits a move → controller stores it → engine.runTurn() executes.
-     * After human move, if game continues, engine.runTurn() again for AI.
+     * After human move, if game continues, AI move is processed after a delay.
      */
     const submitHumanMove = (move: Move) => {
         // tell the human controller what to play
@@ -44,9 +48,11 @@ export function createEngineBundle(): EngineBundle {
         // let the engine process White's turn
         (engine as any).runTurn();
 
+        // Process AI move after a short delay to make it feel more natural
         if (!engine.isGameOver()) {
-            // let the engine process Black's turn (AI)
-            (engine as any).runTurn();
+            setTimeout(() => {
+                (engine as any).runTurn();
+            }, 10); // 500ms delay
         }
     };
 
