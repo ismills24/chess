@@ -1,0 +1,56 @@
+.board-wrap {
+    display: inline-block;
+    user-select: none;
+}
+
+.bar {
+    margin-bottom: 8px;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+}
+
+.board {
+    display: grid;
+    grid-auto-rows: 64px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(8, 64px);
+}
+
+.sq {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.light {
+    background: #f0d9b5;
+}
+
+.dark {
+    background: #b58863;
+}
+
+.pc {
+    width: 80%;
+    height: 80%;
+    pointer-events: none;
+}
+
+.sel {
+    box-shadow: inset 0 0 0 3px #33c;
+}
+
+.legal::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(32, 160, 32, 0.65);
+}
