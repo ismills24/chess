@@ -50,9 +50,7 @@ export function createEngineBundle(): EngineBundle {
 
         // Process AI move after a short delay to make it feel more natural
         if (!engine.isGameOver()) {
-            setTimeout(() => {
-                (engine as any).runTurn();
-            }, 10); // 500ms delay
+            (engine as any).runTurn();
         }
     };
 
