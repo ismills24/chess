@@ -88,37 +88,40 @@ export class GameEngine {
     undoLastMove(): void {
         if (this._history.length === 0) return;
 
+        // Step back two full turns (white+black) so it's the same side to move.
         let seen = 0;
         let rewindTo = -1;
 
         for (let i = this._currentIndex; i >= 0; i--) {
             if (this._history[i].event instanceof TurnAdvancedEvent) {
                 seen++;
-                if (seen === 3) {
+                if (seen === 3) { // current TA, previous TA, and the one we want to land on
                     rewindTo = i;
                     break;
                 }
             }
         }
-        this._currentIndex = rewindTo >= 0 ? rewindTo : -1;
+        // If not enough history yet (e.g., only one side moved), go to the seed at index 0
+        this._currentIndex = rewindTo >= 0 ? rewindTo : 0;
     }
 
     redoLastMove(): void {
         if (this._history.length === 0) return;
 
+        // Step forward two full turns if available
         let seen = 0;
         let redoTo = -1;
 
         for (let i = this._currentIndex + 1; i < this._history.length; i++) {
             if (this._history[i].event instanceof TurnAdvancedEvent) {
                 seen++;
-                if (seen === 3) {
+                if (seen === 2) { // next TA (opponent), then next (same side to move)
                     redoTo = i;
                     break;
                 }
             }
         }
-        if (redoTo >= 0) this._currentIndex = redoTo;
+        if (redoTo >= 0) this._currentIndex = redoTo; else this._currentIndex = this._history.length - 1;
     }
 
     /**

@@ -39,6 +39,7 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
         <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
             <header style={{ padding: 8, borderBottom: "1px solid #ccc", display: "flex", gap: 12 }}>
                 <button onClick={onNewGame}>New Game</button>
+                <UndoRedoButtons engine={engine} onBump={() => setEngineKey((k) => k + 1)} />
                 <span>Mode:</span>
                 <button
                     onClick={() => {
@@ -67,5 +68,23 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
                 </EngineProvider>
             </div>
         </div>
+    );
+};
+
+const UndoRedoButtons: React.FC<{ engine: GameEngine; onBump: () => void }> = ({ engine, onBump }) => {
+    const onUndo = () => {
+        (engine as any).undoLastMove();
+        // trigger UI update without rebuilding engine
+        (engine as any)._notify?.();
+    };
+    const onRedo = () => {
+        (engine as any).redoLastMove();
+        (engine as any)._notify?.();
+    };
+    return (
+        <>
+            <button onClick={onUndo} title="Undo last move">Undo</button>
+            <button onClick={onRedo} title="Redo last move">Redo</button>
+        </>
     );
 };

@@ -38,6 +38,11 @@ export const EngineProvider: React.FC<{ children: React.ReactNode; existing?: En
                     }
                 },
             };
+            // Attach a manual notifier for UI updates on non-event mutations (e.g., undo/redo)
+            if (!((existing as any)._subs)) (existing as any)._subs = new Set<() => void>();
+            (existing as any)._notify = () => {
+                for (const f of (existing as any)._subs as Set<() => void>) f();
+            };
         } else {
             bundleRef.current = createEngineBundle();
         }
