@@ -1,0 +1,33 @@
+{
+  "width": 4,
+  "height": 4,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "King",
+      "color": "White",
+      "x": 1,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 3,
+      "y": 3,
+      "decorators": []
+    }
+  ],
+  "tiles": [
+    {
+      "type": "SlipperyTile",
+      "x": 1,
+      "y": 1
+    },
+    {
+      "type": "SlipperyTile",
+      "x": 2,
+      "y": 2
+    }
+  ]
+}

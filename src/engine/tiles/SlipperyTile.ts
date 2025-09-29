@@ -3,7 +3,7 @@ import { Tile } from "./Tile";
 import { Vector2Int } from "../primitives/Vector2Int";
 import { GameState } from "../state/GameState";
 import { MoveEvent } from "../events/GameEvent";
-import { EventSequence } from "../events/EventSequence";
+import { EventSequence, FallbackPolicy } from "../events/EventSequence";
 import { EventSequences } from "../events/EventSequences";
 import { Interceptor } from "../events/Interceptor";
 
@@ -21,12 +21,15 @@ export class SlipperyTile extends BaseTile implements Interceptor<MoveEvent> {
         return new SlipperyTile(this.position, this.id);
     }
 
-    intercept(ev: MoveEvent, state: GameState): EventSequence {
+    intercept(ev: MoveEvent | any, state: GameState): EventSequence {
+        // Only handle MoveEvents. Other events (Capture/Destroy/etc.) also reach tiles via the pipeline.
+        if (!(ev instanceof MoveEvent)) return EventSequences.Continue as EventSequence;
+
         // If this move was already emitted by us, ignore it to prevent recursion.
         if (ev.sourceId === this.id) return EventSequences.Continue as EventSequence;
 
         // Only trigger when the piece lands on this tile.
-        if (!ev.to.equals(this.position)) return EventSequences.Continue as EventSequence;
+        if (!ev.to || !ev.to.equals(this.position)) return EventSequences.Continue as EventSequence;
 
         const dir = new Vector2Int(ev.to.x - ev.from.x, ev.to.y - ev.from.y);
         const step = new Vector2Int(Math.sign(dir.x), Math.sign(dir.y));
@@ -42,6 +45,6 @@ export class SlipperyTile extends BaseTile implements Interceptor<MoveEvent> {
         const slide = new MoveEvent(ev.to, next, ev.piece, ev.actor, ev.isPlayerAction, this.id);
         const processedMove = new MoveEvent(ev.from, ev.to, ev.piece, ev.actor, ev.isPlayerAction, this.id);
 
-        return new EventSequence([processedMove, slide], "ContinueChain" as any);
+        return new EventSequence([processedMove, slide], FallbackPolicy.ContinueChain);
     }
 }
