@@ -1,29 +1,36 @@
 import React, { createContext, useContext, useMemo, useRef, useSyncExternalStore } from "react";
 import { createEngineBundle, EngineBundle } from "./engineAdapter";
+import "../../engine/core/Turns";
 
 const EngineCtx = createContext<EngineBundle | null>(null);
 
-export const EngineProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const EngineProvider: React.FC<{ children: React.ReactNode; existing?: EngineBundle["engine"] }> = ({ children, existing }) => {
     const bundleRef = useRef<EngineBundle | null>(null);
     if (!bundleRef.current) {
-        bundleRef.current = createEngineBundle();
+        if (existing) {
+            bundleRef.current = {
+                engine: existing,
+                getState: () => existing.currentState,
+                rules: (existing as any).ruleset,
+                submitHumanMove: (move) => {
+                    (existing as any).whiteController.submitMove(move);
+                    (existing as any).runTurn();
+                    if (!existing.isGameOver()) (existing as any).runTurn();
+                },
+            };
+        } else {
+            bundleRef.current = createEngineBundle();
+        }
     }
 
-    // subscribe to engine events → simple store using .onEventPublished
-    const subscribers = useRef(new Set<() => void>());
-
-    const bundle = useMemo(() => {
-        const b = bundleRef.current!;
-        b.engine.onEventPublished = () => {
-            for (const fn of subscribers.current) fn();
-        };
-        return b;
-    }, []);
-
-    const value = bundle;
-
-    return <EngineCtx.Provider value={value}>{children}</EngineCtx.Provider>;
+    return (
+        <EngineCtx.Provider value={bundleRef.current}>
+            {children}
+        </EngineCtx.Provider>
+    );
 };
+
+
 
 export function useEngine() {
     const ctx = useContext(EngineCtx);

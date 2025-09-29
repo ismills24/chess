@@ -1,6 +1,8 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import * as fs from "fs/promises";
+
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -50,6 +52,29 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+ipcMain.handle("maps:save", async (_evt, json: string) => {
+  const win = BrowserWindow.getFocusedWindow();
+  const { filePath, canceled } = await dialog.showSaveDialog(win!, {
+    title: "Save Map JSON",
+    filters: [{ name: "Map JSON", extensions: ["json"] }],
+    defaultPath: "map.json",
+  });
+  if (canceled || !filePath) return false;
+  await fs.writeFile(filePath, json, "utf-8");
+  return true;
+});
+
+ipcMain.handle("maps:open", async () => {
+  const win = BrowserWindow.getFocusedWindow();
+  const { filePaths, canceled } = await dialog.showOpenDialog(win!, {
+    title: "Open Map JSON",
+    filters: [{ name: "Map JSON", extensions: ["json"] }],
+    properties: ["openFile"],
+  });
+  if (canceled || filePaths.length === 0) return null;
+  const content = await fs.readFile(filePaths[0], "utf-8");
+  return content;
 });
 
 // In this file you can include the rest of your app's specific main process

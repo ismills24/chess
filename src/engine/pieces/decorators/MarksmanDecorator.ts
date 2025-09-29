@@ -36,7 +36,8 @@ export class MarksmanDecorator extends PieceDecoratorBase implements Interceptor
     }
 
     intercept(ev: CaptureEvent, _state: GameState): EventSequence {
-        if (this.rangedAttacksLeft > 0 && ev.attacker === this.inner) {
+        console.log(`[Marksman] Intercepting capture, inner id is ${this.inner.id} and attacker id is ${ev.attacker?.id}`);
+        if (this.rangedAttacksLeft > 0 && ev.attacker?.id === this.inner.id) {
             console.log(`[Marksman] Ranged shot fired by ${this.inner.name}`);
             this.rangedAttacksLeft--;
 

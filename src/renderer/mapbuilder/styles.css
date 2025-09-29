@@ -1,0 +1,148 @@
+.builderLayout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: 100vh;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto;
+}
+
+.sidebar {
+    padding: 12px;
+    border-right: 1px solid #ddd;
+    overflow: auto;
+}
+
+.canvas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+}
+
+.sectionTitle {
+    margin: 12px 0 6px;
+    font-weight: 700;
+    color: #444;
+}
+
+.toolRow {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 6px 10px;
+    border: 1px solid #bbb;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn.sel {
+    border-color: #2a6;
+    background: #eaffea;
+}
+
+.palette .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.cell {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.cell.sel {
+    outline: 2px solid #2684ff;
+}
+
+.board {
+    display: grid;
+    grid-auto-rows: 64px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(12, 64px);
+}
+
+/* adjusts visually for up to 12; overflow OK */
+.sq {
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    position: relative;
+}
+
+.light {
+    background: #f0d9b5;
+}
+
+.dark {
+    background: #b58863;
+}
+
+.pcWrap {
+    position: relative;
+}
+
+.pc {
+    width: 80%;
+    height: 80%;
+    pointer-events: none;
+}
+
+.badges {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    display: flex;
+    gap: 4px;
+}
+
+.badge {
+    background: #222;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 6px;
+}
+
+.icon {
+    width: 80%;
+    height: 80%;
+}
+
+.emoji {
+    font-size: 22px;
+}
+
+.tileIcon {
+    position: absolute;
+    font-size: 22px;
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.pc.small {
+    width: 70%;
+    height: 70%;
+}
+
+.badge {
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 14px;
+    padding: 1px 3px;
+    border-radius: 4px;
+}

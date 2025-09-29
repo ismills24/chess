@@ -8,6 +8,8 @@ import { Bishop } from "../../pieces/standard/Bishop";
 import { Queen } from "../../pieces/standard/Queen";
 import { King } from "../../pieces/standard/King";
 import { Pawn } from "../../pieces/standard/Pawn";
+import { ExplodingDecorator } from "../../pieces/decorators/ExplodingDecorator";
+import { MarksmanDecorator } from "../../pieces/decorators/MarksmanDecorator";
 
 /**
  * Standard chess piece placement.
@@ -19,7 +21,8 @@ export class StandardChessPlacement implements PiecePlacement {
 
         board.placePiece(new Rook(color, new Vector2Int(0, mainRank)), new Vector2Int(0, mainRank));
         board.placePiece(new Knight(color, new Vector2Int(1, mainRank)), new Vector2Int(1, mainRank));
-        board.placePiece(new Bishop(color, new Vector2Int(2, mainRank)), new Vector2Int(2, mainRank));
+        const bishopMarksman = new MarksmanDecorator(new Bishop(color, new Vector2Int(2, mainRank)));
+        board.placePiece(bishopMarksman, new Vector2Int(2, mainRank));
         board.placePiece(new Queen(color, new Vector2Int(3, mainRank)), new Vector2Int(3, mainRank));
         board.placePiece(new King(color, new Vector2Int(4, mainRank)), new Vector2Int(4, mainRank));
         board.placePiece(new Bishop(color, new Vector2Int(5, mainRank)), new Vector2Int(5, mainRank));
@@ -27,7 +30,9 @@ export class StandardChessPlacement implements PiecePlacement {
         board.placePiece(new Rook(color, new Vector2Int(7, mainRank)), new Vector2Int(7, mainRank));
 
         for (let x = 0; x < 8; x++) {
-            board.placePiece(new Pawn(color, new Vector2Int(x, pawnRank)), new Vector2Int(x, pawnRank));
+            const pawn = new Pawn(color, new Vector2Int(x, pawnRank));
+            const explodingPawn = new ExplodingDecorator(pawn);
+            board.placePiece(pawn, new Vector2Int(x, pawnRank));
         }
     }
 }
