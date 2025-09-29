@@ -22,7 +22,14 @@ export class ExplodingDecorator
     }
 
     intercept(ev: DestroyEvent | CaptureEvent, state: GameState): EventSequence {
-        const kind = ev instanceof CaptureEvent ? "CaptureEvent" : ev instanceof DestroyEvent ? "DestroyEvent" : ev.constructor.name;
+        let kind: string;
+        if (ev instanceof CaptureEvent) {
+            kind = "CaptureEvent";
+        } else if (ev instanceof DestroyEvent) {
+            kind = "DestroyEvent";
+        } else {
+            kind = "UnknownEvent";
+        }
         // Debug logging for chaining
         console.log(`[Exploding] intercept ${kind} → target.id=${ev.target?.id} self.id=${this.id} sourceId=${ev.sourceId}`);
 
