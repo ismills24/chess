@@ -4,6 +4,8 @@ import { Vector2Int } from "../../engine/primitives/Vector2Int";
 import { Move } from "../../engine/primitives/Move";
 import { PlayerColor } from "../../engine/primitives/PlayerColor";
 import "./board.css";
+import { iconForDecorator, iconForTile } from "../mapbuilder/paletteData";
+import { getDecoratorIds, getTileId } from "./iconHelpers";
 
 type Coord = { x: number; y: number };
 
@@ -69,6 +71,11 @@ export const BoardView: React.FC = () => {
             const isSelected = selected?.x === x && selected?.y === y;
             const isLegal = legalTargets.has(`${x},${y}`);
 
+            const tile = state.board.getTile(pos);
+            const tileId = getTileId(tile);
+            const tileIcon = tileId === "StandardTile" ? "" : iconForTile(tileId);
+            const decos = p ? getDecoratorIds(p) : [];
+
             cells.push(
                 <div
                     key={key}
@@ -82,7 +89,15 @@ export const BoardView: React.FC = () => {
                         .trim()}
                     onClick={() => onSquareClick(x, y)}
                 >
+                    {/* tile icon under piece (hide for StandardTile) */}
+                    {tileId !== "StandardTile" ? (
+                        <span className="tile-icon">{tileIcon}</span>
+                    ) : null}
                     {p ? <PieceIcon owner={p.owner} name={p.name} /> : null}
+                    {/* decorator icons overlay */}
+                    {decos.map((d, i) => (
+                        <span key={`${key}-deco-${i}`} className="deco-icon">{iconForDecorator(d)}</span>
+                    ))}
                 </div>
             );
         }

@@ -42,6 +42,24 @@
     pointer-events: none;
 }
 
+.tile-icon,
+.deco-icon {
+    position: absolute;
+    pointer-events: none;
+}
+
+.tile-icon {
+    left: 4px;
+    bottom: 4px;
+    font-size: 16px;
+}
+
+.deco-icon {
+    right: 4px;
+    top: 4px;
+    font-size: 16px;
+}
+
 .sel {
     box-shadow: inset 0 0 0 3px #33c;
 }
