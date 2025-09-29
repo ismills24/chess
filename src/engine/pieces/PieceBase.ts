@@ -24,7 +24,7 @@ export abstract class PieceBase implements Piece {
         movesMade: number = 0,
         capturesMade: number = 0
     ) {
-        this.id = id ?? crypto.randomUUID();
+        this.id = id ?? this.generateDescriptiveId(name, owner);
         this.name = name;
         this.owner = owner;
         this.position = position;
@@ -57,5 +57,12 @@ export abstract class PieceBase implements Piece {
 
     incrementCaptures(): void {
         this.capturesMade++;
+    }
+
+    private generateDescriptiveId(name: string, owner: PlayerColor): string {
+        const colorPrefix = owner === PlayerColor.White ? "W" : "B";
+        const shortName = name.toLowerCase();
+        const uuid = crypto.randomUUID().substring(0, 8); // Use first 8 chars for uniqueness
+        return `${colorPrefix}-${shortName}-${uuid}`;
     }
 }

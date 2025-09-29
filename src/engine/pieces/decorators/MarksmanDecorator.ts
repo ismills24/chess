@@ -1,9 +1,10 @@
 import { PieceDecoratorBase } from "./PieceDecoratorBase";
 import { Piece } from "../Piece";
 import { Move } from "../../primitives/Move";
+import { Vector2Int } from "../../primitives/Vector2Int";
 import { GameState } from "../../state/GameState";
 import { CaptureEvent, DestroyEvent, GameEvent } from "../../events/GameEvent";
-import { EventSequence } from "../../events/EventSequence";
+import { EventSequence, FallbackPolicy } from "../../events/EventSequence";
 import { EventSequences } from "../../events/EventSequences";
 import { Interceptor } from "../../events/Interceptor";
 
@@ -35,17 +36,30 @@ export class MarksmanDecorator extends PieceDecoratorBase implements Interceptor
         return moves;
     }
 
-    intercept(ev: CaptureEvent, _state: GameState): EventSequence {
+    intercept(ev: CaptureEvent, state: GameState): EventSequence {
         console.log(`[Marksman] Intercepting capture, inner id is ${this.inner.id} and attacker id is ${ev.attacker?.id}`);
-        if (this.rangedAttacksLeft > 0 && ev.attacker?.id === this.inner.id) {
-            console.log(`[Marksman] Ranged shot fired by ${this.inner.name}`);
-            this.rangedAttacksLeft--;
-
-            const destroy = new DestroyEvent(ev.target, "Marksman ranged attack", ev.actor, this.id);
-            return new EventSequence([destroy], "AbortChain" as any);
+        
+        // Only intercept player actions (not moves from other effects)
+        if (!ev.isPlayerAction) {
+            return EventSequences.Continue as EventSequence;
         }
+        
+        // Check if this marksman has attacks left
+        if (this.rangedAttacksLeft <= 0) {
+            return EventSequences.Continue as EventSequence;
+        }
+        
+        // Check if the attacker is this marksman piece (by position and owner)
+        const attackerAtPosition = state.board.getPieceAt(ev.attacker?.position || new Vector2Int(-1, -1));
+        if (!attackerAtPosition || attackerAtPosition.id !== this.id) {
+            return EventSequences.Continue as EventSequence;
+        }
+        
+        console.log(`[Marksman] Ranged shot fired by ${this.inner.name}`);
+        this.rangedAttacksLeft--;
 
-        return EventSequences.Continue as EventSequence;
+        const destroy = new DestroyEvent(ev.target, "Marksman ranged attack", ev.actor, this.id);
+        return new EventSequence([destroy], FallbackPolicy.AbortChain);
     }
 
     protected createDecoratorClone(inner: Piece): Piece {

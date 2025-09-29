@@ -1,0 +1,38 @@
+{
+  "width": 4,
+  "height": 4,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "King",
+      "color": "White",
+      "x": 2,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Rook",
+      "color": "White",
+      "x": 0,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Rook",
+      "color": "Black",
+      "x": 0,
+      "y": 3,
+      "decorators": [
+        "Exploding"
+      ]
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 2,
+      "y": 3,
+      "decorators": []
+    }
+  ],
+  "tiles": []
+}

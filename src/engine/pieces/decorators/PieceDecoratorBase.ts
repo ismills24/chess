@@ -14,7 +14,7 @@ export abstract class PieceDecoratorBase implements Piece {
 
     constructor(inner: Piece, id?: string) {
         this.inner = inner;
-        this.id = id ?? crypto.randomUUID();
+        this.id = id ?? this.generateDescriptiveId();
     }
 
     get name(): string {
@@ -66,5 +66,13 @@ export abstract class PieceDecoratorBase implements Piece {
 
     get innerPiece(): Piece {
         return this.inner;
+    }
+
+    private generateDescriptiveId(): string {
+        const decoratorName = this.constructor.name.replace('Decorator', '').toLowerCase();
+        const innerName = this.inner.name.toLowerCase();
+        const colorPrefix = this.inner.owner === "White" ? "W" : "B";
+        const uuid = crypto.randomUUID().substring(0, 8); // Use first 8 chars for uniqueness
+        return `${colorPrefix}-${innerName}-${decoratorName}-${uuid}`;
     }
 }
