@@ -1,0 +1,42 @@
+{
+  "width": 4,
+  "height": 4,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "King",
+      "color": "White",
+      "x": 2,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Rook",
+      "color": "White",
+      "x": 1,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 3,
+      "y": 2,
+      "decorators": []
+    },
+    {
+      "type": "Knight",
+      "color": "Black",
+      "x": 1,
+      "y": 3,
+      "decorators": []
+    }
+  ],
+  "tiles": [
+    {
+      "type": "GuardianTile",
+      "x": 1,
+      "y": 3
+    }
+  ]
+}
