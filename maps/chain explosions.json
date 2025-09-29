@@ -15,15 +15,6 @@
     {
       "type": "Pawn",
       "color": "White",
-      "x": 1,
-      "y": 1,
-      "decorators": [
-        "Exploding"
-      ]
-    },
-    {
-      "type": "Pawn",
-      "color": "White",
       "x": 2,
       "y": 1,
       "decorators": [
@@ -63,15 +54,6 @@
       "x": 2,
       "y": 0,
       "decorators": []
-    },
-    {
-      "type": "Queen",
-      "color": "White",
-      "x": 1,
-      "y": 0,
-      "decorators": [
-        "Marksman"
-      ]
     },
     {
       "type": "Pawn",
@@ -128,18 +110,23 @@
       ]
     },
     {
-      "type": "Queen",
-      "color": "Black",
-      "x": 1,
-      "y": 5,
-      "decorators": [
-        "Marksman"
-      ]
-    },
-    {
       "type": "King",
       "color": "Black",
       "x": 2,
+      "y": 5,
+      "decorators": []
+    },
+    {
+      "type": "Queen",
+      "color": "White",
+      "x": 1,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Queen",
+      "color": "Black",
+      "x": 1,
       "y": 5,
       "decorators": []
     }
