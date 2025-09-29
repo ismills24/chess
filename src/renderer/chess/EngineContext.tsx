@@ -13,9 +13,29 @@ export const EngineProvider: React.FC<{ children: React.ReactNode; existing?: En
                 getState: () => existing.currentState,
                 rules: (existing as any).ruleset,
                 submitHumanMove: (move) => {
-                    (existing as any).whiteController.submitMove(move);
+                    // Submit move to the current player's controller
+                    const currentPlayer = existing.currentState.currentPlayer;
+                    if (currentPlayer === "White") {
+                        (existing as any).whiteController.submitMove(move);
+                    } else {
+                        (existing as any).blackController.submitMove(move);
+                    }
                     (existing as any).runTurn();
-                    if (!existing.isGameOver()) (existing as any).runTurn();
+                    
+                    // If the next player is AI, automatically process their turn
+                    if (!existing.isGameOver()) {
+                        const nextPlayer = existing.currentState.currentPlayer;
+                        const nextController = nextPlayer === "White" 
+                            ? (existing as any).whiteController 
+                            : (existing as any).blackController;
+                        
+                        // Check if the next controller is AI by checking if it's an instance of GreedyAIController
+                        if (nextController && nextController.constructor.name === 'GreedyAIController') {
+                            setTimeout(() => {
+                                (existing as any).runTurn();
+                            }, 10);
+                        }
+                    }
                 },
             };
         } else {

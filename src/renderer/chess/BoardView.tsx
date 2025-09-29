@@ -26,8 +26,7 @@ export const BoardView: React.FC = () => {
     }, [selected, state, rules]);
 
     const onSquareClick = (x: number, y: number) => {
-        // Only allow White (human) to act
-        if (state.currentPlayer !== PlayerColor.White) return;
+        // Allow the current player to act (both White and Black in human vs human mode)
 
         const pos = new Vector2Int(x, y);
         const piece = state.board.getPieceAt(pos);
@@ -51,8 +50,8 @@ export const BoardView: React.FC = () => {
                 setSelected(null);
             }
         } else {
-            // No selection yet: select your piece (white only)
-            if (piece && piece.owner === PlayerColor.White) {
+            // No selection yet: select your piece (current player)
+            if (piece && piece.owner === state.currentPlayer) {
                 setSelected({ x, y });
             }
         }
