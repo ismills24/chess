@@ -12,11 +12,18 @@ import { King } from "../../engine/pieces/standard/King";
 import { MarksmanDecorator } from "../../engine/pieces/decorators/MarksmanDecorator";
 import { ExplodingDecorator } from "../../engine/pieces/decorators/ExplodingDecorator";
 import { ScapegoatDecorator } from "../../engine/pieces/decorators/ScapegoatDecorator";
+import { PiercingDecorator } from "../../engine/pieces/decorators/PiercingDecorator";
 import { Vector2Int } from "../../engine/primitives/Vector2Int";
 import { PlayerColor } from "../../engine/primitives/PlayerColor";
 import { GameState } from "../../engine/state/GameState";
 
 export function loadMap(def: MapDefinition): GameState {
+    console.log(`[MapLoader] ===== LOADING MAP =====`);
+    console.log(`[MapLoader] Map definition:`, JSON.stringify(def, null, 2));
+    
+    // Test if PiercingDecorator is available
+    console.log(`[MapLoader] Testing PiercingDecorator availability:`, typeof PiercingDecorator);
+    
     const board = new Board(def.width, def.height);
 
     // Fill board with tiles
@@ -73,10 +80,19 @@ function makePiece(def: PlacedPiece, pos: Vector2Int) {
     }
 
     // Wrap in decorators if any
+    console.log(`[MapLoader] Applying decorators to ${piece.name}:`, def.decorators);
     for (const deco of def.decorators) {
         if (deco === "Marksman") piece = new MarksmanDecorator(piece);
         if (deco === "Exploding") piece = new ExplodingDecorator(piece);
         if (deco === "Scapegoat") piece = new ScapegoatDecorator(piece);
+        if (deco === "Piercing") {
+            console.log(`[MapLoader] Applying Piercing decorator to ${piece.name}`);
+            piece = new PiercingDecorator(piece);
+            // Test if decorator is working
+            if ((piece as any).testDecorator) {
+                console.log(`[MapLoader] Decorator test:`, (piece as any).testDecorator());
+            }
+        }
     }
 
     return piece;
