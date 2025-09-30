@@ -57,8 +57,10 @@ function processInterceptors(
     state: GameState
 ): { replacement?: EventSequenceLike; abort: boolean } {
     const interceptors = InterceptorCollector.getForEvent(ev, state);
+    console.log(`[EventPipeline] Processing ${ev.constructor.name} with ${interceptors.length} interceptors`);
 
     for (const entry of interceptors) {
+        console.log(`[EventPipeline] Trying interceptor: ${entry.instance.constructor.name} (priority: ${entry.priority})`);
         const seq = entry.instance.intercept(ev as any, state);
 
         // Abort: stop everything (with or without replacements)
@@ -92,16 +94,22 @@ class InterceptorCollector {
         // Pieces (walk decorator chains)
         for (const piece of state.board.getAllPieces()) {
             let current: any = piece;
+            let depth = 0;
             // Unwrap decorators to include each layer that may implement Interceptor
             while (true) {
-                if (isInterceptor(current)) results.push(current);
+                if (isInterceptor(current)) {
+                    console.log(`[InterceptorCollector] Found interceptor: ${current.constructor.name} (depth: ${depth}) for piece: ${piece.name}`);
+                    results.push(current);
+                }
                 if (current instanceof PieceDecoratorBase) {
                     current = current.innerPiece;
+                    depth++;
                     continue;
                 }
                 break;
             }
         }
+        console.log(`[InterceptorCollector] Total interceptors collected: ${results.length}`);
         return results;
     }
 
@@ -119,5 +127,17 @@ class InterceptorCollector {
 }
 
 function isInterceptor(obj: any): obj is Interceptor {
-    return obj && typeof obj.intercept === "function" && typeof obj.priority !== "undefined";
+    const hasIntercept = obj && typeof obj.intercept === "function";
+    const hasPriority = typeof obj.priority !== "undefined";
+    const result = hasIntercept && hasPriority;
+    
+    if (obj && obj.constructor && obj.constructor.name === "PiercingDecorator") {
+        console.log(`[isInterceptor] Checking PiercingDecorator:`);
+        console.log(`[isInterceptor] - hasIntercept: ${hasIntercept}`);
+        console.log(`[isInterceptor] - hasPriority: ${hasPriority}`);
+        console.log(`[isInterceptor] - priority value: ${obj.priority}`);
+        console.log(`[isInterceptor] - result: ${result}`);
+    }
+    
+    return result;
 }

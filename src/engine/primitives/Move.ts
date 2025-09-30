@@ -1,5 +1,5 @@
 import { Vector2Int } from "./Vector2Int";
-import { IPiece } from "../pieces/IPiece";
+import { Piece } from "../pieces/Piece";
 
 /**
  * Represents a single attempted move of a piece.
@@ -8,13 +8,13 @@ import { IPiece } from "../pieces/IPiece";
 export class Move {
     readonly from: Vector2Int;
     readonly to: Vector2Int;
-    readonly piece: IPiece;
+    readonly piece: Piece;
     readonly isCapture: boolean;
 
     constructor(
         from: Vector2Int,
         to: Vector2Int,
-        piece: IPiece,
+        piece: Piece,
         isCapture: boolean = false
     ) {
         this.from = from;
