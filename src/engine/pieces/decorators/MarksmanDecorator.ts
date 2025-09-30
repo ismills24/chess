@@ -7,6 +7,7 @@ import { CaptureEvent, DestroyEvent, GameEvent } from "../../events/GameEvent";
 import { EventSequence, FallbackPolicy } from "../../events/EventSequence";
 import { EventSequences } from "../../events/EventSequences";
 import { Interceptor } from "../../events/Interceptor";
+import { CandidateMoves } from "../MovementHelper";
 
 /**
  * Allows the piece to capture enemies at a distance without moving.
@@ -21,9 +22,9 @@ export class MarksmanDecorator extends PieceDecoratorBase implements Interceptor
         this.rangedAttacksLeft = charges;
     }
 
-    getPseudoLegalMoves(state: GameState): Move[] {
+    getCandidateMoves(state: GameState): CandidateMoves {
         const moves: Move[] = [];
-        for (const move of this.inner.getPseudoLegalMoves(state)) {
+        for (const move of this.inner.getCandidateMoves(state).moves) {
             moves.push(move);
             if (this.rangedAttacksLeft > 0) {
                 const target = state.board.getPieceAt(move.to);
@@ -33,7 +34,7 @@ export class MarksmanDecorator extends PieceDecoratorBase implements Interceptor
                 }
             }
         }
-        return moves;
+        return new CandidateMoves(moves);
     }
 
     intercept(ev: CaptureEvent, state: GameState): EventSequence {

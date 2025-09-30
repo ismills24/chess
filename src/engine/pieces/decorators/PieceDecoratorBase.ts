@@ -3,6 +3,7 @@ import { PlayerColor } from "../../primitives/PlayerColor";
 import { Vector2Int } from "../../primitives/Vector2Int";
 import { Move } from "../../primitives/Move";
 import { GameState } from "../../state/GameState";
+import { CandidateMoves, MovementRestrictions } from "../MovementHelper";
 
 /**
  * Abstract base for decorators that wrap another Piece
@@ -46,8 +47,8 @@ export abstract class PieceDecoratorBase implements Piece {
         this.inner.capturesMade = v;
     }
 
-    getPseudoLegalMoves(state: GameState): Move[] {
-        return this.inner.getPseudoLegalMoves(state);
+    getCandidateMoves(state: GameState): CandidateMoves {
+        return this.inner.getCandidateMoves(state);
     }
 
     getValue(): number {
@@ -74,5 +75,9 @@ export abstract class PieceDecoratorBase implements Piece {
         const colorPrefix = this.inner.owner === "White" ? "W" : "B";
         const uuid = crypto.randomUUID().substring(0, 8); // Use first 8 chars for uniqueness
         return `${colorPrefix}-${innerName}-${decoratorName}-${uuid}`;
+    }
+
+    public getRestrictedSquares(state: GameState): MovementRestrictions {
+        return null;
     }
 }

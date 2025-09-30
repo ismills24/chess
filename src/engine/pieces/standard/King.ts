@@ -3,7 +3,7 @@ import { Vector2Int } from "../../primitives/Vector2Int";
 import { Move } from "../../primitives/Move";
 import { GameState } from "../../state/GameState";
 import { PieceBase } from "../PieceBase";
-import { MovementHelper } from "../MovementHelper";
+import { CandidateMoves, MovementHelper } from "../MovementHelper";
 
 export class King extends PieceBase {
     constructor(owner: PlayerColor, position: Vector2Int) {
@@ -14,7 +14,7 @@ export class King extends PieceBase {
         return 100000; // very high value
     }
 
-    getPseudoLegalMoves(state: GameState): Move[] {
+    getCandidateMoves(state: GameState): CandidateMoves {
         return MovementHelper.getJumpMoves(
             this,
             state,

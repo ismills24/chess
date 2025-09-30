@@ -34,7 +34,7 @@ export class CheckmateCondition implements WinCondition {
     }
 
     private getLegalMovesForPiece(state: GameState, piece: Piece): Move[] {
-        return piece.getPseudoLegalMoves(state).filter(
+        return piece.getCandidateMoves(state).moves.filter(
             (m) => !CheckRules.wouldMovePutKingInCheck(state, m, piece.owner)
         );
     }

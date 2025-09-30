@@ -4,6 +4,7 @@ import { PlayerColor } from "../primitives/PlayerColor";
 import { RuleSet } from "../rules/RuleSet";
 import { Vector2Int } from "../primitives/Vector2Int";
 import { PieceValueCalculator } from "../pieces/PieceValueCalculator";
+import { MovementRestrictions } from "../pieces/MovementHelper";
 
 /**
  * Immutable snapshot of the current game state.
@@ -98,6 +99,29 @@ export class GameState {
             }
         }
         return score;
+    }
+
+    /**
+     * Get all movement restrictions for current player.
+     */
+    getAllMovementRestrictions(): MovementRestrictions[] {
+        const results: MovementRestrictions[] = [];
+        // add restrictions from tiles
+        for (const tile of (this.board.tiles).flat()) {
+            const restrictions = tile.getRestrictedSquares(this);
+            if (restrictions) {
+                results.push(restrictions);
+            }
+        }
+        // add restrictions from pieces
+        for (const piece of this.board.getAllPieces(this.currentPlayer)) {
+            const restrictions = piece.getRestrictedSquares(this);
+            if (restrictions) {
+                results.push(restrictions);
+            }
+        }
+        console.log('results', results);
+        return results;
     }
 
     /**

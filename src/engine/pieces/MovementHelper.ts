@@ -7,52 +7,96 @@ import { Piece } from "./Piece";
  * Provides helper methods for common chess movement patterns (sliding, jumping).
  */
 export class MovementHelper {
-    /**
-     * Generate sliding moves in given directions until blocked.
-     */
-    static getSlidingMoves(
-        piece: Piece,
-        state: GameState,
-        ...directions: Vector2Int[]
-    ): Move[] {
-        const moves: Move[] = [];
-        for (const dir of directions) {
-            let pos = piece.position.add(dir);
+  /**
+   * Generate sliding moves in given directions until blocked.
+   */
+  static getSlidingMoves(
+    piece: Piece,
+    state: GameState,
+    ...directions: Vector2Int[]
+  ): CandidateMoves {
+    const moves: Move[] = [];
+    for (const dir of directions) {
+      let pos = piece.position.add(dir);
 
-            while (state.board.isInBounds(pos)) {
-                const target = state.board.getPieceAt(pos);
+      while (state.board.isInBounds(pos)) {
+        const target = state.board.getPieceAt(pos);
 
-                if (!target) {
-                    moves.push(new Move(piece.position, pos, piece));
-                } else {
-                    if (target.owner !== piece.owner) {
-                        moves.push(new Move(piece.position, pos, piece, true));
-                    }
-                    break; // stop at first piece
-                }
-
-                pos = pos.add(dir);
-            }
+        if (!target) {
+          moves.push(new Move(piece.position, pos, piece));
+        } else {
+          if (target.owner !== piece.owner) {
+            moves.push(new Move(piece.position, pos, piece, true));
+          }
+          break; // stop at first piece
         }
-        return moves;
-    }
 
-    /**
-     * Generate single-step jump moves in given offsets.
-     */
-    static getJumpMoves(piece: Piece, state: GameState, ...offsets: Vector2Int[]): Move[] {
-        const moves: Move[] = [];
-        for (const offset of offsets) {
-            const pos = piece.position.add(offset);
-            if (!state.board.isInBounds(pos)) continue;
-
-            const target = state.board.getPieceAt(pos);
-            if (!target) {
-                moves.push(new Move(piece.position, pos, piece));
-            } else if (target.owner !== piece.owner) {
-                moves.push(new Move(piece.position, pos, piece, true));
-            }
-        }
-        return moves;
+        pos = pos.add(dir);
+      }
     }
+    return new CandidateMoves(moves);
+  }
+
+  /**
+   * Generate single-step jump moves in given offsets.
+   */
+  static getJumpMoves(
+    piece: Piece,
+    state: GameState,
+    ...offsets: Vector2Int[]
+  ): CandidateMoves {
+    const moves: Move[] = [];
+    for (const offset of offsets) {
+      const pos = piece.position.add(offset);
+      if (!state.board.isInBounds(pos)) continue;
+
+      const target = state.board.getPieceAt(pos);
+      if (!target) {
+        moves.push(new Move(piece.position, pos, piece));
+      } else if (target.owner !== piece.owner) {
+        moves.push(new Move(piece.position, pos, piece, true));
+      }
+    }
+    return new CandidateMoves(moves);
+  }
+}
+
+export class CandidateMoves {
+  moves: Move[];
+  movesOnFriendlyPieces: Move[];
+  movesOnIllegalTiles: Move[];
+
+  constructor(
+    moves: Move[],
+    movesOnFriendlyPieces: Move[] = [],
+    movesOnIllegalTiles: Move[] = []
+  ) {
+    this.moves = moves;
+    this.movesOnFriendlyPieces = movesOnFriendlyPieces;
+    this.movesOnIllegalTiles = movesOnIllegalTiles;
+  }
+}
+
+export interface MovementRestrictions {
+  restrictedSquares: Vector2Int[];
+  sourceId: string;
+}
+
+export interface RestrictedMove {
+  move: Move;
+  sourceId: string;
+}
+
+export function GetRestrictedMoves(
+  moves: Move[],
+  restrictions: MovementRestrictions[]
+): RestrictedMove[] {
+    const results: RestrictedMove[] = [];
+    for (const move of moves) {
+        const match = restrictions.find((r) =>
+            r.restrictedSquares.some((s) => s.equals(move.to))
+        );
+        if(match) results.push({ move, sourceId: match.sourceId });
+    }
+    return results;
 }

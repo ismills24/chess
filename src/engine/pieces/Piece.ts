@@ -2,6 +2,7 @@ import { PlayerColor } from "../primitives/PlayerColor";
 import { Vector2Int } from "../primitives/Vector2Int";
 import { Move } from "../primitives/Move";
 import { GameState } from "../state/GameState";
+import { CandidateMoves, MovementRestrictions } from "./MovementHelper";
 
 /**
  * Base contract for all pieces (pawns, rooks, custom roguelike units, etc).
@@ -15,7 +16,8 @@ export interface Piece {
     movesMade: number;
     capturesMade: number;
 
-    getPseudoLegalMoves(state: GameState): Move[];
+    getCandidateMoves(state: GameState): CandidateMoves;
+    getRestrictedSquares(state: GameState): MovementRestrictions;
     getValue(): number;
     clone(): Piece;
 }
