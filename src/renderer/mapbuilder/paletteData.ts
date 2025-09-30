@@ -1,7 +1,7 @@
 import { DecoratorId, PieceId, TileId } from "./types";
 
 export const PIECES: PieceId[] = ["Pawn", "Knight", "Bishop", "Rook", "Queen", "King"];
-export const DECORATORS: DecoratorId[] = ["Marksman", "Exploding", "Scapegoat"];
+export const DECORATORS: DecoratorId[] = ["Marksman", "Exploding", "Scapegoat", "Piercing"];
 export const TILES: TileId[] = ["StandardTile", "GuardianTile", "SlipperyTile"];
 
 // map engine piece names → your SVG asset base names
@@ -14,6 +14,7 @@ export function iconForDecorator(id: DecoratorId): string {
     if (id === "Marksman") return "🎯";
     if (id === "Exploding") return "💥";
     if (id === "Scapegoat") return "🛡️";
+    if (id === "Piercing") return "⚡";
     return "✨";
 }
 
