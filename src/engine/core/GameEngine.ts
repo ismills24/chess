@@ -157,6 +157,7 @@ export class GameEngine {
             const piece = board.getPieceAt(ev.from);
             if (piece) {
                 board.movePiece(ev.from, ev.to);
+                piece.movesMade++;
             }
         } else if (ev instanceof CaptureEvent) {
             const pos = ev.target.position;

@@ -93,7 +93,7 @@ export const BoardView: React.FC = () => {
                     {tileId !== "StandardTile" ? (
                         <span className="tile-icon">{tileIcon}</span>
                     ) : null}
-                    {p ? <PieceIcon owner={p.owner} name={p.name} /> : null}
+                    {p ? <PieceIcon owner={p.owner} name={p.name} movesMade={p.movesMade} /> : null}
                     {/* decorator icons overlay */}
                     {decos.map((d, i) => (
                         <span key={`${key}-deco-${i}`} className="deco-icon">{iconForDecorator(d)}</span>
@@ -121,12 +121,12 @@ export const BoardView: React.FC = () => {
     );
 };
 
-const PieceIcon: React.FC<{ owner: PlayerColor; name: string }> = ({ owner, name }) => {
+const PieceIcon: React.FC<{ owner: PlayerColor; name: string; movesMade: number }> = ({ owner, name, movesMade }) => {
     // expected filenames like "bishop-b.svg", "king-w.svg"
     const letter = owner === PlayerColor.White ? "w" : "b";
     const file = iconFile(name);
     const src = `/assets/${file}-${letter}.svg`;
-    return <img src={src} className="pc" draggable={false} alt={`${name.toLowerCase()}-${letter}`} />;
+    return <div className='tooltip'><img src={src} className="pc" draggable={false} alt={`${name.toLowerCase()}-${letter}`} /><span className="tooltiptext">{`Moves made: ${movesMade}`}</span></div>;
 };
 
 // Map engine piece names → asset base names
