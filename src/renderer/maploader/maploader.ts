@@ -13,6 +13,7 @@ import { MarksmanDecorator } from "../../engine/pieces/decorators/MarksmanDecora
 import { ExplodingDecorator } from "../../engine/pieces/decorators/ExplodingDecorator";
 import { ScapegoatDecorator } from "../../engine/pieces/decorators/ScapegoatDecorator";
 import { PiercingDecorator } from "../../engine/pieces/decorators/PiercingDecorator";
+import { BouncerDecorator } from "../../engine/pieces/decorators/BouncerDecorator";
 import { Vector2Int } from "../../engine/primitives/Vector2Int";
 import { PlayerColor } from "../../engine/primitives/PlayerColor";
 import { GameState } from "../../engine/state/GameState";
@@ -92,6 +93,10 @@ function makePiece(def: PlacedPiece, pos: Vector2Int) {
             if ((piece as any).testDecorator) {
                 console.log(`[MapLoader] Decorator test:`, (piece as any).testDecorator());
             }
+        }
+        if (deco === "Bouncer") {
+            console.log(`[MapLoader] Applying Bouncer decorator to ${piece.name}`);
+            piece = new BouncerDecorator(piece);
         }
     }
 

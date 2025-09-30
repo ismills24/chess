@@ -5,6 +5,7 @@ import { MarksmanDecorator } from "../../engine/pieces/decorators/MarksmanDecora
 import { ExplodingDecorator } from "../../engine/pieces/decorators/ExplodingDecorator";
 import { ScapegoatDecorator } from "../../engine/pieces/decorators/ScapegoatDecorator";
 import { PiercingDecorator } from "../../engine/pieces/decorators/PiercingDecorator";
+import { BouncerDecorator } from "../../engine/pieces/decorators/BouncerDecorator";
 import { GuardianTile } from "../../engine/tiles/GuardianTile";
 import { SlipperyTile } from "../../engine/tiles/SlipperyTile";
 import { StandardTile } from "../../engine/tiles/StandardTile";
@@ -18,6 +19,7 @@ export function getDecoratorIds(piece: Piece): DecoratorId[] {
         if (current instanceof ExplodingDecorator) ids.push("Exploding");
         if (current instanceof ScapegoatDecorator) ids.push("Scapegoat");
         if (current instanceof PiercingDecorator) ids.push("Piercing");
+        if (current instanceof BouncerDecorator) ids.push("Bouncer");
 
         if (current instanceof PieceDecoratorBase) {
             current = current.innerPiece;
