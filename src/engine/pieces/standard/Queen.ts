@@ -3,7 +3,7 @@ import { Vector2Int } from "../../primitives/Vector2Int";
 import { Move } from "../../primitives/Move";
 import { GameState } from "../../state/GameState";
 import { PieceBase } from "../PieceBase";
-import { MovementHelper } from "../MovementHelper";
+import { CandidateMoves, MovementHelper } from "../MovementHelper";
 
 export class Queen extends PieceBase {
     constructor(owner: PlayerColor, position: Vector2Int) {
@@ -14,7 +14,7 @@ export class Queen extends PieceBase {
         return 9;
     }
 
-    getPseudoLegalMoves(state: GameState): Move[] {
+    getCandidateMoves(state: GameState): CandidateMoves {
         return MovementHelper.getSlidingMoves(
             this,
             state,

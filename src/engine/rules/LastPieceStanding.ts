@@ -11,7 +11,7 @@ import { PlayerColor } from "../primitives/PlayerColor";
 export class LastPieceStandingRuleSet implements RuleSet {
     getLegalMoves(_state: GameState, piece: Piece): Move[] {
         // All pseudo-legal moves are legal in this ruleset
-        return piece.getPseudoLegalMoves(_state);
+        return piece.getCandidateMoves(_state).moves;
     }
 
     isGameOver(state: GameState): { over: boolean; winner: PlayerColor | null } {

@@ -8,6 +8,7 @@ import { EventSequences } from "../../events/EventSequences";
 import { Interceptor } from "../../events/Interceptor";
 import { EventSequenceLike } from "../../events/EventSequence";
 import { Queen } from "./Queen";
+import { CandidateMoves } from "../MovementHelper";
 
 /**
  * Standard chess pawn piece.
@@ -22,7 +23,7 @@ export class Pawn extends PieceBase implements Interceptor<MoveEvent> {
         return 1;
     }
 
-    getPseudoLegalMoves(state: GameState): Move[] {
+    getCandidateMoves(state: GameState): CandidateMoves {
         const moves: Move[] = [];
         const direction = this.owner === PlayerColor.White ? 1 : -1;
         const startRank = this.owner === PlayerColor.White ? 1 : state.board.height - 2;
@@ -56,7 +57,7 @@ export class Pawn extends PieceBase implements Interceptor<MoveEvent> {
             }
         }
 
-        return moves;
+        return new CandidateMoves(moves);
     }
 
     readonly priority = 0;

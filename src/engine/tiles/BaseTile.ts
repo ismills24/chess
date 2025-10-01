@@ -1,5 +1,7 @@
 import { Tile } from "./Tile";
 import { Vector2Int } from "../primitives/Vector2Int";
+import { MovementRestrictions } from "../pieces/MovementHelper";
+import { GameState } from "../state/GameState";
 
 /**
  * Base class for tiles providing ID and position.
@@ -17,6 +19,10 @@ export abstract class BaseTile implements Tile {
      * Subclasses must override clone() to return a deep copy.
      */
     abstract clone(): Tile;
+
+    public getRestrictedSquares(state: GameState): MovementRestrictions {
+        return null;
+    }
 
     protected generateDescriptiveId(): string {
         const className = this.constructor.name.replace('Tile', '').toLowerCase();

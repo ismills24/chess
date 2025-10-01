@@ -3,6 +3,7 @@ import { Vector2Int } from "../primitives/Vector2Int";
 import { Move } from "../primitives/Move";
 import { GameState } from "../state/GameState";
 import { Piece } from "./Piece";
+import { CandidateMoves, MovementRestrictions } from "./MovementHelper";
 
 /**
  * Base class for all pieces providing default behavior.
@@ -33,7 +34,7 @@ export abstract class PieceBase implements Piece {
     }
 
     // ---------------- Movement ----------------
-    abstract getPseudoLegalMoves(state: GameState): Move[];
+    abstract getCandidateMoves(state: GameState): CandidateMoves;
 
     // ---------------- Value & Cloning ----------------
     abstract getValue(): number;
@@ -57,6 +58,10 @@ export abstract class PieceBase implements Piece {
 
     incrementCaptures(): void {
         this.capturesMade++;
+    }
+
+    getRestrictedSquares(state: GameState): MovementRestrictions {
+        return null;
     }
 
     private generateDescriptiveId(name: string, owner: PlayerColor): string {

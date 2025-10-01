@@ -10,19 +10,24 @@ import { PlayerColor } from "../primitives/PlayerColor";
  * Standard chess ruleset with check/checkmate and king safety.
  */
 export class StandardChessRuleSet implements RuleSet {
-    private readonly checkmateCondition: CheckmateCondition;
+  private readonly checkmateCondition: CheckmateCondition;
 
-    constructor() {
-        this.checkmateCondition = new CheckmateCondition();
-    }
+  constructor() {
+    this.checkmateCondition = new CheckmateCondition();
+  }
 
-    getLegalMoves(state: GameState, piece: Piece): Move[] {
-        return piece.getPseudoLegalMoves(state).filter(
-            (m) => !CheckRules.wouldMovePutKingInCheck(state, m, piece.owner)
-        );
-    }
+  getLegalMoves(state: GameState, piece: Piece): Move[] {
+    const legalMoves = piece
+      .getCandidateMoves(state)
+      .moves.filter(
+        (m) => !CheckRules.wouldMovePutKingInCheck(state, m, piece.owner)
+      );
+    const restrictedMoves = state.GetRestrictedMoves(legalMoves);
+    const filteredMoves = legalMoves.filter(m => !restrictedMoves.some(rm => rm.move.to.equals(m.to)));
+    return filteredMoves;
+  }
 
-    isGameOver(state: GameState): { over: boolean; winner: PlayerColor | null } {
-        return this.checkmateCondition.isGameOver(state);
-    }
+  isGameOver(state: GameState): { over: boolean; winner: PlayerColor | null } {
+    return this.checkmateCondition.isGameOver(state);
+  }
 }

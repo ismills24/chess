@@ -27,7 +27,7 @@ export class CheckRules {
                     return true;
                 }
             } else {
-                if (piece.getPseudoLegalMoves(state).some((m) => m.to.equals(king.position))) {
+                if (piece.getCandidateMoves(state).moves.some((m) => m.to.equals(king.position))) {
                     return true;
                 }
             }

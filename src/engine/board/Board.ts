@@ -9,8 +9,8 @@ import { StandardTile } from "../tiles/StandardTile";
  * Provides spatial queries and mutation methods.
  */
 export class Board {
-    private pieces: (Piece | null)[][];
-    private tiles: Tile[][];
+    public pieces: (Piece | null)[][];
+    public tiles: Tile[][];
 
     readonly width: number;
     readonly height: number;
