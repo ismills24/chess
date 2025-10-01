@@ -1,26 +1,17 @@
-import { DecoratorId, PieceId, TileId } from "./types";
+import {
+    DECORATOR_IDS,
+    DecoratorId,
+    iconForDecorator,
+    iconForPiece,
+    iconForTile,
+    PIECE_IDS,
+    PieceId,
+    TILE_IDS,
+    TileId,
+} from "../../shared/entityRegistry";
 
-export const PIECES: PieceId[] = ["Pawn", "Knight", "Bishop", "Rook", "Queen", "King"];
-export const DECORATORS: DecoratorId[] = ["Marksman", "Exploding", "Scapegoat", "Piercing"];
-export const TILES: TileId[] = ["StandardTile", "GuardianTile", "SlipperyTile", "FogTile"];
+export const PIECES: PieceId[] = [...PIECE_IDS];
+export const DECORATORS: DecoratorId[] = [...DECORATOR_IDS];
+export const TILES: TileId[] = [...TILE_IDS];
 
-// map engine piece names → your SVG asset base names
-export function iconForPiece(name: PieceId): string {
-    return name.toLowerCase(); // pawn, knight, ...
-}
-
-export function iconForDecorator(id: DecoratorId): string {
-    // simple emoji-ish fallback; you can replace with real svgs later
-    if (id === "Marksman") return "🎯";
-    if (id === "Exploding") return "💥";
-    if (id === "Scapegoat") return "🛡️";
-    if (id === "Piercing") return "⚡";
-    return "✨";
-}
-
-export function iconForTile(id: TileId): string {
-    if (id === "GuardianTile") return "🛡️";
-    if (id === "SlipperyTile") return "🧊";
-    if (id === "FogTile") return "☁️";
-    return "⬜";
-}
+export { iconForPiece, iconForDecorator, iconForTile };

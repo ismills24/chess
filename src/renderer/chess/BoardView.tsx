@@ -4,8 +4,7 @@ import { Vector2Int } from "../../engine/primitives/Vector2Int";
 import { Move } from "../../engine/primitives/Move";
 import { PlayerColor } from "../../engine/primitives/PlayerColor";
 import "./board.css";
-import { iconForDecorator, iconForTile } from "../mapbuilder/paletteData";
-import { getDecoratorIds, getTileId } from "./iconHelpers";
+import { decoratorIdsForPiece, iconForDecorator, iconForTile, tileIdForInstance } from "../../shared/entityRegistry";
 
 type Coord = { x: number; y: number };
 
@@ -72,9 +71,9 @@ export const BoardView: React.FC = () => {
       const isLegal = legalTargets.has(`${x},${y}`);
 
       const tile = state.board.getTile(pos);
-      const tileId = getTileId(tile);
+      const tileId = tileIdForInstance(tile);
       const tileIcon = tileId === "StandardTile" ? "" : iconForTile(tileId);
-      const decos = p ? getDecoratorIds(p) : [];
+      const decos = p ? decoratorIdsForPiece(p) : [];
 
       cells.push(
         <div

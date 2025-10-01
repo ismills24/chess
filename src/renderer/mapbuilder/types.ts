@@ -1,8 +1,6 @@
-export type Color = "White" | "Black";
+import { DecoratorId, PieceId, TileId } from "../../shared/entityRegistry";
 
-export type PieceId = "Pawn" | "Knight" | "Bishop" | "Rook" | "Queen" | "King";
-export type DecoratorId = "Marksman" | "Exploding" | "Scapegoat" | "Piercing";
-export type TileId = "StandardTile" | "GuardianTile" | "SlipperyTile" | "FogTile";
+export type Color = "White" | "Black";
 
 export interface PlacedPiece {
     type: PieceId;
