@@ -8,9 +8,7 @@ import { applyDecorator, createPiece, createTile } from "../../shared/entityRegi
 export function loadMap(def: MapDefinition): GameState {
     console.log(`[MapLoader] ===== LOADING MAP =====`);
     console.log(`[MapLoader] Map definition:`, JSON.stringify(def, null, 2));
-    
-    // Test if PiercingDecorator is available
-    console.log(`[MapLoader] Testing PiercingDecorator availability:`, typeof PiercingDecorator);
+
     
     const board = new Board(def.width, def.height);
 

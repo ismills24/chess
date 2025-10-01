@@ -17,6 +17,7 @@ import { StandardTile } from "../engine/tiles/StandardTile";
 import { GuardianTile } from "../engine/tiles/GuardianTile";
 import { SlipperyTile } from "../engine/tiles/SlipperyTile";
 import { FogTile } from "../engine/tiles/FogTile";
+import { BouncerDecorator } from "../engine/pieces/decorators/BouncerDecorator";
 
 type PieceConstructor<T extends Piece = Piece> = new (owner: PlayerColor, position: Vector2Int) => T;
 type DecoratorConstructor<T extends PieceDecoratorBase = PieceDecoratorBase> = new (innerPiece: Piece) => T;
@@ -85,6 +86,12 @@ const decoratorDefinitions = [
     icon: "⚡",
     apply: (piece: Piece) => new PiercingDecorator(piece),
     klass: PiercingDecorator as DecoratorConstructor,
+  },
+  {
+    id: "Bouncer",
+    icon: "🏀",
+    apply: (piece: Piece) => new BouncerDecorator(piece),
+    klass: BouncerDecorator as DecoratorConstructor,
   },
 ] as const;
 
