@@ -86,17 +86,3 @@ export interface RestrictedMove {
   move: Move;
   sourceId: string;
 }
-
-export function GetRestrictedMoves(
-  moves: Move[],
-  restrictions: MovementRestrictions[]
-): RestrictedMove[] {
-    const results: RestrictedMove[] = [];
-    for (const move of moves) {
-        const match = restrictions.find((r) =>
-            r.restrictedSquares.some((s) => s.equals(move.to))
-        );
-        if(match) results.push({ move, sourceId: match.sourceId });
-    }
-    return results;
-}

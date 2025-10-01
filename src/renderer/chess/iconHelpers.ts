@@ -7,6 +7,7 @@ import { ScapegoatDecorator } from "../../engine/pieces/decorators/ScapegoatDeco
 import { PiercingDecorator } from "../../engine/pieces/decorators/PiercingDecorator";
 import { GuardianTile } from "../../engine/tiles/GuardianTile";
 import { SlipperyTile } from "../../engine/tiles/SlipperyTile";
+import { FogTile } from "../../engine/tiles/FogTile";
 import { StandardTile } from "../../engine/tiles/StandardTile";
 import { DecoratorId, TileId } from "../mapbuilder/types";
 
@@ -31,6 +32,7 @@ export function getDecoratorIds(piece: Piece): DecoratorId[] {
 export function getTileId(tile: Tile): TileId {
     if (tile instanceof GuardianTile) return "GuardianTile";
     if (tile instanceof SlipperyTile) return "SlipperyTile";
+    if (tile instanceof FogTile) return "FogTile";
     return "StandardTile";
 }
 

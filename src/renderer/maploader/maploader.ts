@@ -3,6 +3,7 @@ import { Board } from "../../engine/board/Board";
 import { StandardTile } from "../../engine/tiles/StandardTile";
 import { GuardianTile } from "../../engine/tiles/GuardianTile";
 import { SlipperyTile } from "../../engine/tiles/SlipperyTile";
+import { FogTile } from "../../engine/tiles/FogTile";
 import { Pawn } from "../../engine/pieces/standard/Pawn";
 import { Knight } from "../../engine/pieces/standard/Knight";
 import { Bishop } from "../../engine/pieces/standard/Bishop";
@@ -35,6 +36,7 @@ export function loadMap(def: MapDefinition): GameState {
             if (!tileDef || tileDef.type === "StandardTile") tile = new StandardTile(pos);
             else if (tileDef.type === "GuardianTile") tile = new GuardianTile(pos);
             else if (tileDef.type === "SlipperyTile") tile = new SlipperyTile(pos);
+            else if (tileDef.type === "FogTile") tile = new FogTile(pos);
             board.setTile(pos, tile);
         }
     }

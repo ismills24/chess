@@ -5,7 +5,6 @@ import { Piece } from "../pieces/Piece";
 import { CheckRules } from "./CheckRules";
 import { CheckmateCondition } from "../winconditions/CheckmateCondition";
 import { PlayerColor } from "../primitives/PlayerColor";
-import { GetRestrictedMoves } from "../pieces/MovementHelper";
 
 /**
  * Standard chess ruleset with check/checkmate and king safety.
@@ -23,10 +22,9 @@ export class StandardChessRuleSet implements RuleSet {
       .moves.filter(
         (m) => !CheckRules.wouldMovePutKingInCheck(state, m, piece.owner)
       );
-    const restrictions = state.getAllMovementRestrictions();
-    const restrictedMoves = GetRestrictedMoves(legalMoves, restrictions);
-    console.log('restrictedMoves', restrictedMoves);
-    return legalMoves;
+    const restrictedMoves = state.GetRestrictedMoves(legalMoves);
+    const filteredMoves = legalMoves.filter(m => !restrictedMoves.some(rm => rm.move.to.equals(m.to)));
+    return filteredMoves;
   }
 
   isGameOver(state: GameState): { over: boolean; winner: PlayerColor | null } {

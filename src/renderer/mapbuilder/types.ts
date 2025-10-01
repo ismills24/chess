@@ -2,7 +2,7 @@ export type Color = "White" | "Black";
 
 export type PieceId = "Pawn" | "Knight" | "Bishop" | "Rook" | "Queen" | "King";
 export type DecoratorId = "Marksman" | "Exploding" | "Scapegoat" | "Piercing";
-export type TileId = "StandardTile" | "GuardianTile" | "SlipperyTile";
+export type TileId = "StandardTile" | "GuardianTile" | "SlipperyTile" | "FogTile";
 
 export interface PlacedPiece {
     type: PieceId;
