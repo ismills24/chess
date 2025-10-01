@@ -1,0 +1,73 @@
+{
+  "width": 8,
+  "height": 8,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "Knight",
+      "color": "White",
+      "x": 2,
+      "y": 2,
+      "decorators": [
+        "Cannibal"
+      ]
+    },
+    {
+      "type": "Rook",
+      "color": "White",
+      "x": 1,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Rook",
+      "color": "White",
+      "x": 2,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Rook",
+      "color": "White",
+      "x": 3,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 1,
+      "y": 4,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 3,
+      "y": 4,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 4,
+      "y": 3,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "White",
+      "x": 4,
+      "y": 1,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 2,
+      "y": 6,
+      "decorators": []
+    }
+  ],
+  "tiles": []
+}

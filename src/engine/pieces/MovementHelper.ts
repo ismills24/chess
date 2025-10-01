@@ -16,6 +16,8 @@ export class MovementHelper {
     ...directions: Vector2Int[]
   ): CandidateMoves {
     const moves: Move[] = [];
+    const movesOnEnemyPieces: Move[] = [];
+    const movesOnFriendlyPieces: Move[] = [];
     for (const dir of directions) {
       let pos = piece.position.add(dir);
 
@@ -27,6 +29,9 @@ export class MovementHelper {
         } else {
           if (target.owner !== piece.owner) {
             moves.push(new Move(piece.position, pos, piece, true));
+            movesOnEnemyPieces.push(new Move(piece.position, pos, piece, true));
+          } else {
+            movesOnFriendlyPieces.push(new Move(piece.position, pos, piece));
           }
           break; // stop at first piece
         }
@@ -34,7 +39,7 @@ export class MovementHelper {
         pos = pos.add(dir);
       }
     }
-    return new CandidateMoves(moves);
+    return new CandidateMoves(moves, movesOnFriendlyPieces, movesOnEnemyPieces);
   }
 
   /**
@@ -46,6 +51,8 @@ export class MovementHelper {
     ...offsets: Vector2Int[]
   ): CandidateMoves {
     const moves: Move[] = [];
+    const movesOnEnemyPieces: Move[] = [];
+    const movesOnFriendlyPieces: Move[] = [];
     for (const offset of offsets) {
       const pos = piece.position.add(offset);
       if (!state.board.isInBounds(pos)) continue;
@@ -55,24 +62,30 @@ export class MovementHelper {
         moves.push(new Move(piece.position, pos, piece));
       } else if (target.owner !== piece.owner) {
         moves.push(new Move(piece.position, pos, piece, true));
+        movesOnEnemyPieces.push(new Move(piece.position, pos, piece, true));
+      } else {
+        movesOnFriendlyPieces.push(new Move(piece.position, pos, piece));
       }
     }
-    return new CandidateMoves(moves);
+    return new CandidateMoves(moves, movesOnFriendlyPieces, movesOnEnemyPieces);
   }
 }
 
 export class CandidateMoves {
   moves: Move[];
   movesOnFriendlyPieces: Move[];
+  movesOnEnemyPieces: Move[];
   movesOnIllegalTiles: Move[];
 
   constructor(
     moves: Move[],
     movesOnFriendlyPieces: Move[] = [],
+    movesOnEnemyPieces: Move[] = [],
     movesOnIllegalTiles: Move[] = []
   ) {
     this.moves = moves;
     this.movesOnFriendlyPieces = movesOnFriendlyPieces;
+    this.movesOnEnemyPieces = movesOnEnemyPieces;
     this.movesOnIllegalTiles = movesOnIllegalTiles;
   }
 }
