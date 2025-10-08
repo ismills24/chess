@@ -173,3 +173,31 @@ export class PieceChangedEvent extends GameEvent {
         this.position = position;
     }
 }
+
+export class SwapEvent extends GameEvent {
+    readonly piece1: Piece;
+    readonly piece2: Piece;
+    readonly position1: Vector2Int;
+    readonly position2: Vector2Int;
+
+    constructor(
+        piece1: Piece,
+        piece2: Piece,
+        position1: Vector2Int,
+        position2: Vector2Int,
+        actor: PlayerColor,
+        sourceId: string,
+        isPlayerAction = false
+    ) {
+        super({
+            actor,
+            isPlayerAction,
+            description: `Swap ${piece1.name} at ${position1.toString()} ↔ ${piece2.name} at ${position2.toString()}`,
+            sourceId,
+        });
+        this.piece1 = piece1;
+        this.piece2 = piece2;
+        this.position1 = position1;
+        this.position2 = position2;
+    }
+}

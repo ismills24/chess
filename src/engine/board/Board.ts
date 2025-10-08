@@ -57,6 +57,21 @@ export class Board {
         piece.position = to;
     }
 
+    swapPieces(pos1: Vector2Int, pos2: Vector2Int): void {
+        if (!this.isInBounds(pos1) || !this.isInBounds(pos2)) return;
+        const piece1 = this.pieces[pos1.x][pos1.y];
+        const piece2 = this.pieces[pos2.x][pos2.y];
+        if (!piece1 || !piece2) return;
+
+        // Swap pieces on the board
+        this.pieces[pos1.x][pos1.y] = piece2;
+        this.pieces[pos2.x][pos2.y] = piece1;
+        
+        // Update piece positions
+        piece1.position = pos2;
+        piece2.position = pos1;
+    }
+
     getTile(pos: Vector2Int): Tile {
         return this.isInBounds(pos) ? this.tiles[pos.x][pos.y] : new StandardTile();
     }

@@ -44,11 +44,22 @@ export class CheckRules {
         const piece = cloned.board.getPieceAt(move.from);
         if (!piece) return true;
 
-        cloned.board.removePiece(move.from);
         const target = cloned.board.getPieceAt(move.to);
-        if (target) cloned.board.removePiece(move.to);
-
-        cloned.board.placePiece(piece, move.to);
+        
+        // If target is a friendly piece, this is a swap (e.g., SwapperDecorator)
+        // Simulate a swap instead of a capture
+        if (target && target.owner === movingPlayer) {
+            // Swap by removing both and placing in opposite positions
+            cloned.board.removePiece(move.from);
+            cloned.board.removePiece(move.to);
+            cloned.board.placePiece(piece, move.to);
+            cloned.board.placePiece(target, move.from);
+        } else {
+            // Normal move or capture
+            cloned.board.removePiece(move.from);
+            if (target) cloned.board.removePiece(move.to);
+            cloned.board.placePiece(piece, move.to);
+        }
 
         return this.isKingInCheck(cloned, movingPlayer);
     }

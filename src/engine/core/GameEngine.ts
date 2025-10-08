@@ -11,6 +11,7 @@ import {
     TurnEndEvent,
     TileChangedEvent,
     PieceChangedEvent,
+    SwapEvent,
 } from "../events/GameEvent";
 import { GameState } from "../state/GameState";
 import { RuleSet } from "../rules/RuleSet";
@@ -158,6 +159,21 @@ export class GameEngine {
             if (piece) {
                 board.movePiece(ev.from, ev.to);
                 piece.movesMade++;
+            }
+        } else if (ev instanceof SwapEvent) {
+            // Swap two pieces by removing both, then placing them in swapped positions
+            const piece1 = board.getPieceAt(ev.position1);
+            const piece2 = board.getPieceAt(ev.position2);
+            if (piece1 && piece2) {
+                // Remove both pieces first
+                board.removePiece(ev.position1);
+                board.removePiece(ev.position2);
+                // Place them in swapped positions
+                board.placePiece(piece1, ev.position2);
+                board.placePiece(piece2, ev.position1);
+                // Increment move counters
+                piece1.movesMade++;
+                piece2.movesMade++;
             }
         } else if (ev instanceof CaptureEvent) {
             const pos = ev.target.position;

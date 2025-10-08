@@ -19,6 +19,7 @@ import { SlipperyTile } from "../engine/tiles/SlipperyTile";
 import { FogTile } from "../engine/tiles/FogTile";
 import { BouncerDecorator } from "../engine/pieces/decorators/BouncerDecorator";
 import { CannibalDecorator } from "../engine/pieces/decorators/CannibalDecorator";
+import { SwapperDecorator } from "../engine/pieces/decorators/SwapperDecorator";
 
 type PieceConstructor<T extends Piece = Piece> = new (owner: PlayerColor, position: Vector2Int) => T;
 type DecoratorConstructor<T extends PieceDecoratorBase = PieceDecoratorBase> = new (innerPiece: Piece) => T;
@@ -99,6 +100,12 @@ const decoratorDefinitions = [
     icon: "🍔",
     apply: (piece: Piece) => new CannibalDecorator(piece),
     klass: CannibalDecorator as DecoratorConstructor,
+  },
+  {
+    id: "Swapper",
+    icon: "🔄",
+    apply: (piece: Piece) => new SwapperDecorator(piece),
+    klass: SwapperDecorator as DecoratorConstructor,
   },
 ] as const;
 
