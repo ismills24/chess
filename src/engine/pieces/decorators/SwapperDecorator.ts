@@ -103,13 +103,6 @@ export class SwapperDecorator extends PieceDecoratorBase implements Interceptor<
         return EventSequences.Continue as EventSequence;
     }
     
-    private isOurMove(ev: MoveEvent, state: GameState): boolean {
-        // Verify the moving piece is this decorated piece
-        // The piece in the event should have our ID
-        console.log(`[Swapper] isOurMove - ev.piece.id: ${ev.piece.id}, this.id: ${this.id}`);
-        return ev.piece.id === this.id;
-    }
-    
     protected createDecoratorClone(inner: Piece): Piece {
         return new SwapperDecorator(inner, this.id, this.swapsLeft);
     }
