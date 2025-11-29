@@ -173,3 +173,17 @@ export class PieceChangedEvent extends GameEvent {
         this.position = position;
     }
 }
+
+export class TimeExpiredEvent extends GameEvent {
+    readonly expiredPlayer: PlayerColor;
+
+    constructor(expiredPlayer: PlayerColor) {
+        super({
+            actor: expiredPlayer,
+            isPlayerAction: false,
+            description: `Time expired for ${expiredPlayer}`,
+            sourceId: "",
+        });
+        this.expiredPlayer = expiredPlayer;
+    }
+}

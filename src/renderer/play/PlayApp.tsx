@@ -7,84 +7,91 @@ import { GreedyAIController } from "../../engine/controllers/GreedyAIController"
 import { GameEngine } from "../../engine/core/GameEngine";
 import { StandardChessRuleSet } from "../../engine/rules/StandardChess";
 import { MapDefinition } from "../mapbuilder/types";
+import { ClockView } from "../chess/ClockView";
 
 export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
-    const [mode, setMode] = useState<"hva" | "hvh">("hva");
-    const [engineKey, setEngineKey] = useState(0);
+	const [mode, setMode] = useState<"hva" | "hvh">("hva");
+	const [engineKey, setEngineKey] = useState(0);
 
-    // Build a new engine each time engineKey changes
-    const makeEngine = () => {
-        const state = loadMap(map);
-        const rules = new StandardChessRuleSet();
+	// Configurable time budget (e.g., 5 minutes)
+	const timeBudgetMs = 5 * 60 * 1000;
 
-        if (mode === "hva") {
-            const human = new HumanController(rules);
-            const ai = new GreedyAIController(rules, 3);
-            return new GameEngine(state, human, ai, rules);
-        } else {
-            // Human vs Human → two human controllers
-            const white = new HumanController(rules);
-            const black = new HumanController(rules);
-            return new GameEngine(state, white, black, rules);
-        }
-    };
+	// Build a new engine each time engineKey changes
+	const makeEngine = () => {
+		const state = loadMap(map);
+		const rules = new StandardChessRuleSet();
 
-    const engine = makeEngine();
+		if (mode === "hva") {
+			const human = new HumanController(rules);
+			const ai = new GreedyAIController(rules, 3);
+			return new GameEngine(state, human, ai, rules, timeBudgetMs, Date.now());
+		} else {
+			// Human vs Human → two human controllers
+			const white = new HumanController(rules);
+			const black = new HumanController(rules);
+			return new GameEngine(state, white, black, rules, timeBudgetMs, Date.now());
+		}
+	};
 
-    const onNewGame = () => {
-        setEngineKey((k) => k + 1); // trigger rebuild
-    };
+	const engine = makeEngine();
 
-    return (
-        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <header style={{ padding: 8, borderBottom: "1px solid #ccc", display: "flex", gap: 12 }}>
-                <button onClick={onNewGame}>New Game</button>
-                <UndoRedoButtons engine={engine} onBump={() => setEngineKey((k) => k + 1)} />
-                <span>Mode:</span>
-                <button
-                    onClick={() => {
-                        setMode("hva");
-                        setEngineKey((k) => k + 1);
-                    }}
-                    style={{ fontWeight: mode === "hva" ? "bold" : "normal" }}
-                >
-                    Human vs AI
-                </button>
-                <button
-                    onClick={() => {
-                        setMode("hvh");
-                        setEngineKey((k) => k + 1);
-                    }}
-                    style={{ fontWeight: mode === "hvh" ? "bold" : "normal" }}
-                >
-                    Human vs Human
-                </button>
-            </header>
+	const onNewGame = () => {
+		setEngineKey((k) => k + 1); // trigger rebuild
+	};
 
-            <div style={{ flex: 1 }}>
-                {/* engineKey forces EngineProvider + BoardView to reset */}
-                <EngineProvider key={engineKey} existing={engine}>
-                    <BoardView />
-                </EngineProvider>
-            </div>
-        </div>
-    );
+	return (
+		<div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+			{/* engineKey forces EngineProvider + BoardView to reset */}
+			<EngineProvider key={engineKey} existing={engine}>
+				<header style={{ padding: 8, borderBottom: "1px solid #ccc", display: "flex", gap: 12, alignItems: "center" }}>
+					<button onClick={onNewGame}>New Game</button>
+					<UndoRedoButtons engine={engine} onBump={() => setEngineKey((k) => k + 1)} />
+					<span>Mode:</span>
+					<button
+						onClick={() => {
+							setMode("hva");
+							setEngineKey((k) => k + 1);
+						}}
+						style={{ fontWeight: mode === "hva" ? "bold" : "normal" }}
+					>
+						Human vs AI
+					</button>
+					<button
+						onClick={() => {
+							setMode("hvh");
+							setEngineKey((k) => k + 1);
+						}}
+						style={{ fontWeight: mode === "hvh" ? "bold" : "normal" }}
+					>
+						Human vs Human
+					</button>
+					<div style={{ marginLeft: "auto" }}>
+						<ClockView />
+					</div>
+				</header>
+
+				<div style={{ flex: 1 }}>
+					<BoardView />
+				</div>
+			</EngineProvider>
+		</div>
+	);
 };
 
 const UndoRedoButtons: React.FC<{ engine: GameEngine; onBump: () => void }> = ({ engine, onBump }) => {
-    const onUndo = () => {
-        (engine as any).undoLastMove();
-        // trigger UI update without rebuilding engine
-        (engine as any)._notify?.();
-    };
-    const onRedo = () => {
-        (engine as any).redoLastMove();
-        (engine as any)._notify?.();
-    };
-    return (
-        <>
-            <button onClick={onUndo} title="Undo last move">Undo</button>
-            <button onClick={onRedo} title="Redo last move">Redo</button>
-        </>
-    );
+	const onUndo = () => {
+		(engine as any).undoLastMove();
+		// trigger UI update without rebuilding engine
+		(engine as any)._notify?.();
+	};
+	const onRedo = () => {
+		(engine as any).redoLastMove();
+		(engine as any)._notify?.();
+	};
+	return (
+		<>
+			<button onClick={onUndo} title="Undo last move">Undo</button>
+			<button onClick={onRedo} title="Redo last move">Redo</button>
+		</>
+	);
 };
