@@ -1,0 +1,166 @@
+# Chess Game Engine - Cursor Rules
+
+## General Rules
+- **NEVER generate or create files when asked to load, read, or analyze files to add to context**
+- When asked to load/read/analyze files, only use read operations (read_file, codebase_search, grep, etc.)
+- Only create or modify files when explicitly asked to do so, not when gathering context
+
+## Project Overview
+This is a chess game built with Electron, TypeScript, and React. The game features a sophisticated event-driven engine with an interceptor pipeline that allows game entities (pieces, tiles, decorators) to modify game events before they're applied to state.
+
+## Architecture
+
+### Core Architecture Pattern
+- **Event-Driven Architecture**: All game actions flow through an event pipeline
+- **Interceptor Pipeline**: Pieces, tiles, and decorators can intercept and modify events
+- **Immutable State**: GameState is immutable; history stores state snapshots
+- **Stack-Based Event Processing**: Events are processed in LIFO order, allowing recursive event generation
+
+### Key Components
+- **GameEngine** (`src/engine/core/GameEngine.ts`): Central orchestrator managing canonical pipeline and history
+- **EventPipeline** (`src/engine/core/EventPipeline.ts`): Handles event dispatch and interceptor processing
+- **GameState** (`src/engine/state/GameState.ts`): Immutable game state representation
+- **GameEvent** (`src/engine/events/GameEvent.ts`): Base class for all game events
+- **Interceptor** (`src/engine/events/Interceptor.ts`): Interface for entities that can intercept events
+
+### Directory Structure
+- `src/engine/`: Core game engine logic
+  - `core/`: Core engine components (GameEngine, EventPipeline, GameClock, etc.)
+  - `pieces/`: Piece implementations and decorators
+  - `tiles/`: Tile implementations
+  - `rules/`: Game rule sets
+  - `modes/`: Game mode implementations
+  - `events/`: Event system
+  - `primitives/`: Basic types (Move, Piece, Player, Vector2Int)
+- `src/renderer/`: React UI components
+  - `chess/`: Main chess game UI
+  - `mapbuilder/`: Map editor UI
+  - `play/`: Play mode UI
+- `src/main/`: Electron main process
+- `src/shared/`: Shared utilities
+
+## Coding Conventions
+
+### TypeScript
+- Use TypeScript strict mode (`noImplicitAny: true`)
+- Prefer interfaces for object shapes, classes for implementations
+- Use readonly arrays and properties where appropriate
+- Avoid `any`; use `unknown` or proper types instead
+- Use JSDoc comments for public APIs
+
+### Event System
+- All game actions must go through the event pipeline via `dispatch()`
+- Events are immutable and should be created with all required data
+- Interceptors return `EventSequence` objects with `events` and `fallback` policy
+- Priority-based interceptor execution: lower priority = earlier execution
+- Use `FallbackPolicy.AbortChain` to stop event processing
+- Use `FallbackPolicy.ContinueChain` to allow further processing
+
+### State Management
+- GameState is immutable - always create new instances
+- Use `clone()` methods for board and piece copying
+- History stores `{ event, state }` pairs
+- Never mutate state directly; use events
+
+### Piece Decorators
+- Decorators extend `PieceDecoratorBase`
+- Decorator chains are fully unwrapped during interceptor collection
+- Each decorator layer can intercept events independently
+- Use priority to control interceptor execution order
+
+### React Components
+- Use functional components with hooks
+- Keep components focused and composable
+- Use TypeScript for all component props
+- Follow React best practices for state and effects
+
+## Design Patterns
+
+### Interceptor Pattern
+- Entities implement `Interceptor<TEvent>` interface
+- `intercept()` method returns `EventSequenceLike`
+- Check `sourceId` to avoid re-processing own events
+- Return `EventSequences.Continue` to pass through
+- Return `EventSequences.Abort` to suppress
+- Return new `EventSequence` to replace event
+
+### Decorator Pattern
+- Pieces can have multiple decorators
+- Decorators wrap inner pieces
+- Each decorator layer is collected separately for interception
+- Use `PieceDecoratorBase` as base class
+
+### Event Sequence Pattern
+- Events are packaged as `EventSequence` objects
+- `fallback` policy controls chain behavior
+- Stack-based processing allows recursive event generation
+
+## Important Files
+
+### Core Engine Files
+- `GameEngine.ts`: Main engine class, manages history and state
+- `EventPipeline.ts`: Event dispatch and interceptor processing (partial class)
+- `GameClock.ts`: Time management for timed games
+- `ProcessMove.ts`: Move processing logic
+- `Turns.ts`: Turn management
+
+### Event System
+- `GameEvent.ts`: All event type definitions
+- `EventSequence.ts`: Event sequence structure
+- `Interceptor.ts`: Interceptor interface
+
+### Game Components
+- `Piece.ts` / `PieceBase.ts`: Piece implementations
+- `Tile.ts` / `BaseTile.ts`: Tile implementations
+- `RuleSet.ts`: Rule set interface
+- `GameMode.ts`: Game mode interface
+
+## Common Tasks
+
+### Adding a New Piece Decorator
+1. Extend `PieceDecoratorBase`
+2. Implement `Interceptor` interface if needed
+3. Set appropriate `priority` for interceptor
+4. Override `intercept()` to handle relevant events
+5. Return appropriate `EventSequence`
+
+### Adding a New Tile Type
+1. Extend `BaseTile` or `StandardTile`
+2. Implement `Interceptor` interface if needed
+3. Set appropriate `priority` for interceptor
+4. Override `intercept()` to handle relevant events
+5. Register in entity registry if needed
+
+### Adding a New Event Type
+1. Extend `GameEvent` class
+2. Add to `GameEvent.ts` union type
+3. Handle in `GameEngine.applyEventToState()`
+4. Update any relevant interceptors
+
+### Adding a New Game Mode
+1. Implement `GameMode` interface
+2. Create placement logic if needed (extend `PiecePlacement`)
+3. Create rule set (extend `RuleSet`)
+4. Register in appropriate places
+
+## Testing and Debugging
+- Use `simulation: true` flag for move validation without side effects
+- Check console logs for event flow debugging
+- History allows undo/redo for testing
+- Use `jumpTo()` to navigate history for debugging
+
+## Code Quality
+- Follow existing code style and patterns
+- Maintain immutability of state
+- Ensure events are properly typed
+- Keep interceptors focused and single-purpose
+- Document complex logic with comments
+- Use descriptive variable and function names
+
+## Notes
+- The engine uses a partial class pattern for `EventPipeline` (separate file extends `GameEngine`)
+- TimeOutEvent is automatically converted to GameOverEvent by default interceptor
+- Decorator chains are fully unwrapped during interceptor collection
+- Events have `sourceId` to prevent infinite recursion
+- Simulation mode skips clock notifications and external event publishing
+
