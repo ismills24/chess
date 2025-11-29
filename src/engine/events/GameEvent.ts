@@ -174,16 +174,32 @@ export class PieceChangedEvent extends GameEvent {
     }
 }
 
-export class TimeExpiredEvent extends GameEvent {
+export class TimeOutEvent extends GameEvent {
     readonly expiredPlayer: PlayerColor;
 
-    constructor(expiredPlayer: PlayerColor) {
+    constructor(expiredPlayer: PlayerColor, sourceId: string = "") {
         super({
             actor: expiredPlayer,
             isPlayerAction: false,
             description: `Time expired for ${expiredPlayer}`,
-            sourceId: "",
+            sourceId,
         });
         this.expiredPlayer = expiredPlayer;
     }
 }
+
+export class GameOverEvent extends GameEvent {
+    readonly losingPlayer: PlayerColor;
+
+    constructor(losingPlayer: PlayerColor, sourceId: string = "") {
+        const winner = losingPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+        super({
+            actor: losingPlayer,
+            isPlayerAction: false,
+            description: `Game Over - ${losingPlayer} loses, ${winner} wins`,
+            sourceId,
+        });
+        this.losingPlayer = losingPlayer;
+    }
+}
+

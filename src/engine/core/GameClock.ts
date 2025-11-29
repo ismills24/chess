@@ -1,9 +1,13 @@
 import { PlayerColor } from "../primitives/PlayerColor";
 import { GameEvent, TurnStartEvent, TurnEndEvent, TurnAdvancedEvent } from "../events/GameEvent";
+import { TimeExpiryHandler, TimeExpiryHandlers } from "./TimeExpiryHandler";
 
 /**
  * GameClock tracks time for a player and can expire when time runs out.
  * Subscribes to game events to automatically start/pause based on turn lifecycle.
+ * 
+ * The clock is configurable via TimeExpiryHandler to determine what happens when time expires,
+ * allowing different behaviors (game over, draw, penalty, etc.) independent of the ruleset.
  */
 export class GameClock {
     private readonly timeBudgetMs: number;
@@ -11,25 +15,31 @@ export class GameClock {
     private lastStartTimeMs: number = 0;
     private elapsedMs: number = 0;
     private timerId: number | null = null;
-    private readonly onExpire: (player: PlayerColor) => void;
+    private readonly onEventPublished: (ev: GameEvent) => void;
     private readonly playerColor: PlayerColor;
+    private readonly expiryHandler: TimeExpiryHandler;
     private isExpired: boolean = false;
+    private _expiredPlayer: PlayerColor | null = null;
 
     /**
      * @param timeBudgetMs Total time budget in milliseconds
      * @param startTimeMs Initial timestamp (typically Date.now())
      * @param playerColor Which player this clock tracks
-     * @param onExpire Callback when time expires
+     * @param onEventPublished Callback to publish events (e.g., TimeOutEvent)
+     * @param expiryHandler Handler that determines what events to publish when time expires.
+     *                      Defaults to gameOver (opponent wins).
      */
     constructor(
         timeBudgetMs: number,
         startTimeMs: number,
         playerColor: PlayerColor,
-        onExpire: (player: PlayerColor) => void
+        onEventPublished: (ev: GameEvent) => void,
+        expiryHandler: TimeExpiryHandler = TimeExpiryHandlers.gameOver
     ) {
         this.timeBudgetMs = timeBudgetMs;
         this.playerColor = playerColor;
-        this.onExpire = onExpire;
+        this.onEventPublished = onEventPublished;
+        this.expiryHandler = expiryHandler;
         this.lastStartTimeMs = startTimeMs;
         console.log(`[GameClock] constructed for ${playerColor} with budget=${timeBudgetMs}ms, start=${startTimeMs}`);
     }
@@ -74,6 +84,13 @@ export class GameClock {
 
     get expired(): boolean {
         return this.isExpired;
+    }
+
+    /**
+     * Get the player whose time has expired, or null if no time has expired.
+     */
+    get expiredPlayer(): PlayerColor | null {
+        return this._expiredPlayer;
     }
 
     get elapsed(): number {
@@ -132,6 +149,7 @@ export class GameClock {
         this.elapsedMs = 0;
         this.lastStartTimeMs = startTimeMs;
         this.isExpired = false;
+        this._expiredPlayer = null;
         console.log(`[GameClock] reset at ${startTimeMs}`);
     }
 
@@ -143,10 +161,23 @@ export class GameClock {
                 const remaining = this.getRemaining();
                 if (remaining <= 0) {
                     this.isExpired = true;
+                    this._expiredPlayer = this.playerColor;
                     this.isTicking = false;
                     this.stopTimer();
                     console.log(`[GameClock] expired for ${this.playerColor}`);
-                    this.onExpire(this.playerColor);
+                    
+                    // Use the configured expiry handler to determine what events to publish
+                    const events = this.expiryHandler(this.playerColor);
+                    console.log(`[GameClock] expiry handler returned ${events.length} event(s)`);
+                    
+                    // Publish all events returned by the handler
+                    for (const event of events) {
+                        try {
+                            this.onEventPublished(event);
+                        } catch (e) {
+                            console.error(`[GameClock] onEventPublished(${event.constructor.name}) error`, e);
+                        }
+                    }
                 } else {
                     const delay = Math.min(100, remaining);
                     this.timerId = (globalThis as any).setTimeout(checkExpiry, delay);

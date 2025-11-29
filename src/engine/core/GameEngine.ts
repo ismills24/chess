@@ -11,13 +11,16 @@ import {
     TurnEndEvent,
     TileChangedEvent,
     PieceChangedEvent,
-    TimeExpiredEvent,
+    GameOverEvent,
+    TimeOutEvent,
 } from "../events/GameEvent";
 import { GameState } from "../state/GameState";
 import { RuleSet } from "../rules/RuleSet";
 import { PlayerController } from "../controllers/PlayerController";
 import { GameClock } from "./GameClock";
-import { HumanController } from "../controllers/HumanController";
+import { ActionPackages } from "./action-packages";
+import { EventSequence, FallbackPolicy } from "../events/EventSequence";
+import { Interceptor } from "../events/Interceptor";
 
 /**
  * Central orchestrator for the game engine.
@@ -32,7 +35,6 @@ export class GameEngine {
     private readonly whiteController: PlayerController;
     private readonly blackController: PlayerController;
     private readonly clock: GameClock | null;
-    private timeExpiredFor: PlayerColor | null = null;
 
     onEventPublished?: (ev: GameEvent) => void;
 
@@ -41,31 +43,12 @@ export class GameEngine {
         whiteController: PlayerController,
         blackController: PlayerController,
         ruleset: RuleSet,
-        timeBudgetMs?: number,
-        startTimeMs?: number
+        clock?: GameClock | null
     ) {
         this.ruleset = ruleset;
         this.whiteController = whiteController;
         this.blackController = blackController;
-
-        // Create clock for human player if time budget provided
-        if (timeBudgetMs !== undefined && timeBudgetMs > 0) {
-            const humanPlayer = this.detectHumanPlayer();
-            console.log(`[Engine] timeBudget provided=${timeBudgetMs}, humanPlayer=${humanPlayer}`);
-            if (humanPlayer !== null) {
-                const startTime = startTimeMs ?? Date.now();
-                this.clock = new GameClock(
-                    timeBudgetMs,
-                    startTime,
-                    humanPlayer,
-                    (player) => this.handleTimeExpired(player)
-                );
-            } else {
-                this.clock = null;
-            }
-        } else {
-            this.clock = null;
-        }
+        this.clock = clock ?? null;
 
         // Seed with synthetic TurnAdvancedEvent describing the starting player/turn
         const seed = new TurnAdvancedEvent(initialState.currentPlayer, initialState.turnNumber);
@@ -99,21 +82,44 @@ export class GameEngine {
     }
 
     isGameOver(): boolean {
-        // Check time expiry first (takes precedence)
-        if (this.timeExpiredFor !== null) {
+        // Check for GameOverEvent in history first (takes precedence over ruleset)
+        const gameOverEvent = this.getMostRecentGameOverEvent();
+        if (gameOverEvent) {
             return true;
         }
         return this.ruleset.isGameOver(this.currentState).over;
     }
 
     getWinner(): PlayerColor | null {
-        // Time expiry takes precedence
-        if (this.timeExpiredFor !== null) {
-            // Winner is the opponent of the player who ran out of time
-            return this.timeExpiredFor === PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+        // Check for GameOverEvent in history first (takes precedence over ruleset)
+        const gameOverEvent = this.getMostRecentGameOverEvent();
+        if (gameOverEvent) {
+            // Winner is the opponent of the losing player
+            const winner = gameOverEvent.losingPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+            console.log(`[GameEngine] Winner: ${winner}`);
+            return winner;
         }
         const res = this.ruleset.isGameOver(this.currentState);
-        return res.over ? res.winner ?? null : null;
+        const winner = res.over ? res.winner ?? null : null;
+        if (winner) {
+            console.log(`[GameEngine] Winner: ${winner}`);
+        }
+        return winner;
+    }
+
+    /**
+     * Get the most recent GameOverEvent from history up to the current index.
+     * Returns null if no game over event exists.
+     */
+    private getMostRecentGameOverEvent(): GameOverEvent | null {
+        // Search backwards from current index to find the most recent GameOverEvent
+        for (let i = this._currentIndex; i >= 0; i--) {
+            const entry = this._history[i];
+            if (entry.event instanceof GameOverEvent) {
+                return entry.event;
+            }
+        }
+        return null;
     }
 
     undo(): void {
@@ -193,7 +199,7 @@ export class GameEngine {
             } catch (e) {
                 console.error(`[Engine] clock.handleEvent error`, e);
             }
-            // Then notify external subscribers
+            // Then publish to external subscribers
             try {
                 this.onEventPublished?.(ev);
             } catch (e) {
@@ -237,57 +243,70 @@ export class GameEngine {
             // no board change
         } else if (ev instanceof TurnEndEvent) {
             // no board change
-        } else if (ev instanceof TimeExpiredEvent) {
-            // no board change - time expiry is handled at engine level
+        } else if (ev instanceof TimeOutEvent) {
+            // no board change - TimeOutEvent is converted to GameOverEvent by default interceptor
+        } else if (ev instanceof GameOverEvent) {
+            // no board change - game over is handled at engine level
         }
 
         return new GameState(board, nextPlayer, turn);
     }
 
     /**
-     * Handle time expiry for a player.
-     * Publishes TimeExpiredEvent and sets the expiry flag.
+     * Internal method to publish events. Used by clock to publish TimeOutEvent.
+     * TimeOutEvent goes through the interceptor pipeline so pieces can intercept it.
+     * If not intercepted, it will be converted to GameOverEvent by the default interceptor.
      */
-    private handleTimeExpired(player: PlayerColor): void {
-        if (this.timeExpiredFor !== null) return; // Already expired
-        this.timeExpiredFor = player;
-        const timeExpiredEvent = new TimeExpiredEvent(player);
-        console.log(`[Engine] handleTimeExpired for ${player}`);
-        // Publish the event (but don't dispatch it through pipeline - it's a notification)
+    _publishEvent(ev: GameEvent): void {
+        // For TimeOutEvent, route it through dispatch() so it goes through the interceptor pipeline
+        if (ev instanceof TimeOutEvent) {
+            // Check if already in history to avoid duplicates
+            const alreadyInHistory = this._history.some(
+                entry => entry.event instanceof TimeOutEvent || entry.event instanceof GameOverEvent
+            );
+            if (!alreadyInHistory) {
+                // Route through dispatch() so it goes through interceptors
+                // The default interceptor will convert it to GameOverEvent if not modified
+                const sequence = ActionPackages.single(ev, FallbackPolicy.ContinueChain);
+                (this as any).dispatch(sequence, false);
+                console.log(`[Engine] TimeOutEvent routed through dispatch() via _publishEvent`);
+                return;
+            } else {
+                // Already in history, just publish to subscribers
+                console.log(`[Engine] TimeOutEvent already in history, publishing to subscribers`);
+            }
+        }
+        
+        // For GameOverEvent (from other sources), add it to history directly
+        if (ev instanceof GameOverEvent) {
+            // Check if already in history to avoid duplicates
+            const alreadyInHistory = this._history.some(
+                entry => entry.event instanceof GameOverEvent
+            );
+            if (!alreadyInHistory) {
+                // Add to history using applyCanonical (non-simulation so it publishes)
+                this.applyCanonical(ev, false);
+                console.log(`[Engine] GameOverEvent added to history via _publishEvent`);
+                return; // applyCanonical already publishes the event
+            } else {
+                // Already in history, just publish to subscribers
+                console.log(`[Engine] GameOverEvent already in history, publishing to subscribers`);
+            }
+        }
+        
+        // For other events, just publish to external subscribers
         try {
-            this.onEventPublished?.(timeExpiredEvent);
+            this.onEventPublished?.(ev);
         } catch (e) {
-            console.error(`[Engine] onEventPublished(TimeExpiredEvent) error`, e);
+            console.error(`[Engine] onEventPublished handler error`, e);
         }
     }
 
     /**
-     * Get the game clock instance (if created).
+     * Get the game clock instance (if provided).
      */
     get gameClock(): GameClock | null {
         return this.clock;
-    }
-
-    /**
-     * Detect which player is controlled by a HumanController.
-     * Returns null if neither player is human.
-     * Uses constructor name check instead of instanceof for reliability across module boundaries.
-     */
-    private detectHumanPlayer(): PlayerColor | null {
-        // Check constructor name (more reliable than instanceof in Electron)
-        const whiteIsHuman = this.whiteController.constructor.name === 'HumanController' || 
-                            (this.whiteController as any).submitMove !== undefined;
-        const blackIsHuman = this.blackController.constructor.name === 'HumanController' || 
-                            (this.blackController as any).submitMove !== undefined;
-        console.log(`[Engine] detectHumanPlayer: whiteController.constructor.name=${this.whiteController.constructor.name}, blackController.constructor.name=${this.blackController.constructor.name}`);
-        console.log(`[Engine] detectHumanPlayer: whiteIsHuman=${whiteIsHuman}, blackIsHuman=${blackIsHuman}`);
-        if (whiteIsHuman) {
-            return PlayerColor.White;
-        }
-        if (blackIsHuman) {
-            return PlayerColor.Black;
-        }
-        return null;
     }
 
     // Expose for partial (EventPipeline) file

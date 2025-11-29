@@ -1,7 +1,7 @@
 // src/engine/core/GameEngine.EventPipeline.ts
 import { GameEngine } from "./GameEngine";
-import { GameEvent } from "../events/GameEvent";
-import { EventSequenceLike, FallbackPolicy } from "../events/EventSequence";
+import { GameEvent, TimeOutEvent, GameOverEvent } from "../events/GameEvent";
+import { EventSequenceLike, FallbackPolicy, EventSequence } from "../events/EventSequence";
 import { GameState } from "../state/GameState";
 import { Interceptor } from "../events/Interceptor";
 import { PieceDecoratorBase } from "../pieces/decorators/PieceDecoratorBase";
@@ -68,13 +68,25 @@ function processInterceptors(
             return { replacement: seq, abort: true };
         }
 
-        // Continue with replacements
+        // Continue with replacements - if any interceptor returned events, use them
         if (seq.events.length > 0) {
             return { replacement: seq, abort: false };
         }
 
         // Continue + 0 events → try next interceptor
     }
+
+    // Default interceptor: Convert TimeOutEvent to GameOverEvent if no interceptor modified it
+    // This runs after all other interceptors have been tried
+    if (ev instanceof TimeOutEvent) {
+        console.log(`[EventPipeline] TimeOutEvent not modified by interceptors, converting to GameOverEvent`);
+        const gameOverEvent = new GameOverEvent(ev.expiredPlayer, ev.sourceId);
+        return {
+            replacement: new EventSequence([gameOverEvent], FallbackPolicy.ContinueChain),
+            abort: false
+        };
+    }
+
     return { abort: false };
 }
 
