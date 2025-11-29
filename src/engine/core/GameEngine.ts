@@ -11,10 +11,16 @@ import {
     TurnEndEvent,
     TileChangedEvent,
     PieceChangedEvent,
+    GameOverEvent,
+    TimeOutEvent,
 } from "../events/GameEvent";
 import { GameState } from "../state/GameState";
 import { RuleSet } from "../rules/RuleSet";
 import { PlayerController } from "../controllers/PlayerController";
+import { GameClock } from "./GameClock";
+import { ActionPackages } from "./action-packages";
+import { EventSequence, FallbackPolicy } from "../events/EventSequence";
+import { Interceptor } from "../events/Interceptor";
 
 /**
  * Central orchestrator for the game engine.
@@ -28,6 +34,7 @@ export class GameEngine {
     private readonly ruleset: RuleSet;
     private readonly whiteController: PlayerController;
     private readonly blackController: PlayerController;
+    private readonly clock: GameClock | null;
 
     onEventPublished?: (ev: GameEvent) => void;
 
@@ -35,16 +42,30 @@ export class GameEngine {
         initialState: GameState,
         whiteController: PlayerController,
         blackController: PlayerController,
-        ruleset: RuleSet
+        ruleset: RuleSet,
+        clock?: GameClock | null
     ) {
         this.ruleset = ruleset;
         this.whiteController = whiteController;
         this.blackController = blackController;
+        this.clock = clock ?? null;
 
         // Seed with synthetic TurnAdvancedEvent describing the starting player/turn
         const seed = new TurnAdvancedEvent(initialState.currentPlayer, initialState.turnNumber);
         this._history.push({ event: seed, state: initialState });
         this._currentIndex = 0;
+        console.log(`[Engine] constructed; seed TurnAdvancedEvent for ${initialState.currentPlayer}`);
+
+        // Notify clock of the initial TurnAdvancedEvent (so it can start if it's the human's turn)
+        // This happens before onEventPublished is set up, so we call handleEvent directly
+        try {
+            if (this.clock) {
+                console.log(`[Engine] notifying clock of seed TurnAdvancedEvent`);
+                this.clock.handleEvent(seed);
+            }
+        } catch (e) {
+            console.error(`[Engine] error notifying clock of seed event`, e);
+        }
     }
 
     get currentState(): GameState {
@@ -61,12 +82,44 @@ export class GameEngine {
     }
 
     isGameOver(): boolean {
+        // Check for GameOverEvent in history first (takes precedence over ruleset)
+        const gameOverEvent = this.getMostRecentGameOverEvent();
+        if (gameOverEvent) {
+            return true;
+        }
         return this.ruleset.isGameOver(this.currentState).over;
     }
 
     getWinner(): PlayerColor | null {
+        // Check for GameOverEvent in history first (takes precedence over ruleset)
+        const gameOverEvent = this.getMostRecentGameOverEvent();
+        if (gameOverEvent) {
+            // Winner is the opponent of the losing player
+            const winner = gameOverEvent.losingPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+            console.log(`[GameEngine] Winner: ${winner}`);
+            return winner;
+        }
         const res = this.ruleset.isGameOver(this.currentState);
-        return res.over ? res.winner ?? null : null;
+        const winner = res.over ? res.winner ?? null : null;
+        if (winner) {
+            console.log(`[GameEngine] Winner: ${winner}`);
+        }
+        return winner;
+    }
+
+    /**
+     * Get the most recent GameOverEvent from history up to the current index.
+     * Returns null if no game over event exists.
+     */
+    private getMostRecentGameOverEvent(): GameOverEvent | null {
+        // Search backwards from current index to find the most recent GameOverEvent
+        for (let i = this._currentIndex; i >= 0; i--) {
+            const entry = this._history[i];
+            if (entry.event instanceof GameOverEvent) {
+                return entry.event;
+            }
+        }
+        return null;
     }
 
     undo(): void {
@@ -139,7 +192,20 @@ export class GameEngine {
         this._history.push({ event: ev, state: newState });
         this._currentIndex++;
 
-        if (!simulation) this.onEventPublished?.(ev);
+        if (!simulation) {
+            // Always notify clock first (if it exists)
+            try {
+                this.clock?.handleEvent(ev);
+            } catch (e) {
+                console.error(`[Engine] clock.handleEvent error`, e);
+            }
+            // Then publish to external subscribers
+            try {
+                this.onEventPublished?.(ev);
+            } catch (e) {
+                console.error(`[Engine] onEventPublished handler error`, e);
+            }
+        }
     }
 
     /**
@@ -177,11 +243,71 @@ export class GameEngine {
             // no board change
         } else if (ev instanceof TurnEndEvent) {
             // no board change
+        } else if (ev instanceof TimeOutEvent) {
+            // no board change - TimeOutEvent is converted to GameOverEvent by default interceptor
+        } else if (ev instanceof GameOverEvent) {
+            // no board change - game over is handled at engine level
         }
 
         return new GameState(board, nextPlayer, turn);
     }
-    
+
+    /**
+     * Internal method to publish events. Used by clock to publish TimeOutEvent.
+     * TimeOutEvent goes through the interceptor pipeline so pieces can intercept it.
+     * If not intercepted, it will be converted to GameOverEvent by the default interceptor.
+     */
+    _publishEvent(ev: GameEvent): void {
+        // For TimeOutEvent, route it through dispatch() so it goes through the interceptor pipeline
+        if (ev instanceof TimeOutEvent) {
+            // Check if already in history to avoid duplicates
+            const alreadyInHistory = this._history.some(
+                entry => entry.event instanceof TimeOutEvent || entry.event instanceof GameOverEvent
+            );
+            if (!alreadyInHistory) {
+                // Route through dispatch() so it goes through interceptors
+                // The default interceptor will convert it to GameOverEvent if not modified
+                const sequence = ActionPackages.single(ev, FallbackPolicy.ContinueChain);
+                (this as any).dispatch(sequence, false);
+                console.log(`[Engine] TimeOutEvent routed through dispatch() via _publishEvent`);
+                return;
+            } else {
+                // Already in history, just publish to subscribers
+                console.log(`[Engine] TimeOutEvent already in history, publishing to subscribers`);
+            }
+        }
+        
+        // For GameOverEvent (from other sources), add it to history directly
+        if (ev instanceof GameOverEvent) {
+            // Check if already in history to avoid duplicates
+            const alreadyInHistory = this._history.some(
+                entry => entry.event instanceof GameOverEvent
+            );
+            if (!alreadyInHistory) {
+                // Add to history using applyCanonical (non-simulation so it publishes)
+                this.applyCanonical(ev, false);
+                console.log(`[Engine] GameOverEvent added to history via _publishEvent`);
+                return; // applyCanonical already publishes the event
+            } else {
+                // Already in history, just publish to subscribers
+                console.log(`[Engine] GameOverEvent already in history, publishing to subscribers`);
+            }
+        }
+        
+        // For other events, just publish to external subscribers
+        try {
+            this.onEventPublished?.(ev);
+        } catch (e) {
+            console.error(`[Engine] onEventPublished handler error`, e);
+        }
+    }
+
+    /**
+     * Get the game clock instance (if provided).
+     */
+    get gameClock(): GameClock | null {
+        return this.clock;
+    }
 
     // Expose for partial (EventPipeline) file
     /** @internal */
