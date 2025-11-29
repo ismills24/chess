@@ -5,7 +5,7 @@ import { loadMap } from "../maploader/maploader";
 import { HumanController } from "../../engine/controllers/HumanController";
 import { GreedyAIController } from "../../engine/controllers/GreedyAIController";
 import { GameEngine } from "../../engine/core/GameEngine";
-import { StandardChessRuleSet } from "../../engine/rules/StandardChess";
+import { LastPieceStandingRuleSet } from "../../engine/rules/LastPieceStanding";
 import { MapDefinition } from "../mapbuilder/types";
 import { ClockView } from "../chess/ClockView";
 import { GameClock } from "../../engine/core/GameClock";
@@ -18,6 +18,12 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
 
 	// Configurable time budget (e.g., 10 seconds)
 	const timeBudgetMs = 10 * 1000;
+
+    // Build a new engine each time engineKey changes
+    const makeEngine = () => {
+        const state = loadMap(map);
+        const rules = new LastPieceStandingRuleSet();
+
 
 	// Build a new engine each time engineKey changes
 	const makeEngine = () => {
