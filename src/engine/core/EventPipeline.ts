@@ -1,6 +1,6 @@
 // src/engine/core/GameEngine.EventPipeline.ts
 import { GameEngine } from "./GameEngine";
-import { GameEvent } from "../events/GameEvent";
+import { GameEvent, MoveEvent, CaptureEvent, DestroyEvent, PieceChangedEvent } from "../events/GameEvent";
 import { EventSequenceLike, FallbackPolicy } from "../events/EventSequence";
 import { GameState } from "../state/GameState";
 import { Interceptor } from "../events/Interceptor";
@@ -21,6 +21,13 @@ import { PieceDecoratorBase } from "../pieces/decorators/PieceDecoratorBase";
     while (stack.length > 0) {
         const ev = stack.pop()!;
         // console.log(`[Pipeline] Handling ${ev.constructor.name} (${ev.description})`);
+
+        // Pre-filter: Skip events that target pieces that no longer exist
+        // This prevents wasting cycles on invalid events and duplicate processing
+        if (!isEventValid(ev, (this as GameEngine).currentState)) {
+            // console.log(`[Pipeline] Skipping invalid event: ${ev.constructor.name} (target no longer exists)`);
+            continue;
+        }
 
         const { replacement, abort } = processInterceptors(ev, (this as GameEngine).currentState);
 
@@ -129,15 +136,44 @@ class InterceptorCollector {
 function isInterceptor(obj: any): obj is Interceptor {
     const hasIntercept = obj && typeof obj.intercept === "function";
     const hasPriority = typeof obj.priority !== "undefined";
-    const result = hasIntercept && hasPriority;
-    
-    if (obj && obj.constructor && obj.constructor.name === "PiercingDecorator") {
-        console.log(`[isInterceptor] Checking PiercingDecorator:`);
-        console.log(`[isInterceptor] - hasIntercept: ${hasIntercept}`);
-        console.log(`[isInterceptor] - hasPriority: ${hasPriority}`);
-        console.log(`[isInterceptor] - priority value: ${obj.priority}`);
-        console.log(`[isInterceptor] - result: ${result}`);
+    return hasIntercept && hasPriority;
+}
+
+/**
+ * Validates that an event's target pieces still exist in the current state.
+ * This pre-filters invalid events before they enter the interceptor pipeline,
+ * preventing wasted cycles on events targeting destroyed pieces.
+ * 
+ * Checks both position AND piece ID to ensure we're not operating on stale references.
+ */
+function isEventValid(ev: GameEvent, state: GameState): boolean {
+    if (ev instanceof DestroyEvent) {
+        // Target piece must exist at target.position and match the piece ID
+        const pieceAtPos = state.board.getPieceAt(ev.target.position);
+        return pieceAtPos !== null && pieceAtPos.id === ev.target.id;
     }
     
-    return result;
+    if (ev instanceof MoveEvent) {
+        // Piece must exist at from position and match the piece ID
+        const pieceAtFrom = state.board.getPieceAt(ev.from);
+        return pieceAtFrom !== null && pieceAtFrom.id === ev.piece.id;
+    }
+    
+    if (ev instanceof CaptureEvent) {
+        // Both attacker and target must exist at their positions and match IDs
+        const attackerAtPos = state.board.getPieceAt(ev.attacker.position);
+        const targetAtPos = state.board.getPieceAt(ev.target.position);
+        return (attackerAtPos !== null && attackerAtPos.id === ev.attacker.id) &&
+               (targetAtPos !== null && targetAtPos.id === ev.target.id);
+    }
+    
+    if (ev instanceof PieceChangedEvent) {
+        // Old piece must exist at position and match ID
+        const pieceAtPos = state.board.getPieceAt(ev.position);
+        return pieceAtPos !== null && pieceAtPos.id === ev.oldPiece.id;
+    }
+    
+    // Other event types (TurnStartEvent, TurnEndEvent, TurnAdvancedEvent, TileChangedEvent)
+    // don't reference pieces that can be destroyed, so they're always valid
+    return true;
 }

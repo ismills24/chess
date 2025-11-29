@@ -1,6 +1,5 @@
 // src/engine/core/GameEngine.ts
 import { PlayerColor } from "../primitives/PlayerColor";
-import { Vector2Int } from "../primitives/Vector2Int";
 import {
     GameEvent,
     MoveEvent,
@@ -21,6 +20,17 @@ import { PlayerController } from "../controllers/PlayerController";
  * Manages canonical pipeline and history.
  * Dispatch() lives in GameEngine.EventPipeline.ts (partial).
  */
+import { Move } from "../primitives/Move";
+
+export interface TurnMetrics {
+    canonicalEvents: readonly GameEvent[];
+    processingTimeMs: number;
+    finalState: GameState;
+    turnNumber: number;
+    player: PlayerColor;
+    playerMoveIntent: Move | null; // The original move the player intended, before interceptors modify it
+}
+
 export class GameEngine {
     private readonly _history: Array<{ event: GameEvent; state: GameState }> = [];
     private _currentIndex = -1;
@@ -30,6 +40,12 @@ export class GameEngine {
     private readonly blackController: PlayerController;
 
     onEventPublished?: (ev: GameEvent) => void;
+    
+    // Debug/metrics tracking
+    private _turnMetricsHistory: TurnMetrics[] = [];
+    private _canonicalEventsThisTurn: GameEvent[] = [];
+    private _turnStartTime: number = 0;
+    private _playerMoveIntentThisTurn: Move | null = null;
 
     constructor(
         initialState: GameState,
@@ -58,6 +74,22 @@ export class GameEngine {
     }
     get history(): ReadonlyArray<{ event: GameEvent; state: GameState }> {
         return this._history;
+    }
+    
+    /**
+     * Get metrics for the last completed turn (for debugging/performance tracking).
+     */
+    get lastTurnMetrics(): TurnMetrics | null {
+        return this._turnMetricsHistory.length > 0 
+            ? this._turnMetricsHistory[this._turnMetricsHistory.length - 1] 
+            : null;
+    }
+    
+    /**
+     * Get all turn metrics history (for debugging).
+     */
+    get turnMetricsHistory(): ReadonlyArray<TurnMetrics> {
+        return this._turnMetricsHistory;
     }
 
     isGameOver(): boolean {
@@ -139,7 +171,52 @@ export class GameEngine {
         this._history.push({ event: ev, state: newState });
         this._currentIndex++;
 
-        if (!simulation) this.onEventPublished?.(ev);
+        // Track canonical events for this turn (non-simulation only)
+        if (!simulation) {
+            this._canonicalEventsThisTurn.push(ev);
+            this.onEventPublished?.(ev);
+        }
+    }
+    
+    /**
+     * Start tracking a new turn (called by runTurn).
+     * @internal
+     */
+    _startTurnTracking(): void {
+        this._canonicalEventsThisTurn = [];
+        this._playerMoveIntentThisTurn = null;
+        this._turnStartTime = performance.now();
+    }
+    
+    /**
+     * Record the player's move intent (called by runTurn before processing).
+     * @internal
+     */
+    _recordPlayerMoveIntent(move: Move): void {
+        this._playerMoveIntentThisTurn = move;
+    }
+    
+    /**
+     * Finish tracking a turn and store metrics (called by runTurn).
+     * @internal
+     */
+    _finishTurnTracking(player: PlayerColor, turnNumber: number): void {
+        const processingTime = performance.now() - this._turnStartTime;
+        const metrics: TurnMetrics = {
+            canonicalEvents: [...this._canonicalEventsThisTurn],
+            processingTimeMs: processingTime,
+            finalState: this.currentState,
+            turnNumber,
+            player,
+            playerMoveIntent: this._playerMoveIntentThisTurn,
+        };
+        this._turnMetricsHistory.push(metrics);
+        // Keep only last 50 turns to prevent memory bloat
+        if (this._turnMetricsHistory.length > 50) {
+            this._turnMetricsHistory.shift();
+        }
+        this._canonicalEventsThisTurn = [];
+        this._playerMoveIntentThisTurn = null;
     }
 
     /**

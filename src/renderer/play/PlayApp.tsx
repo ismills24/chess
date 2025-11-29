@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { EngineProvider } from "../chess/EngineContext";
 import { BoardView } from "../chess/BoardView";
+import { DebugPanel } from "../chess/DebugPanel";
 import { loadMap } from "../maploader/maploader";
 import { HumanController } from "../../engine/controllers/HumanController";
 import { GreedyAIController } from "../../engine/controllers/GreedyAIController";
@@ -61,10 +62,11 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
                 </button>
             </header>
 
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, position: "relative" }}>
                 {/* engineKey forces EngineProvider + BoardView to reset */}
                 <EngineProvider key={engineKey} existing={engine}>
                     <BoardView />
+                    <DebugPanel />
                 </EngineProvider>
             </div>
         </div>
