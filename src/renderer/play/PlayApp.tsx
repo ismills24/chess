@@ -5,7 +5,7 @@ import { loadMap } from "../maploader/maploader";
 import { HumanController } from "../../engine/controllers/HumanController";
 import { GreedyAIController } from "../../engine/controllers/GreedyAIController";
 import { GameEngine } from "../../engine/core/GameEngine";
-import { StandardChessRuleSet } from "../../engine/rules/StandardChess";
+import { LastPieceStandingRuleSet } from "../../engine/rules/LastPieceStanding";
 import { MapDefinition } from "../mapbuilder/types";
 
 export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
@@ -15,7 +15,7 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
     // Build a new engine each time engineKey changes
     const makeEngine = () => {
         const state = loadMap(map);
-        const rules = new StandardChessRuleSet();
+        const rules = new LastPieceStandingRuleSet();
 
         if (mode === "hva") {
             const human = new HumanController(rules);
