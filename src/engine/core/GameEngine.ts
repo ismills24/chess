@@ -28,7 +28,7 @@ export interface TurnMetrics {
     finalState: GameState;
     turnNumber: number;
     player: PlayerColor;
-    playerMoveIntent: Move | null; // The original move the player intended, before interceptors modify it
+    playerMoveIntent: Move | null;
 }
 
 export class GameEngine {

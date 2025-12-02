@@ -1,6 +1,6 @@
 // src/engine/core/GameEngine.EventPipeline.ts
 import { GameEngine } from "./GameEngine";
-import { GameEvent, MoveEvent, CaptureEvent, DestroyEvent, PieceChangedEvent } from "../events/GameEvent";
+import { GameEvent, ReferencedActor } from "../events/GameEvent";
 import { EventSequenceLike, FallbackPolicy } from "../events/EventSequence";
 import { GameState } from "../state/GameState";
 import { Interceptor } from "../events/Interceptor";
@@ -140,40 +140,38 @@ function isInterceptor(obj: any): obj is Interceptor {
 }
 
 /**
- * Validates that an event's target pieces still exist in the current state.
+ * Validates that an event's referenced pieces and tiles still exist in the current state.
  * This pre-filters invalid events before they enter the interceptor pipeline,
- * preventing wasted cycles on events targeting destroyed pieces.
+ * preventing wasted cycles on events targeting destroyed pieces or invalid tiles.
  * 
- * Checks both position AND piece ID to ensure we're not operating on stale references.
+ * Uses the standardized getReferencedActors() method, making this validation
+ * agnostic to specific event types and extensible for new event types.
+ * 
+ * For pieces: Checks both position AND piece ID to ensure we're not operating on stale references.
+ * For tiles: Validates that the position is in bounds and the tile exists.
  */
 function isEventValid(ev: GameEvent, state: GameState): boolean {
-    if (ev instanceof DestroyEvent) {
-        // Target piece must exist at target.position and match the piece ID
-        const pieceAtPos = state.board.getPieceAt(ev.target.position);
-        return pieceAtPos !== null && pieceAtPos.id === ev.target.id;
+    const references = ev.getReferencedActors();
+    
+    for (const actor of references) {
+        if (actor.type === "piece") {
+            const pieceAtPos = state.board.getPieceAt(actor.expectedPosition);
+            if (!pieceAtPos || pieceAtPos.id !== actor.piece.id) {
+                return false;
+            }
+        } else if (actor.type === "tile") {
+            // Validate that the position is in bounds and a tile exists there
+            if (!state.board.isInBounds(actor.expectedPosition)) {
+                return false;
+            }
+            const tileAtPos = state.board.getTile(actor.expectedPosition);
+            // For TileChangedEvent, we're replacing the tile, so we just validate position exists
+            // For other potential tile references, we could validate tile type/ID if needed
+            if (!tileAtPos) {
+                return false;
+            }
+        }
     }
     
-    if (ev instanceof MoveEvent) {
-        // Piece must exist at from position and match the piece ID
-        const pieceAtFrom = state.board.getPieceAt(ev.from);
-        return pieceAtFrom !== null && pieceAtFrom.id === ev.piece.id;
-    }
-    
-    if (ev instanceof CaptureEvent) {
-        // Both attacker and target must exist at their positions and match IDs
-        const attackerAtPos = state.board.getPieceAt(ev.attacker.position);
-        const targetAtPos = state.board.getPieceAt(ev.target.position);
-        return (attackerAtPos !== null && attackerAtPos.id === ev.attacker.id) &&
-               (targetAtPos !== null && targetAtPos.id === ev.target.id);
-    }
-    
-    if (ev instanceof PieceChangedEvent) {
-        // Old piece must exist at position and match ID
-        const pieceAtPos = state.board.getPieceAt(ev.position);
-        return pieceAtPos !== null && pieceAtPos.id === ev.oldPiece.id;
-    }
-    
-    // Other event types (TurnStartEvent, TurnEndEvent, TurnAdvancedEvent, TileChangedEvent)
-    // don't reference pieces that can be destroyed, so they're always valid
     return true;
 }

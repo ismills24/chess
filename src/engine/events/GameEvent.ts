@@ -4,6 +4,13 @@ import { Piece } from "../pieces/Piece";
 import { Tile } from "../tiles/Tile";
 
 /**
+ * Represents a piece or tile referenced by an event that needs validation.
+ */
+export type ReferencedActor =
+    | { type: "piece"; piece: Piece; expectedPosition: Vector2Int }
+    | { type: "tile"; tile: Tile; expectedPosition: Vector2Int };
+
+/**
  * Base class for all events in the system.
  * Immutable, with a clear source and description.
  */
@@ -26,6 +33,13 @@ export abstract class GameEvent {
         this.description = params.description ?? "";
         this.sourceId = params.sourceId;
     }
+
+    /**
+     * Returns all pieces and tiles referenced by this event and their expected positions.
+     * Used for validation against current state to ensure actors still exist and are valid.
+     * Events that don't reference pieces or tiles should return an empty array.
+     */
+    abstract getReferencedActors(): ReferencedActor[];
 }
 
 // --------------------- Concrete event types ---------------------
@@ -53,6 +67,10 @@ export class MoveEvent extends GameEvent {
         this.to = to;
         this.piece = piece;
     }
+
+    getReferencedActors(): ReferencedActor[] {
+        return [{ type: "piece", piece: this.piece, expectedPosition: this.from }];
+    }
 }
 
 export class CaptureEvent extends GameEvent {
@@ -69,6 +87,13 @@ export class CaptureEvent extends GameEvent {
         this.attacker = attacker;
         this.target = target;
     }
+
+    getReferencedActors(): ReferencedActor[] {
+        return [
+            { type: "piece", piece: this.attacker, expectedPosition: this.attacker.position },
+            { type: "piece", piece: this.target, expectedPosition: this.target.position },
+        ];
+    }
 }
 
 export class DestroyEvent extends GameEvent {
@@ -82,6 +107,10 @@ export class DestroyEvent extends GameEvent {
             sourceId,
         });
         this.target = target;
+    }
+
+    getReferencedActors(): ReferencedActor[] {
+        return [{ type: "piece", piece: this.target, expectedPosition: this.target.position }];
     }
 }
 
@@ -99,6 +128,10 @@ export class TurnAdvancedEvent extends GameEvent {
         this.nextPlayer = nextPlayer;
         this.turnNumber = turnNumber;
     }
+
+    getReferencedActors(): ReferencedActor[] {
+        return [];
+    }
 }
 
 export class TurnStartEvent extends GameEvent {
@@ -114,6 +147,10 @@ export class TurnStartEvent extends GameEvent {
         });
         this.player = player;
         this.turnNumber = turnNumber;
+    }
+
+    getReferencedActors(): ReferencedActor[] {
+        return [];
     }
 }
 
@@ -131,6 +168,10 @@ export class TurnEndEvent extends GameEvent {
         this.player = player;
         this.turnNumber = turnNumber;
     }
+
+    getReferencedActors(): ReferencedActor[] {
+        return [];
+    }
 }
 
 export class TileChangedEvent extends GameEvent {
@@ -146,6 +187,12 @@ export class TileChangedEvent extends GameEvent {
         });
         this.position = position;
         this.newTile = newTile;
+    }
+
+    getReferencedActors(): ReferencedActor[] {
+        // Validate that the position is in bounds (tile exists at that position)
+        // We don't need to validate the old tile since we're replacing it
+        return [{ type: "tile", tile: this.newTile, expectedPosition: this.position }];
     }
 }
 
@@ -171,5 +218,9 @@ export class PieceChangedEvent extends GameEvent {
         this.oldPiece = oldPiece;
         this.newPiece = newPiece;
         this.position = position;
+    }
+
+    getReferencedActors(): ReferencedActor[] {
+        return [{ type: "piece", piece: this.oldPiece, expectedPosition: this.position }];
     }
 }
