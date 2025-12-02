@@ -1,4 +1,10 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useEngine, useEngineState } from "../chess/EngineContext";
@@ -8,6 +14,7 @@ import { Move } from "../../engine/primitives/Move";
 import { BoardMesh } from "./BoardMesh";
 import { Piece3D } from "./Piece3D";
 import { getCameraPosition, BoardDimensions } from "./coordinates";
+import { GeometryProvider } from "./pieces/GeometryStore";
 
 const CameraSetup: React.FC<{
   position: [number, number, number];
@@ -26,8 +33,8 @@ const CameraSetup: React.FC<{
   return null;
 };
 
-const FPSCounter: React.FC<{ onFpsUpdate: (fps: number) => void }> = ({
-  onFpsUpdate,
+const FPSCounter: React.FC<{ fpsRef: React.RefObject<number> }> = ({
+  fpsRef,
 }) => {
   const frames = useRef(0);
   const lastTime = useRef(performance.now());
@@ -36,13 +43,45 @@ const FPSCounter: React.FC<{ onFpsUpdate: (fps: number) => void }> = ({
     frames.current++;
     const now = performance.now();
     if (now - lastTime.current >= 1000) {
-      onFpsUpdate(frames.current);
+      fpsRef.current = frames.current;
       frames.current = 0;
       lastTime.current = now;
     }
   });
 
   return null;
+};
+
+const FPSDisplay: React.FC<{ fpsRef: React.RefObject<number> }> = ({
+  fpsRef,
+}) => {
+  const [displayFps, setDisplayFps] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayFps(fpsRef.current);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [fpsRef]);
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: 12,
+        left: 12,
+        zIndex: 100,
+        background: "rgba(0, 0, 0, 0.7)",
+        color: "#0f0",
+        padding: "6px 10px",
+        borderRadius: 4,
+        fontFamily: "monospace",
+        fontSize: 13,
+      }}
+    >
+      {displayFps} FPS
+    </div>
+  );
 };
 
 export const Board3DView: React.FC = () => {
@@ -52,7 +91,7 @@ export const Board3DView: React.FC = () => {
     null
   );
   const [cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
-  const [fps, setFps] = useState(0);
+  const fpsRef = useRef(0);
 
   const dimensions: BoardDimensions = useMemo(
     () => ({ width: state.board.width, height: state.board.height }),
@@ -76,63 +115,58 @@ export const Board3DView: React.FC = () => {
     );
   }, [selected, state, rules]);
 
-  const handleSquareClick = (pos: Vector2Int) => {
-    const piece = state.board.getPieceAt(pos);
+  const handleSquareClick = useCallback(
+    (pos: Vector2Int) => {
+      const piece = state.board.getPieceAt(pos);
 
-    if (selected) {
-      if (legalTargets.has(`${pos.x},${pos.y}`)) {
-        const from = new Vector2Int(selected.x, selected.y);
-        const mover = state.board.getPieceAt(from);
-        if (mover) {
-          const mv = new Move(from, pos, mover);
-          submitHumanMove(mv);
+      if (selected) {
+        if (legalTargets.has(`${pos.x},${pos.y}`)) {
+          const from = new Vector2Int(selected.x, selected.y);
+          const mover = state.board.getPieceAt(from);
+          if (mover) {
+            const mv = new Move(from, pos, mover);
+            submitHumanMove(mv);
+            setSelected(null);
+          }
+          return;
+        }
+        if (piece && piece.owner === state.currentPlayer) {
+          setSelected({ x: pos.x, y: pos.y });
+        } else {
           setSelected(null);
         }
-        return;
-      }
-      if (piece && piece.owner === state.currentPlayer) {
-        setSelected({ x: pos.x, y: pos.y });
       } else {
-        setSelected(null);
+        if (piece && piece.owner === state.currentPlayer) {
+          setSelected({ x: pos.x, y: pos.y });
+        }
       }
-    } else {
-      if (piece && piece.owner === state.currentPlayer) {
-        setSelected({ x: pos.x, y: pos.y });
-      }
-    }
-  };
+    },
+    [selected, legalTargets, state, submitHumanMove]
+  );
 
-  const handlePieceClick = (pos: Vector2Int) => {
-    handleSquareClick(pos);
-  };
+  const handlePieceClick = useCallback(
+    (pos: Vector2Int) => {
+      handleSquareClick(pos);
+    },
+    [handleSquareClick]
+  );
 
   const pieces = state.board.getAllPieces();
 
-  const resetCamera = () => {
+  const resetCamera = useCallback(() => {
     setCameraControlsEnabled(false);
-  };
+  }, []);
+
+  const toggleCamera = useCallback(() => {
+    setCameraControlsEnabled((prev) => !prev);
+  }, []);
 
   return (
     <div
       style={{ width: "100%", height: "100%", position: "relative" }}
       className="board3d-container"
     >
-      <div
-        style={{
-          position: "absolute",
-          bottom: 12,
-          left: 12,
-          zIndex: 100,
-          background: "rgba(0, 0, 0, 0.7)",
-          color: "#0f0",
-          padding: "6px 10px",
-          borderRadius: 4,
-          fontFamily: "monospace",
-          fontSize: 13,
-        }}
-      >
-        {fps} FPS
-      </div>
+      <FPSDisplay fpsRef={fpsRef} />
       <div
         style={{
           position: "absolute",
@@ -144,7 +178,7 @@ export const Board3DView: React.FC = () => {
         }}
       >
         <button
-          onClick={() => setCameraControlsEnabled(!cameraControlsEnabled)}
+          onClick={toggleCamera}
           style={{
             padding: "8px 12px",
             background: cameraControlsEnabled ? "#4a9eff" : "#2d2d44",
@@ -205,24 +239,26 @@ export const Board3DView: React.FC = () => {
         />
         <directionalLight position={[-5, 8, -3]} intensity={0.4} />
 
-        <BoardMesh
-          board={state.board}
-          legalMoves={legalTargets}
-          onSquareClick={handleSquareClick}
-        />
-
-        {pieces.map((piece) => (
-          <Piece3D
-            key={piece.id}
-            piece={piece}
-            dimensions={dimensions}
-            isSelected={
-              selected?.x === piece.position.x &&
-              selected?.y === piece.position.y
-            }
-            onClick={() => handlePieceClick(piece.position)}
+        <GeometryProvider>
+          <BoardMesh
+            board={state.board}
+            legalMoves={legalTargets}
+            onSquareClick={handleSquareClick}
           />
-        ))}
+
+          {pieces.map((piece) => (
+            <Piece3D
+              key={piece.id}
+              piece={piece}
+              dimensions={dimensions}
+              isSelected={
+                selected?.x === piece.position.x &&
+                selected?.y === piece.position.y
+              }
+              onClick={() => handlePieceClick(piece.position)}
+            />
+          ))}
+        </GeometryProvider>
 
         {cameraControlsEnabled && (
           // Polar angle limits: min=30° (prevent looking from below), max=82° (prevent top-down)
@@ -235,7 +271,7 @@ export const Board3DView: React.FC = () => {
           />
         )}
 
-        <FPSCounter onFpsUpdate={setFps} />
+        <FPSCounter fpsRef={fpsRef} />
       </Canvas>
     </div>
   );
