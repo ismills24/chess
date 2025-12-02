@@ -1,0 +1,50 @@
+{
+  "width": 8,
+  "height": 8,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "Rook",
+      "color": "White",
+      "x": 1,
+      "y": 0,
+      "decorators": ["Bouncer"]
+    },
+    {
+      "type": "King",
+      "color": "White",
+      "x": 4,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 3,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 4,
+      "y": 1,
+      "decorators": []
+    },
+    {
+      "type": "Rook",
+      "color": "Black",
+      "x": 5,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 4,
+      "y": 7,
+      "decorators": []
+    }
+  ],
+  "tiles": []
+}

@@ -3,6 +3,7 @@ import { BoardEditor } from "./BoardEditor";
 import { Palette, Tool } from "./Palette";
 import { MapDefinition } from "./types";
 import { emptyMap } from "./serializer";
+import { MapSelector } from "../components/MapSelector";
 import "./styles.css";
 
 type Mode = "white" | "black" | "tiles";
@@ -102,8 +103,16 @@ export const MapBuilderApp: React.FC<{
                         Save JSON
                     </button>
                     <button className="btn" onClick={onLoad}>
-                        Load JSON
+                        Load File...
                     </button>
+                </div>
+                <div className="toolRow">
+                    <MapSelector
+                        onSelect={(loaded, _filename) => {
+                            setMap(loaded);
+                            if (onMapChanged) onMapChanged(loaded);
+                        }}
+                    />
                 </div>
 
                 <Palette mode={mode} tool={tool} setTool={setTool} />

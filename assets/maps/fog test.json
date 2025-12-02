@@ -1,0 +1,61 @@
+{
+  "width": 8,
+  "height": 8,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "King",
+      "color": "White",
+      "x": 3,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Queen",
+      "color": "White",
+      "x": 3,
+      "y": 1,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 7,
+      "y": 7,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 0,
+      "y": 4,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 3,
+      "y": 5,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 6,
+      "y": 4,
+      "decorators": []
+    }
+  ],
+  "tiles": [
+    {
+      "type": "FogTile",
+      "x": 0,
+      "y": 4
+    },
+    {
+      "type": "FogTile",
+      "x": 3,
+      "y": 4
+    }
+  ]
+}
