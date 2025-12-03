@@ -3,6 +3,12 @@ import path from "node:path";
 import started from "electron-squirrel-startup";
 import * as fs from "fs/promises";
 
+// These settings need main process restart to take effect
+// TODO: Consider implementing environment variables  and/or game config file
+// - GBF 2025-12-02
+app.commandLine.appendSwitch("disable-frame-rate-limit");
+app.commandLine.appendSwitch("disable-gpu-vsync");
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
