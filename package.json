@@ -10,7 +10,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "test:decorator-values": "npx tsx src/engine/pieces/decorators/DecoratorValue.test.ts"
+    "test:decorator-values": "npx tsx src/engine/pieces/decorators/__tests__/DecoratorValue.test.ts"
   },
   "keywords": [],
   "author": {

@@ -5,13 +5,13 @@
  * You can import this in any part of the codebase to see the values in action.
  */
 
-import { Pawn } from "../../pieces/standard/Pawn";
-import { Rook } from "../../pieces/standard/Rook";
-import { PiercingDecorator } from "./PiercingDecorator";
-import { ExplodingDecorator } from "./ExplodingDecorator";
-import { MarksmanDecorator } from "./MarksmanDecorator";
-import { PlayerColor } from "../../primitives/PlayerColor";
-import { Vector2Int } from "../../primitives/Vector2Int";
+import { Pawn } from "../../standard/Pawn";
+import { Rook } from "../../standard/Rook";
+import { PiercingDecorator } from "../PiercingDecorator";
+import { ExplodingDecorator } from "../ExplodingDecorator";
+import { MarksmanDecorator } from "../MarksmanDecorator";
+import { PlayerColor } from "../../../primitives/PlayerColor";
+import { Vector2Int } from "../../../primitives/Vector2Int";
 
 /**
  * Demonstrates decorator value recursion with detailed logging

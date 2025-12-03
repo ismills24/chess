@@ -1,21 +1,21 @@
 /**
  * Test file for decorator value system
- * Run with: npx ts-node src/engine/pieces/decorators/DecoratorValue.test.ts
+ * Run with: npx tsx src/engine/pieces/decorators/__tests__/DecoratorValue.test.ts
  * Or just inspect the code to verify the logic
  */
 
-import { Pawn } from "../../pieces/standard/Pawn";
-import { Rook } from "../../pieces/standard/Rook";
-import { Queen } from "../../pieces/standard/Queen";
-import { Knight } from "../../pieces/standard/Knight";
-import { PiercingDecorator } from "./PiercingDecorator";
-import { ExplodingDecorator } from "./ExplodingDecorator";
-import { MarksmanDecorator } from "./MarksmanDecorator";
-import { CannibalDecorator } from "./CannibalDecorator";
-import { BouncerDecorator } from "./BouncerDecorator";
-import { ScapegoatDecorator } from "./ScapegoatDecorator";
-import { PlayerColor } from "../../primitives/PlayerColor";
-import { Vector2Int } from "../../primitives/Vector2Int";
+import { Pawn } from "../../standard/Pawn";
+import { Rook } from "../../standard/Rook";
+import { Queen } from "../../standard/Queen";
+import { Knight } from "../../standard/Knight";
+import { PiercingDecorator } from "../PiercingDecorator";
+import { ExplodingDecorator } from "../ExplodingDecorator";
+import { MarksmanDecorator } from "../MarksmanDecorator";
+import { CannibalDecorator } from "../CannibalDecorator";
+import { BouncerDecorator } from "../BouncerDecorator";
+import { ScapegoatDecorator } from "../ScapegoatDecorator";
+import { PlayerColor } from "../../../primitives/PlayerColor";
+import { Vector2Int } from "../../../primitives/Vector2Int";
 
 // Test helper
 function assertEquals(actual: number, expected: number, testName: string): void {
