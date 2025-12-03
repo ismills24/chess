@@ -14,6 +14,7 @@ import { Interceptor } from "../../events/Interceptor";
  */
 export class PiercingDecorator extends PieceDecoratorBase implements Interceptor<CaptureEvent> {
     readonly priority = 1; // Run after basic movement validation but before other effects
+    protected readonly decoratorValue = 2;
 
     constructor(inner: Piece, id?: string) {
         super(inner, id);

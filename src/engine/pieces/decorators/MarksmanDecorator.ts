@@ -16,6 +16,7 @@ import { CandidateMoves } from "../MovementHelper";
 export class MarksmanDecorator extends PieceDecoratorBase implements Interceptor<CaptureEvent> {
     private rangedAttacksLeft: number = 1;
     readonly priority = 0;
+    protected readonly decoratorValue = 2;
 
     constructor(inner: Piece, id?: string, charges = 1) {
         super(inner, id);

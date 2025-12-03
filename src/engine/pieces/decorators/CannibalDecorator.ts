@@ -13,6 +13,7 @@ import { CandidateMoves } from "../MovementHelper";
  */
 export class CannibalDecorator extends PieceDecoratorBase implements Interceptor<CaptureEvent> {
     readonly priority = 0;
+    protected readonly decoratorValue = 1;
 
     constructor(inner: Piece, id?: string) {
         super(inner, id);
