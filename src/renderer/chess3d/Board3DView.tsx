@@ -5,6 +5,7 @@ import React, {
   useRef,
   useCallback,
 } from "react";
+import * as THREE from "three";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useEngine, useEngineState } from "../chess/EngineContext";
@@ -13,8 +14,10 @@ import { Vector2Int } from "../../engine/primitives/Vector2Int";
 import { Move } from "../../engine/primitives/Move";
 import { BoardMesh } from "./BoardMesh";
 import { Piece3D } from "./Piece3D";
-import { getCameraPosition, BoardDimensions } from "./coordinates";
+import { getCameraPosition, BoardDimensions, worldToGrid } from "./coordinates";
 import { GeometryProvider } from "./pieces/GeometryStore";
+
+const BOARD_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.1);
 
 const CameraSetup: React.FC<{
   position: [number, number, number];
@@ -84,6 +87,41 @@ const FPSDisplay: React.FC<{ fpsRef: React.RefObject<number> }> = ({
   );
 };
 
+const ClickHandler: React.FC<{
+  dimensions: BoardDimensions;
+  onSquareClick: (pos: Vector2Int) => void;
+}> = ({ dimensions, onSquareClick }) => {
+  const { camera, gl } = useThree();
+  const raycaster = useMemo(() => new THREE.Raycaster(), []);
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+    
+    const handleClick = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      
+      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+      const intersection = new THREE.Vector3();
+      const hit = raycaster.ray.intersectPlane(BOARD_PLANE, intersection);
+      
+      if (hit) {
+        const gridPos = worldToGrid(intersection.x, intersection.z, dimensions);
+        if (gridPos.x >= 0 && gridPos.x < dimensions.width && 
+            gridPos.y >= 0 && gridPos.y < dimensions.height) {
+          onSquareClick(gridPos);
+        }
+      }
+    };
+    
+    canvas.addEventListener('click', handleClick);
+    return () => canvas.removeEventListener('click', handleClick);
+  }, [camera, gl, raycaster, dimensions, onSquareClick]);
+
+  return null;
+};
+
 export const Board3DView: React.FC = () => {
   const state = useEngineState();
   const { rules, submitHumanMove } = useEngine();
@@ -142,13 +180,6 @@ export const Board3DView: React.FC = () => {
       }
     },
     [selected, legalTargets, state, submitHumanMove]
-  );
-
-  const handlePieceClick = useCallback(
-    (pos: Vector2Int) => {
-      handleSquareClick(pos);
-    },
-    [handleSquareClick]
   );
 
   const pieces = state.board.getAllPieces();
@@ -239,11 +270,15 @@ export const Board3DView: React.FC = () => {
         />
         <directionalLight position={[-5, 8, -3]} intensity={0.4} />
 
+        <ClickHandler 
+          dimensions={dimensions} 
+          onSquareClick={handleSquareClick} 
+        />
+        
         <GeometryProvider>
           <BoardMesh
             board={state.board}
             legalMoves={legalTargets}
-            onSquareClick={handleSquareClick}
           />
 
           {pieces.map((piece) => (
@@ -255,7 +290,6 @@ export const Board3DView: React.FC = () => {
                 selected?.x === piece.position.x &&
                 selected?.y === piece.position.y
               }
-              onClick={() => handlePieceClick(piece.position)}
             />
           ))}
         </GeometryProvider>

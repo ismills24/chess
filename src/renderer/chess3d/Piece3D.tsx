@@ -1,5 +1,4 @@
 import React from "react";
-import { ThreeEvent } from "@react-three/fiber";
 import { Piece } from "../../engine/pieces/Piece";
 import { gridToWorld, BoardDimensions } from "./coordinates";
 import { getProceduralPieceComponent } from "./pieces/ProceduralPieces";
@@ -10,14 +9,12 @@ interface Piece3DProps {
   piece: Piece;
   dimensions: BoardDimensions;
   isSelected?: boolean;
-  onClick?: () => void;
 }
 
 const Piece3DInner: React.FC<Piece3DProps> = ({
   piece,
   dimensions,
   isSelected,
-  onClick,
 }) => {
   const PieceComponent = getProceduralPieceComponent(piece.name);
   const worldPos = gridToWorld(piece.position, dimensions);
@@ -25,13 +22,8 @@ const Piece3DInner: React.FC<Piece3DProps> = ({
 
   if (!PieceComponent) return null;
 
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-    onClick?.();
-  };
-
   return (
-    <group position={[worldPos.x, 0.05, worldPos.z]} onClick={handleClick}>
+    <group position={[worldPos.x, 0.05, worldPos.z]}>
       <PieceComponent owner={piece.owner} />
       {isSelected && <SelectionRing />}
       {decorators.map((decoratorId, index) => (
@@ -46,7 +38,6 @@ const Piece3DInner: React.FC<Piece3DProps> = ({
   );
 };
 
-/** Skip re-render if piece identity, position, selection, and board dimensions are unchanged */
 export const Piece3D = React.memo(Piece3DInner, (prev, next) => {
   return (
     prev.piece.id === next.piece.id &&
@@ -58,11 +49,9 @@ export const Piece3D = React.memo(Piece3DInner, (prev, next) => {
   );
 });
 
-const SelectionRing: React.FC = React.memo(() => {
-  return (
-    <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[0.35, 0.42, 32]} />
-      <meshBasicMaterial color="#3366cc" transparent opacity={0.8} />
-    </mesh>
-  );
-});
+const SelectionRing: React.FC = React.memo(() => (
+  <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <ringGeometry args={[0.35, 0.42, 32]} />
+    <meshBasicMaterial color="#3366cc" transparent opacity={0.8} />
+  </mesh>
+));
