@@ -1,6 +1,5 @@
-import React, { useRef, useMemo, useEffect, useCallback } from "react";
+import React, { useRef, useMemo, useEffect } from "react";
 import * as THREE from "three";
-import { ThreeEvent } from "@react-three/fiber";
 import { Board } from "../../engine/board/Board";
 import { Vector2Int } from "../../engine/primitives/Vector2Int";
 import { gridToWorld, SQUARE_SIZE, BoardDimensions } from "./coordinates";
@@ -19,7 +18,6 @@ const TILE_COLORS: Record<string, THREE.Color> = {
 interface BoardMeshProps {
   board: Board;
   legalMoves: Set<string>;
-  onSquareClick: (pos: Vector2Int) => void;
 }
 
 interface SquareData {
@@ -34,7 +32,6 @@ interface SquareData {
 const BoardMeshInner: React.FC<BoardMeshProps> = ({
   board,
   legalMoves,
-  onSquareClick,
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dimensions: BoardDimensions = useMemo(
@@ -89,16 +86,6 @@ const BoardMeshInner: React.FC<BoardMeshProps> = ({
     }
   }, [squareData]);
 
-  const handleClick = useCallback(
-    (e: ThreeEvent<MouseEvent>) => {
-      if (e.instanceId !== undefined && e.instanceId < squareData.length) {
-        e.stopPropagation();
-        onSquareClick(squareData[e.instanceId].pos);
-      }
-    },
-    [squareData, onSquareClick]
-  );
-
   const frameWidth = board.width * SQUARE_SIZE + 0.4;
   const frameHeight = board.height * SQUARE_SIZE + 0.4;
 
@@ -117,7 +104,6 @@ const BoardMeshInner: React.FC<BoardMeshProps> = ({
       <instancedMesh
         ref={meshRef}
         args={[undefined, undefined, squareCount]}
-        onClick={handleClick}
         receiveShadow
       >
         <boxGeometry args={[SQUARE_SIZE, 0.1, SQUARE_SIZE]} />
