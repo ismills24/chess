@@ -16,7 +16,7 @@ export class ExplodingDecorator
     implements Interceptor<CaptureEvent>, Interceptor<DestroyEvent> {
     // Run after Marksman (which defaults to 0) so ranged kills happen first
     readonly priority = 1;
-    protected readonly decoratorValue = 3;
+    protected readonly decoratorValue = 2;
 
     constructor(inner: Piece, id?: string) {
         super(inner, id);
