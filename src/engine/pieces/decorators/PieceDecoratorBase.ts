@@ -12,6 +12,7 @@ import { CandidateMoves, MovementRestrictions } from "../MovementHelper";
 export abstract class PieceDecoratorBase implements Piece {
     readonly id: string;
     protected inner: Piece;
+    protected abstract readonly decoratorValue: number;
 
     constructor(inner: Piece, id?: string) {
         this.inner = inner;
@@ -52,7 +53,7 @@ export abstract class PieceDecoratorBase implements Piece {
     }
 
     getValue(): number {
-        return this.inner.getValue();
+        return this.inner.getValue() + this.decoratorValue;
     }
 
     clone(): Piece {

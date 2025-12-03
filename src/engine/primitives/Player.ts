@@ -1,19 +1,19 @@
 import { Piece } from "./Piece";
 
 /**
- * Configuration for a player, including their pieces, time budget, and power-up.
+ * Configuration for a player, including their pieces and money.
  * This is a data structure representing player configuration.
  */
 export class Player {
     readonly pieces: Piece[];
-    readonly timeLeft: number; // Time in milliseconds (matching GameClock's timeBudgetMs type)
+    readonly money: number;
 
     constructor(
         pieces: Piece[],
-        timeLeft: number,
+        money: number = 0,
     ) {
         this.pieces = [...pieces]; // Create a copy to prevent external mutation
-        this.timeLeft = timeLeft;
+        this.money = money;
     }
 
     /**
@@ -22,7 +22,7 @@ export class Player {
     clone(): Player {
         return new Player(
             this.pieces.map(p => p.clone()),
-            this.timeLeft,
+            this.money,
         );
     }
 

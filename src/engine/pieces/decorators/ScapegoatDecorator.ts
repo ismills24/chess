@@ -13,6 +13,7 @@ import { Interceptor } from "../../events/Interceptor";
  */
 export class ScapegoatDecorator extends PieceDecoratorBase implements Interceptor<CaptureEvent>, Interceptor<DestroyEvent> {
     readonly priority = 0;
+    protected readonly decoratorValue = 1;
 
     constructor(inner: Piece, id?: string) {
         super(inner, id);

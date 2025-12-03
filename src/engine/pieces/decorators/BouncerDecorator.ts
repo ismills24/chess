@@ -16,6 +16,7 @@ import { Interceptor } from "../../events/Interceptor";
  */
 export class BouncerDecorator extends PieceDecoratorBase implements Interceptor<CaptureEvent> {
     readonly priority = 1; // Run after basic movement validation but before other effects
+    protected readonly decoratorValue = 1;
 
     constructor(inner: Piece, id?: string) {
         super(inner, id);
