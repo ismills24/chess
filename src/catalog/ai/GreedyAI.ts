@@ -4,6 +4,7 @@ import { Move } from "../../chess-engine/primitives/Move";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { ChessEngine } from "../../chess-engine/core/ChessEngine";
 import { RuleSet } from "../../chess-engine/rules/RuleSet";
+import { TurnAdvancedEvent } from "../../chess-engine/events/EventRegistry";
 
 /**
  * Greedy AI using negamax with alpha-beta pruning.
@@ -49,13 +50,22 @@ export class GreedyAI implements AI {
     }
 
     /**
-     * Simulate a move by resolving it through ChessEngine.
-     * Note: AI simulation doesn't need turn events, just the move resolution.
+     * Simulate a move by resolving it through ChessEngine and advancing the turn.
+     * This matches the old Simulation.simulateTurn() behavior - we need to advance
+     * the turn so the AI evaluates positions from the opponent's perspective.
      */
     private simulateTurn(state: GameState, move: Move): GameState {
-        const result = ChessEngine.resolveMove(state, move);
-        // Update state to reflect the move (but don't advance turn - that's for actual gameplay)
-        return result.finalState;
+        // Resolve the move
+        const moveResult = ChessEngine.resolveMove(state, move);
+        let newState = moveResult.finalState;
+        
+        // Advance the turn (critical for correct evaluation)
+        // The next player is the opponent of the player who just moved
+        const nextPlayer = state.currentPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
+        const turnAdvancedEvent = new TurnAdvancedEvent(nextPlayer, state.turnNumber + 1);
+        const turnResult = ChessEngine.resolveEvent(newState, turnAdvancedEvent);
+        
+        return turnResult.finalState;
     }
 
     private negamax(node: GameState, depth: number, alpha: number, beta: number): number {
@@ -111,15 +121,15 @@ export class GreedyAI implements AI {
 
     /**
      * Get the value of a piece for evaluation.
-     * This is a simple implementation - can be enhanced later.
+     * Uses the piece's getValue() method which properly handles ability chains.
      */
     private getPieceValue(piece: any): number {
-        // Try to call getValue() if it exists (from catalog pieces)
+        // All catalog pieces implement getValue() which handles ability wrapping
         if (typeof piece.getValue === "function") {
             return piece.getValue();
         }
         
-        // Fallback: simple piece type values
+        // Fallback: simple piece type values (shouldn't happen with catalog pieces)
         const name = piece.name?.toLowerCase() || "";
         if (name.includes("king")) return 1000;
         if (name.includes("queen")) return 9;
