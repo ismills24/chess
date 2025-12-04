@@ -1,91 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { EngineProvider, useEngineState } from "../chess/EngineContext";
 import { BoardView } from "../chess/BoardView";
 import { Board3DView } from "../chess3d";
 import { loadMap } from "../maploader/maploader";
-import { HumanController } from "../../engine/controllers/HumanController";
-import { GreedyAIController } from "../../engine/controllers/GreedyAIController";
-import { GameEngine } from "../../engine/core/GameEngine";
-import { LastPieceStandingRuleSet } from "../../engine/rules/LastPieceStanding";
-import { StandardChessRuleSet } from "../../engine/rules/StandardChess";
+import { createChessManagerBundleFromState } from "../chess/chessManagerAdapter";
 import { MapDefinition } from "../mapbuilder/types";
-import { ClockView } from "../chess/ClockView";
-import { GameClock } from "../../engine/core/GameClock";
-import { PlayerColor } from "../../engine/primitives/PlayerColor";
-import { TimeExpiryHandlers } from "../../engine/core/TimeExpiryHandler";
+import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
+import { ChessManager } from "../../chess-manager/ChessManager";
 
 export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
   const [mode, setMode] = useState<"hva" | "hvh">("hva");
   const [viewMode, setViewMode] = useState<"2d" | "3d">("3d");
-  const [engineKey, setEngineKey] = useState(0);
+  const [gameKey, setGameKey] = useState(0);
 
-  const timeBudgetMs = 60 * 1000;
-
-  const makeEngine = () => {
+  // Create bundle from loaded map
+  const bundle = useMemo(() => {
     const state = loadMap(map);
-    const rules = new StandardChessRuleSet();
+    // In HvA mode, White is human. In HvH mode, both are human (pass null)
+    const humanPlayer = mode === "hva" ? PlayerColor.White : null;
+    return createChessManagerBundleFromState(state, humanPlayer);
+  }, [map, mode, gameKey]);
 
-    // Helper to create clock with event publisher callback that will reference the engine
-    // The clock uses a TimeExpiryHandler to determine what happens when time expires.
-    // Currently uses gameOver handler which sends a TimeOutEvent that goes through interceptors.
-    // If not intercepted, it converts to GameOverEvent and ends the game.
-    const createClockWithCallback = (
-      humanPlayer: PlayerColor
-    ): { clock: GameClock; setEngine: (engine: GameEngine) => void } => {
-      let engineRef: GameEngine | null = null;
-      const clock = new GameClock(
-        timeBudgetMs,
-        Date.now(),
-        humanPlayer,
-        (ev) => {
-          // Publish event through engine's internal publish method
-          // This ensures TimeOutEvent goes through the interceptor pipeline and is handled properly
-          if (engineRef) {
-            (engineRef as any)._publishEvent(ev);
-          }
-        },
-        TimeExpiryHandlers.gameOver // Game ends, opponent wins when time expires
-      );
-      return {
-        clock,
-        setEngine: (engine: GameEngine) => {
-          engineRef = engine;
-        },
-      };
-    };
-
-    if (mode === "hva") {
-      const human = new HumanController(rules);
-      const ai = new GreedyAIController(rules, 3);
-      // Human plays White in HvA mode
-      const { clock, setEngine } = createClockWithCallback(PlayerColor.White);
-      const engine = new GameEngine(state, human, ai, rules, clock);
-      setEngine(engine);
-      return engine;
-    } else {
-      // Human vs Human → two human controllers
-      const white = new HumanController(rules);
-      const black = new HumanController(rules);
-      // For HvH, we'll track White's clock (could be extended to track both)
-      const { clock, setEngine } = createClockWithCallback(PlayerColor.White);
-      const engine = new GameEngine(state, white, black, rules, clock);
-      setEngine(engine);
-      return engine;
-    }
-  };
-
-  const engine = makeEngine();
   // Determine which player is human based on mode
   const humanPlayer = mode === "hva" ? PlayerColor.White : null; // In HvH, both are human
 
   const onNewGame = () => {
-    setEngineKey((k) => k + 1); // trigger rebuild
+    setGameKey((k) => k + 1); // trigger rebuild
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* engineKey forces EngineProvider + BoardView to reset */}
-      <EngineProvider key={engineKey} existing={engine}>
+      {/* gameKey forces bundle to rebuild */}
+      <EngineProvider key={gameKey} existing={bundle}>
         <header
           style={{
             padding: 8,
@@ -97,14 +43,14 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
         >
           <button onClick={onNewGame}>New Game</button>
           <UndoRedoButtons
-            engine={engine}
-            onBump={() => setEngineKey((k) => k + 1)}
+            bundle={bundle}
+            onBump={() => setGameKey((k) => k + 1)}
           />
           <span>Mode:</span>
           <button
             onClick={() => {
               setMode("hva");
-              setEngineKey((k) => k + 1);
+              setGameKey((k) => k + 1);
             }}
             style={{ fontWeight: mode === "hva" ? "bold" : "normal" }}
           >
@@ -113,7 +59,7 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
           <button
             onClick={() => {
               setMode("hvh");
-              setEngineKey((k) => k + 1);
+              setGameKey((k) => k + 1);
             }}
             style={{ fontWeight: mode === "hvh" ? "bold" : "normal" }}
           >
@@ -132,32 +78,26 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
           >
             3D
           </button>
-          <div style={{ marginLeft: "auto" }}>
-            <ClockView />
-          </div>
         </header>
 
         <div style={{ flex: 1, position: "relative" }}>
           {viewMode === "2d" ? <BoardView /> : <Board3DView />}
-          <GameOverPopupWrapper engine={engine} humanPlayer={humanPlayer} />
+          <GameOverPopupWrapper manager={bundle.manager} humanPlayer={humanPlayer} />
         </div>
       </EngineProvider>
     </div>
   );
 };
 
-const UndoRedoButtons: React.FC<{ engine: GameEngine; onBump: () => void }> = ({
-  engine,
+const UndoRedoButtons: React.FC<{ bundle: ReturnType<typeof createChessManagerBundleFromState>; onBump: () => void }> = ({
+  bundle,
   onBump,
 }) => {
   const onUndo = () => {
-    (engine as any).undoLastMove();
-    // trigger UI update without rebuilding engine
-    (engine as any)._notify?.();
+    bundle.undo();
   };
   const onRedo = () => {
-    (engine as any).redoLastMove();
-    (engine as any)._notify?.();
+    bundle.redo();
   };
   return (
     <>
@@ -173,9 +113,9 @@ const UndoRedoButtons: React.FC<{ engine: GameEngine; onBump: () => void }> = ({
 
 // Wrapper component that uses the engine context
 const GameOverPopupWrapper: React.FC<{
-  engine: GameEngine;
+  manager: ChessManager;
   humanPlayer: PlayerColor | null;
-}> = ({ engine, humanPlayer }) => {
+}> = ({ manager, humanPlayer }) => {
   // Use engine state to react to changes - this hook requires EngineProvider context
   const state = useEngineState();
   const [showPopup, setShowPopup] = useState(false);
@@ -185,7 +125,7 @@ const GameOverPopupWrapper: React.FC<{
 
   useEffect(() => {
     const checkGameOver = () => {
-      const isOver = engine.isGameOver();
+      const isOver = manager.isGameOver();
 
       // If game just transitioned from not-over to over, reset dismissed state
       if (isOver && !lastGameOverState) {
@@ -201,7 +141,7 @@ const GameOverPopupWrapper: React.FC<{
 
       // If game is over and popup hasn't been dismissed, show it
       if (isOver && !dismissed) {
-        const winner = engine.getWinner();
+        const winner = manager.getWinner();
 
         if (humanPlayer !== null) {
           // HvA mode: show message for human player
@@ -232,22 +172,13 @@ const GameOverPopupWrapper: React.FC<{
     // Check immediately
     checkGameOver();
 
-    // Subscribe to engine events
-    const originalHandler = engine.onEventPublished;
-    engine.onEventPublished = (ev) => {
-      originalHandler?.(ev);
-      // Small delay to ensure state is updated
-      setTimeout(checkGameOver, 10);
-    };
-
-    // Also set up interval as fallback
+    // Set up interval to check game over state
     const interval = setInterval(checkGameOver, 100);
 
     return () => {
       clearInterval(interval);
-      engine.onEventPublished = originalHandler;
     };
-  }, [engine, humanPlayer, state, dismissed, lastGameOverState]); // React to state changes
+  }, [manager, humanPlayer, state, dismissed, lastGameOverState]); // React to state changes
 
   if (!showPopup) return null;
 

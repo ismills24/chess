@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { useEngine, useEngineState } from "./EngineContext";
-import { Vector2Int } from "../../engine/primitives/Vector2Int";
-import { Move } from "../../engine/primitives/Move";
-import { PlayerColor } from "../../engine/primitives/PlayerColor";
+import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
+import { Move } from "../../chess-engine/primitives/Move";
+import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import "./board.css";
-import { decoratorIdsForPiece, iconForDecorator, iconForTile, tileIdForInstance } from "../../shared/entityRegistry";
+import { abilityIdsForPiece, iconForAbility, iconForTile, tileIdForInstance } from "../../catalog/registry/Catalog";
 
 type Coord = { x: number; y: number };
 
@@ -73,7 +73,7 @@ export const BoardView: React.FC = () => {
       const tile = state.board.getTile(pos);
       const tileId = tileIdForInstance(tile);
       const tileIcon = tileId === "StandardTile" ? "" : iconForTile(tileId);
-      const decos = p ? decoratorIdsForPiece(p) : [];
+      const abilities = p ? abilityIdsForPiece(p) : [];
 
       cells.push(
         <div
@@ -95,10 +95,10 @@ export const BoardView: React.FC = () => {
           {p ? (
             <PieceIcon owner={p.owner} name={p.name} movesMade={p.movesMade} capturesMade={p.capturesMade} />
           ) : null}
-          {/* decorator icons overlay */}
-          {decos.map((d, i) => (
-            <span key={`${key}-deco-${i}`} className="deco-icon">
-              {iconForDecorator(d)}
+          {/* ability icons overlay */}
+          {abilities.map((a, i) => (
+            <span key={`${key}-ability-${i}`} className="deco-icon">
+              {iconForAbility(a)}
             </span>
           ))}
         </div>

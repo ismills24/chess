@@ -1,88 +1,118 @@
-import React, { createContext, useContext, useMemo, useRef, useSyncExternalStore } from "react";
-import { createEngineBundle, EngineBundle } from "./engineAdapter";
-import "../../engine/core/Turns";
+import React, { createContext, useContext, useRef, useSyncExternalStore, useCallback, useMemo } from "react";
+import { createChessManagerBundle, ChessManagerBundle } from "./chessManagerAdapter";
+import { GameState } from "../../chess-engine/state/GameState";
+import { StandardChessRuleSet } from "../../catalog/rulesets/StandardChess";
 
-const EngineCtx = createContext<EngineBundle | null>(null);
+// Legacy type for backward compatibility - wraps ChessManagerBundle
+type EngineBundle = {
+    engine: any; // Not used, but kept for compatibility
+    getState: () => GameState;
+    rules: StandardChessRuleSet;
+    submitHumanMove: (move: any) => void;
+};
 
-export const EngineProvider: React.FC<{ children: React.ReactNode; existing?: EngineBundle["engine"] }> = ({ children, existing }) => {
-    const bundleRef = useRef<EngineBundle | null>(null);
-    if (!bundleRef.current) {
+// Global subscriber set for state change notifications
+const globalSubscribers = new Set<() => void>();
+
+// Expose to chessManagerAdapter for notifications
+(globalThis as any).__chessSubscribers = globalSubscribers;
+
+function notifySubscribers() {
+    globalSubscribers.forEach(fn => fn());
+}
+
+const EngineCtx = createContext<ChessManagerBundle | null>(null);
+
+export const EngineProvider: React.FC<{ children: React.ReactNode; existing?: ChessManagerBundle | any }> = ({ children, existing }) => {
+    // Use existing bundle if provided, otherwise create default
+    const baseBundle = useMemo<ChessManagerBundle>(() => {
         if (existing) {
-            bundleRef.current = {
-                engine: existing,
-                getState: () => existing.currentState,
-                rules: (existing as any).ruleset,
-                submitHumanMove: (move) => {
-                    // Submit move to the current player's controller
-                    const currentPlayer = existing.currentState.currentPlayer;
-                    if (currentPlayer === "White") {
-                        (existing as any).whiteController.submitMove(move);
-                    } else {
-                        (existing as any).blackController.submitMove(move);
-                    }
-                    (existing as any).runTurn();
-                    
-                    // If the next player is AI, automatically process their turn
-                    if (!existing.isGameOver()) {
-                        const nextPlayer = existing.currentState.currentPlayer;
-                        const nextController = nextPlayer === "White" 
-                            ? (existing as any).whiteController 
-                            : (existing as any).blackController;
-                        
-                        // Check if the next controller is AI by checking if it's an instance of GreedyAIController
-                        if (nextController && nextController.constructor.name === 'GreedyAIController') {
-                            setTimeout(() => {
-                                (existing as any).runTurn();
-                            }, 10);
-                        }
-                    }
-                },
-            };
-            // Attach a manual notifier for UI updates on non-event mutations (e.g., undo/redo)
-            if (!((existing as any)._subs)) (existing as any)._subs = new Set<() => void>();
-            (existing as any)._notify = () => {
-                for (const f of (existing as any)._subs as Set<() => void>) f();
-            };
+            // Check if it's already a ChessManagerBundle
+            if (existing.manager && existing.getState && existing.submitHumanMove) {
+                return existing as ChessManagerBundle;
+            } else {
+                // Legacy support: if existing engine is provided, we'd need to migrate it
+                // For now, just create a new bundle
+                console.warn("[EngineProvider] Legacy 'existing' prop not supported with new architecture");
+                return createChessManagerBundle();
+            }
         } else {
-            bundleRef.current = createEngineBundle();
+            return createChessManagerBundle();
         }
-    }
+    }, [existing]);
+
+    // Wrap submitHumanMove to notify subscribers
+    const wrappedSubmitHumanMove = useCallback((move: any) => {
+        const currentIndex = baseBundle.manager.currentIndex;
+        baseBundle.submitHumanMove(move);
+        
+        // Notify subscribers if state changed (submitHumanMove already notifies, but we do it here too for safety)
+        if (baseBundle.manager.currentIndex !== currentIndex) {
+            notifySubscribers();
+        }
+    }, [baseBundle]);
+
+    // Wrap undo/redo to notify subscribers
+    const wrappedUndo = useCallback(() => {
+        const currentIndex = baseBundle.manager.currentIndex;
+        baseBundle.undo();
+        if (baseBundle.manager.currentIndex !== currentIndex) {
+            notifySubscribers();
+        }
+    }, [baseBundle]);
+
+    const wrappedRedo = useCallback(() => {
+        const currentIndex = baseBundle.manager.currentIndex;
+        baseBundle.redo();
+        if (baseBundle.manager.currentIndex !== currentIndex) {
+            notifySubscribers();
+        }
+    }, [baseBundle]);
+
+    // Create wrapped bundle with notification support
+    const wrappedBundle = useMemo<ChessManagerBundle>(() => ({
+        ...baseBundle,
+        submitHumanMove: wrappedSubmitHumanMove,
+        undo: wrappedUndo,
+        redo: wrappedRedo,
+    }), [baseBundle, wrappedSubmitHumanMove, wrappedUndo, wrappedRedo]);
 
     return (
-        <EngineCtx.Provider value={bundleRef.current}>
+        <EngineCtx.Provider value={wrappedBundle}>
             {children}
         </EngineCtx.Provider>
     );
 };
 
-
-
-export function useEngine() {
+export function useEngine(): EngineBundle {
     const ctx = useContext(EngineCtx);
     if (!ctx) throw new Error("useEngine must be used within EngineProvider");
-    return ctx;
+    
+    // Return legacy-compatible interface
+    return {
+        engine: null, // Not used in new architecture
+        getState: ctx.getState,
+        rules: ctx.rules,
+        submitHumanMove: ctx.submitHumanMove,
+    };
 }
 
-/** reactive state hook backed by engine history */
+/** reactive state hook backed by ChessManager history */
 export function useEngineState() {
-    const { engine, getState } = useEngine();
-    const subscribe = (fn: () => void) => {
-        // tie into EngineProvider's subscriber set via engine.onEventPublished
-        // we’ll intercept through a local indirection:
-        const provider = (engine.onEventPublished as any)?._provider;
-        // Fallback: directly add to a Set we keep on the engine (attach ad hoc)
-        if (!((engine as any)._subs)) (engine as any)._subs = new Set<() => void>();
-        (engine as any)._subs.add(fn);
-        const orig = engine.onEventPublished;
-        engine.onEventPublished = (ev) => {
-            (orig as (ev: any) => void | undefined)?.(ev);
-            for (const f of (engine as any)._subs as Set<() => void>) f();
-        };
+    const ctx = useContext(EngineCtx);
+    if (!ctx) throw new Error("useEngineState must be used within EngineProvider");
+    
+    const subscribe = useCallback((fn: () => void) => {
+        globalSubscribers.add(fn);
         return () => {
-            ((engine as any)._subs as Set<() => void>).delete(fn);
+            globalSubscribers.delete(fn);
         };
-    };
+    }, []);
 
     // useSyncExternalStore for consistent updates
-    return useSyncExternalStore(subscribe, getState, getState);
+    return useSyncExternalStore(
+        subscribe,
+        () => ctx.getState(),
+        () => ctx.getState()
+    );
 }

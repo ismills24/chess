@@ -1,11 +1,14 @@
 import React, { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { Piece } from "../../engine/pieces/Piece";
+import { Piece } from "../../catalog/pieces/Piece";
 import { gridToWorld, BoardDimensions } from "./coordinates";
 import { getProceduralPieceComponent } from "./pieces/ProceduralPieces";
-import { decoratorIdsForPiece } from "../../shared/entityRegistry";
+import { abilityIdsForPiece } from "../../catalog/registry/Catalog";
+
+
 import { DecoratorIndicator3D } from "./DecoratorIndicator3D";
+
 
 interface Piece3DProps {
   piece: Piece;
@@ -20,7 +23,7 @@ const Piece3DInner: React.FC<Piece3DProps> = ({
 }) => {
   const PieceComponent = getProceduralPieceComponent(piece.name);
   const worldPos = gridToWorld(piece.position, dimensions);
-  const decorators = decoratorIdsForPiece(piece);
+  const decorators = abilityIdsForPiece(piece);
 
   if (!PieceComponent) return null;
 
