@@ -1,9 +1,9 @@
 import React, { useRef, useMemo, useEffect } from "react";
 import * as THREE from "three";
-import { Board } from "../../engine/board/Board";
-import { Vector2Int } from "../../engine/primitives/Vector2Int";
+import { Board } from "../../chess-engine/state/Board";
+import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { gridToWorld, SQUARE_SIZE, BoardDimensions } from "./coordinates";
-import { tileIdForInstance } from "../../shared/entityRegistry";
+import { tileIdForInstance } from "../../catalog/registry/Catalog";
 
 const LIGHT_COLOR = new THREE.Color("#e8d4b8");
 const DARK_COLOR = new THREE.Color("#b58863");

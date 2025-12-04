@@ -1,4 +1,7 @@
-import { DecoratorId, PieceId, TileId } from "../../shared/entityRegistry";
+import { AbilityId, PieceId, TileId } from "../../catalog/registry/Catalog";
+
+// Legacy type alias for backward compatibility with map files
+export type DecoratorId = AbilityId;
 
 export type Color = "White" | "Black";
 

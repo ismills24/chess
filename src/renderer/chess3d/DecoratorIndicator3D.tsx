@@ -1,10 +1,10 @@
 import React, { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { DecoratorId } from "../../shared/entityRegistry";
+import { AbilityId } from "../../catalog/registry/Catalog";
 import * as THREE from "three";
 
 interface DecoratorIndicator3DProps {
-  decoratorId: DecoratorId;
+  decoratorId: AbilityId;
   index: number;
   total: number;
 }
@@ -44,7 +44,7 @@ interface DecoratorConfig {
   spin?: boolean;
 }
 
-function getDecoratorConfig(id: DecoratorId): DecoratorConfig {
+function getDecoratorConfig(id: AbilityId): DecoratorConfig {
   switch (id) {
     case "Marksman":
       return {

@@ -1,4 +1,4 @@
-import { Vector2Int } from "../../engine/primitives/Vector2Int";
+import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 
 export const SQUARE_SIZE = 1;
 
