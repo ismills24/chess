@@ -50,7 +50,8 @@ describe('ExplodingAbility', () => {
         board.placePiece(enemy, new Vector2Int(2, 2));
         const state = new GameState(board, PlayerColor.Black, 1);
 
-        const destroyEvent = new DestroyEvent(exploding, "Test destroy", PlayerColor.Black);
+        // Use a different sourceId (not exploding.id) so the ability recognizes it as external
+        const destroyEvent = new DestroyEvent(exploding, "Test destroy", PlayerColor.Black, "test-source");
         const destroyResult = ChessEngine.resolveEvent(state, destroyEvent, [exploding]);
 
         expect(destroyResult.finalState.board.getPieceAt(new Vector2Int(3, 3))).toBeNull();
