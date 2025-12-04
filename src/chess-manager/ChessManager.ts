@@ -22,14 +22,18 @@ import { AI } from "../catalog/ai/AI";
  * - Piece types (just uses Piece interface)
  */
 export class ChessManager {
-    private readonly _history: Array<{ state: GameState; eventLog: readonly GameEvent[] }> = [];
+    private readonly _history: Array<{ 
+        state: GameState; 
+        eventLog: readonly GameEvent[];
+        resolveTimeMs?: number; // Time taken to resolve this move (in milliseconds)
+    }> = [];
     private _currentIndex = -1;
     private readonly ruleset: RuleSet;
 
     constructor(initialState: GameState, ruleset: RuleSet) {
         this.ruleset = ruleset;
         
-        // Seed history with initial state
+        // Seed history with initial state (no timing for initial state)
         this._history.push({ state: initialState, eventLog: [] });
         this._currentIndex = 0;
     }
@@ -42,9 +46,13 @@ export class ChessManager {
     }
 
     /**
-     * Get the full history of states and event logs.
+     * Get the full history of states, event logs, and timing information.
      */
-    get history(): readonly { state: GameState; eventLog: readonly GameEvent[] }[] {
+    get history(): readonly { 
+        state: GameState; 
+        eventLog: readonly GameEvent[];
+        resolveTimeMs?: number;
+    }[] {
         return this._history;
     }
 
@@ -63,12 +71,13 @@ export class ChessManager {
      * 
      * @param move - The move to execute
      * @param advanceTurn - Whether to advance the turn after the move (default: true)
-     * @returns Result with success status, new state, and event log
+     * @returns Result with success status, new state, event log, and timing information
      */
     playMove(move: Move, advanceTurn: boolean = true): {
         success: boolean;
         newState: GameState;
         eventLog: readonly GameEvent[];
+        resolveTimeMs?: number;
     } {
         const currentState = this.currentState;
 
@@ -81,6 +90,9 @@ export class ChessManager {
                 eventLog: [],
             };
         }
+
+        // Start timing for the entire move resolution
+        const startTime = performance.now();
 
         // Orchestrate: TurnStart → Move → TurnEnd → (optionally) TurnAdvanced
         const eventLog: GameEvent[] = [];
@@ -112,10 +124,14 @@ export class ChessManager {
             eventLog.push(...turnAdvancedResult.eventLog);
         }
 
-        // Add to history
+        // Calculate total resolution time
+        const resolveTimeMs = performance.now() - startTime;
+
+        // Add to history with timing information
         this._history.push({
             state: state,
             eventLog: Object.freeze(eventLog),
+            resolveTimeMs: resolveTimeMs,
         });
         this._currentIndex = this._history.length - 1;
 
@@ -123,6 +139,7 @@ export class ChessManager {
             success: true,
             newState: state,
             eventLog: Object.freeze(eventLog),
+            resolveTimeMs: resolveTimeMs,
         };
     }
 
@@ -213,12 +230,13 @@ export class ChessManager {
      * 
      * @param playerColor - The player color for the AI
      * @param ai - The AI implementation to use
-     * @returns Result with success status, new state, and event log
+     * @returns Result with success status, new state, event log, and timing information
      */
     playAITurn(playerColor: PlayerColor, ai: AI): {
         success: boolean;
         newState: GameState;
         eventLog: readonly GameEvent[];
+        resolveTimeMs?: number;
     } {
         const state = this.currentState;
 
@@ -234,7 +252,7 @@ export class ChessManager {
         // Get legal moves for the current player
         const legalMoves = this.getLegalMoves();
 
-        // Let AI select a move
+        // Let AI select a move (timing for AI selection is not included in resolveTimeMs)
         const move = ai.getMove(state, legalMoves);
 
         if (!move) {
@@ -246,6 +264,7 @@ export class ChessManager {
         }
 
         // Execute the move with turn advancement (standard chess behavior)
+        // This will include timing for move resolution
         return this.playMove(move, true);
     }
 }

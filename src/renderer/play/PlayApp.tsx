@@ -6,12 +6,14 @@ import { loadMap } from "../maploader/maploader";
 import { createChessManagerBundleFromState } from "../chess/chessManagerAdapter";
 import { MapDefinition } from "../mapbuilder/types";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
+import { DebugPanel } from "../chess/DebugPanel";
 import { ChessManager } from "../../chess-manager/ChessManager";
 
 export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
   const [mode, setMode] = useState<"hva" | "hvh">("hva");
   const [viewMode, setViewMode] = useState<"2d" | "3d">("3d");
   const [gameKey, setGameKey] = useState(0);
+  const [debugPanelOpen, setDebugPanelOpen] = useState(false);
 
   // Create bundle from loaded map
   const bundle = useMemo(() => {
@@ -83,6 +85,7 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
         <div style={{ flex: 1, position: "relative" }}>
           {viewMode === "2d" ? <BoardView /> : <Board3DView />}
           <GameOverPopupWrapper manager={bundle.manager} humanPlayer={humanPlayer} />
+          <DebugPanel isOpen={debugPanelOpen} onToggle={() => setDebugPanelOpen(!debugPanelOpen)} />
         </div>
       </EngineProvider>
     </div>
