@@ -23,7 +23,7 @@ describe('ScapegoatAbility', () => {
         const state = new GameState(board, PlayerColor.Black, 1);
 
         const captureMove = new Move(new Vector2Int(5, 5), new Vector2Int(4, 4), enemy, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [scapegoat]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Scapegoat should be destroyed, friendly should survive
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))).toBeNull();
@@ -45,7 +45,7 @@ describe('ScapegoatAbility', () => {
         const state = new GameState(board, PlayerColor.Black, 1);
 
         const captureMove = new Move(new Vector2Int(6, 6), new Vector2Int(5, 5), enemy, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [scapegoat]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Scapegoat should not be destroyed (not adjacent)
         expect(result.finalState.board.getPieceAt(new Vector2Int(0, 0))?.id).toBe(scapegoat.id);

@@ -19,7 +19,7 @@ describe('SlipperyTile', () => {
         const state = new GameState(board, PlayerColor.White, 1);
 
         const move = new Move(new Vector2Int(2, 2), new Vector2Int(3, 3), piece);
-        const result = ChessEngine.resolveMove(state, move, [slippery]);
+        const result = ChessEngine.resolveMove(state, move);
 
         // Piece should slide to (4, 4) instead of stopping at (3, 3)
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))).toBeNull();
@@ -40,7 +40,7 @@ describe('SlipperyTile', () => {
         const state = new GameState(board, PlayerColor.White, 1);
 
         const move = new Move(new Vector2Int(2, 2), new Vector2Int(3, 3), piece);
-        const result = ChessEngine.resolveMove(state, move, [slippery]);
+        const result = ChessEngine.resolveMove(state, move);
 
         // Piece should stop at slippery tile if next square is blocked
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))?.id).toBe(piece.id);

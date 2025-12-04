@@ -20,7 +20,7 @@ describe('BouncerAbility', () => {
         const state = new GameState(board, PlayerColor.White, 1);
 
         const captureMove = new Move(new Vector2Int(2, 2), new Vector2Int(4, 4), bouncer, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [bouncer]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Target should be bounced backward, bouncer should move to target's position
         const bounceSquare = new Vector2Int(6, 6);
@@ -43,7 +43,7 @@ describe('BouncerAbility', () => {
         const state = new GameState(board, PlayerColor.White, 1);
 
         const captureMove = new Move(new Vector2Int(2, 2), new Vector2Int(4, 4), bouncer, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [bouncer]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Bounce piece should be destroyed
         expect(result.finalState.board.getPieceAt(new Vector2Int(6, 6))?.owner).toBe(PlayerColor.Black);

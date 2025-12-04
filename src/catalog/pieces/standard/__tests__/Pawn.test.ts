@@ -51,7 +51,7 @@ describe('Pawn', () => {
         const state = new GameState(board, PlayerColor.White, 1);
 
         const move = new Move(new Vector2Int(0, 6), new Vector2Int(0, 7), pawn);
-        const result = ChessEngine.resolveMove(state, move, [pawn]);
+        const result = ChessEngine.resolveMove(state, move);
 
         // Check that pawn was promoted to queen
         const pieceAtEnd = result.finalState.board.getPieceAt(new Vector2Int(0, 7));

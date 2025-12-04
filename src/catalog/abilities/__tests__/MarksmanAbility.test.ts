@@ -21,7 +21,7 @@ describe('MarksmanAbility', () => {
         const state = new GameState(board, PlayerColor.White, 1);
 
         const captureMove = new Move(new Vector2Int(0, 0), new Vector2Int(5, 5), marksman, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [marksman]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Should have destroy event instead of capture
         const destroyEvent = result.eventLog.find(e => e instanceof DestroyEvent);
@@ -43,21 +43,14 @@ describe('MarksmanAbility', () => {
 
         // First ranged attack
         const move1 = new Move(new Vector2Int(0, 0), new Vector2Int(5, 5), marksman, true);
-        const result1 = ChessEngine.resolveMove(state, move1, [marksman]);
+        const result1 = ChessEngine.resolveMove(state, move1);
         expect(result1.eventLog.some(e => e instanceof DestroyEvent)).toBe(true);
 
         // Second ranged attack (should still work with 1 charge left)
         const state2 = result1.finalState;
         const marksman2 = state2.board.getPieceAt(new Vector2Int(0, 0))!;
-        // Get listeners from the new state (the marksman piece itself is a listener)
-        const listeners2: Listener[] = [];
-        for (const piece of state2.board.getAllPieces()) {
-            if ('priority' in piece && typeof (piece as any).onBeforeEvent === 'function') {
-                listeners2.push(piece as Listener);
-            }
-        }
         const move2 = new Move(new Vector2Int(0, 0), new Vector2Int(6, 6), marksman2, true);
-        const result2 = ChessEngine.resolveMove(state2, move2, listeners2);
+        const result2 = ChessEngine.resolveMove(state2, move2);
         expect(result2.eventLog.some(e => e instanceof DestroyEvent)).toBe(true);
     });
 

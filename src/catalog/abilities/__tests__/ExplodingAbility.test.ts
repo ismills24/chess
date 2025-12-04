@@ -29,7 +29,7 @@ describe('ExplodingAbility', () => {
         const state2 = new GameState(board, PlayerColor.Black, 1);
         
         const captureMove = new Move(new Vector2Int(4, 3), new Vector2Int(3, 3), capturer, true);
-        const result = ChessEngine.resolveMove(state2, captureMove, [exploding]);
+        const result = ChessEngine.resolveMove(state2, captureMove);
 
         // Exploding piece and adjacent pieces should be destroyed
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))).toBeNull();
@@ -52,7 +52,7 @@ describe('ExplodingAbility', () => {
 
         // Use a different sourceId (not exploding.id) so the ability recognizes it as external
         const destroyEvent = new DestroyEvent(exploding, "Test destroy", PlayerColor.Black, "test-source");
-        const destroyResult = ChessEngine.resolveEvent(state, destroyEvent, [exploding]);
+        const destroyResult = ChessEngine.resolveEvent(state, destroyEvent);
 
         expect(destroyResult.finalState.board.getPieceAt(new Vector2Int(3, 3))).toBeNull();
         expect(destroyResult.finalState.board.getPieceAt(new Vector2Int(2, 2))).toBeNull();

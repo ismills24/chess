@@ -61,7 +61,7 @@ describe('ChessEngine', () => {
 
     it('should resolve basic move', () => {
         const move = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), piece1);
-        const result = ChessEngine.resolveMove(initialState, move, []);
+        const result = ChessEngine.resolveMove(initialState, move);
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))).not.toBeNull();
         expect(result.eventLog.length).toBeGreaterThanOrEqual(1);
     });
@@ -73,7 +73,7 @@ describe('ChessEngine', () => {
         const stateWithEnemy = new GameState(boardWithEnemy, PlayerColor.White, 1, []);
 
         const captureMove = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), piece1, true);
-        const result = ChessEngine.resolveMove(stateWithEnemy, captureMove, []);
+        const result = ChessEngine.resolveMove(stateWithEnemy, captureMove);
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))).not.toBeNull();
         expect(result.finalState.board.getPieceAt(new Vector2Int(1, 1))).toBeNull();
         // Check that capture event is in log
@@ -83,26 +83,23 @@ describe('ChessEngine', () => {
 
     it('should resolve single event', () => {
         const turnStartEvent = new TurnStartEvent(PlayerColor.White, 1);
-        const result = ChessEngine.resolveEvent(initialState, turnStartEvent, []);
+        const result = ChessEngine.resolveEvent(initialState, turnStartEvent);
         expect(result.eventLog.length).toBe(1);
         expect(result.eventLog[0]).toBeInstanceOf(TurnStartEvent);
     });
 
-    it('should resolve full turn', () => {
+    it('should resolve move without turn management', () => {
         const move = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), piece1);
-        const result = ChessEngine.resolveTurn(initialState, move, []);
+        const result = ChessEngine.resolveMove(initialState, move);
         const eventTypes = result.eventLog.map(e => e.constructor.name);
-        expect(eventTypes).toContain("TurnStartEvent");
         expect(eventTypes).toContain("MoveEvent");
-        expect(eventTypes).toContain("TurnEndEvent");
-        expect(eventTypes).toContain("TurnAdvancedEvent");
-        expect(result.finalState.currentPlayer).toBe(PlayerColor.Black);
-        expect(result.finalState.turnNumber).toBe(2);
+        // Note: TurnStart/TurnEnd/TurnAdvanced are now ChessManager's responsibility
     });
 
     it('should call listeners in resolveMove', () => {
         let listenerCalled = false;
-        const testListener: Listener = {
+        const testListenerPiece: Piece & Listener = {
+            ...piece1,
             priority: 0,
             onAfterEvent(ctx, event) {
                 if (event instanceof MoveEvent) {
@@ -112,8 +109,12 @@ describe('ChessEngine', () => {
             },
         };
 
-        const move = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), piece1);
-        ChessEngine.resolveMove(initialState, move, [testListener]);
+        const boardWithListener = new Board(8, 8, () => createMockTile("tile", new Vector2Int(0, 0)));
+        boardWithListener.placePiece(testListenerPiece, new Vector2Int(1, 1));
+        const stateWithListener = new GameState(boardWithListener, PlayerColor.White, 1, []);
+
+        const move = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), testListenerPiece);
+        ChessEngine.resolveMove(stateWithListener, move);
         expect(listenerCalled).toBe(true);
     });
 
@@ -131,35 +132,18 @@ describe('ChessEngine', () => {
         expect(gameOverResult.winner === null || gameOverResult.winner === PlayerColor.White || gameOverResult.winner === PlayerColor.Black).toBe(true);
     });
 
-    it('should let listeners see turn events', () => {
-        const turnEventLog: string[] = [];
-        const turnListener: Listener = {
-            priority: 0,
-            onAfterEvent(ctx, event) {
-                turnEventLog.push(event.constructor.name);
-                return [];
-            },
-        };
-
-        const move = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), piece1);
-        ChessEngine.resolveTurn(initialState, move, [turnListener]);
-        expect(turnEventLog).toContain("TurnStartEvent");
-        expect(turnEventLog).toContain("MoveEvent");
-        expect(turnEventLog).toContain("TurnEndEvent");
-        expect(turnEventLog).toContain("TurnAdvancedEvent");
-    });
-
     it('should maintain state immutability across multiple resolves', () => {
         const move = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), piece1);
-        const result1 = ChessEngine.resolveMove(initialState, move, []);
-        const result2 = ChessEngine.resolveMove(initialState, move, []);
+        const result1 = ChessEngine.resolveMove(initialState, move);
+        const result2 = ChessEngine.resolveMove(initialState, move);
         expect(initialState.board.getPieceAt(new Vector2Int(1, 1))).not.toBeNull();
         expect(result1.finalState.board.getPieceAt(new Vector2Int(3, 3))).not.toBeNull();
         expect(result2.finalState.board.getPieceAt(new Vector2Int(3, 3))).not.toBeNull();
     });
 
     it('should handle chain reactions', () => {
-        const chainListener: Listener = {
+        const chainListenerPiece: Piece & Listener = {
+            ...piece1,
             priority: 0,
             onAfterEvent(ctx, event) {
                 if (event instanceof MoveEvent) {
@@ -170,8 +154,12 @@ describe('ChessEngine', () => {
             },
         };
 
-        const move = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), piece1);
-        const result = ChessEngine.resolveMove(initialState, move, [chainListener]);
+        const boardWithListener = new Board(8, 8, () => createMockTile("tile", new Vector2Int(0, 0)));
+        boardWithListener.placePiece(chainListenerPiece, new Vector2Int(1, 1));
+        const stateWithListener = new GameState(boardWithListener, PlayerColor.White, 1, []);
+
+        const move = new Move(new Vector2Int(1, 1), new Vector2Int(3, 3), chainListenerPiece);
+        const result = ChessEngine.resolveMove(stateWithListener, move);
         expect(result.eventLog.length).toBeGreaterThanOrEqual(2);
         const hasDestroy = result.eventLog.some(e => e instanceof DestroyEvent);
         expect(hasDestroy).toBe(true);

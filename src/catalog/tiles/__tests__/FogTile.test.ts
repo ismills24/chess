@@ -21,7 +21,7 @@ describe('FogTile', () => {
         const state = new GameState(board, PlayerColor.Black, 1);
 
         const captureMove = new Move(new Vector2Int(4, 4), new Vector2Int(3, 3), attacker, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [fog]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Protected piece should survive
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))?.owner).toBe(PlayerColor.White);

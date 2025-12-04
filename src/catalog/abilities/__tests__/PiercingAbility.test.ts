@@ -20,7 +20,7 @@ describe('PiercingAbility', () => {
         const state = new GameState(board, PlayerColor.White, 1);
 
         const captureMove = new Move(new Vector2Int(2, 2), new Vector2Int(4, 4), piercing, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [piercing]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Piercing piece should land behind target, target should be destroyed
         const landingSquare = new Vector2Int(6, 6);
@@ -43,7 +43,7 @@ describe('PiercingAbility', () => {
         const state = new GameState(board, PlayerColor.White, 1);
 
         const captureMove = new Move(new Vector2Int(2, 2), new Vector2Int(4, 4), piercing, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [piercing]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Both target and landing piece should be destroyed
         expect(result.finalState.board.getPieceAt(new Vector2Int(4, 4))).toBeNull();

@@ -22,7 +22,7 @@ describe('GuardianTile', () => {
         const state = new GameState(board, PlayerColor.Black, 1);
 
         const captureMove = new Move(new Vector2Int(4, 4), new Vector2Int(3, 3), attacker, true);
-        const result = ChessEngine.resolveMove(state, captureMove, [guardian]);
+        const result = ChessEngine.resolveMove(state, captureMove);
 
         // Protected piece should survive, guardian should be consumed
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))?.owner).toBe(PlayerColor.White);
@@ -44,7 +44,7 @@ describe('GuardianTile', () => {
         const state = new GameState(board, PlayerColor.Black, 1);
 
         const move = new Move(new Vector2Int(2, 2), new Vector2Int(3, 3), mover);
-        const result = ChessEngine.resolveMove(state, move, [guardian]);
+        const result = ChessEngine.resolveMove(state, move);
 
         // Move should be cancelled, guardian consumed
         expect(result.finalState.board.getPieceAt(new Vector2Int(2, 2))?.id).toBe(mover.id);
