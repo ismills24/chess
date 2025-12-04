@@ -5,7 +5,8 @@ import { Board } from "../../chess-engine/state/Board";
 import { Move } from "../../chess-engine/primitives/Move";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
-import { StandardChessRuleSet } from "../../catalog/rulesets/StandardChess";
+import { RuleSet } from "../../chess-engine/rules/RuleSet";
+import { LastPieceStandingRuleSet } from "../../catalog/rulesets/LastPieceStanding";
 import { GreedyAI } from "../../catalog/ai/GreedyAI";
 import { createPiece, createTile } from "../../catalog/registry/Catalog";
 import { PieceId } from "../../catalog/registry/Catalog";
@@ -22,7 +23,7 @@ import { PieceId } from "../../catalog/registry/Catalog";
 export type ChessManagerBundle = {
     manager: ChessManager;
     getState: () => GameState;
-    rules: StandardChessRuleSet;
+    rules: RuleSet;
     submitHumanMove: (move: Move) => void;
     undo: () => void;
     redo: () => void;
@@ -82,7 +83,7 @@ export function createChessManagerBundleFromState(
     initialState: GameState,
     humanPlayer: PlayerColor | null = PlayerColor.White
 ): ChessManagerBundle {
-    const rules = new StandardChessRuleSet();
+    const rules = new LastPieceStandingRuleSet();
     const manager = new ChessManager(initialState, rules);
 
     const getState = () => manager.currentState;
