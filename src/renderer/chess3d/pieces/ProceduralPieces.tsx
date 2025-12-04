@@ -1,5 +1,5 @@
 import React from "react";
-import { PlayerColor } from "../../../engine/primitives/PlayerColor";
+import { PlayerColor } from "../../../chess-engine/primitives/PlayerColor";
 import { useGeometryStore } from "./GeometryStore";
 
 const WHITE_PIECE = "#f5f0e6";
