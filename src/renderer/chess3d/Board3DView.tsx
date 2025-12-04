@@ -96,27 +96,31 @@ const ClickHandler: React.FC<{
 
   useEffect(() => {
     const canvas = gl.domElement;
-    
+
     const handleClick = (event: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-      
+
       raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
       const intersection = new THREE.Vector3();
       const hit = raycaster.ray.intersectPlane(BOARD_PLANE, intersection);
-      
+
       if (hit) {
         const gridPos = worldToGrid(intersection.x, intersection.z, dimensions);
-        if (gridPos.x >= 0 && gridPos.x < dimensions.width && 
-            gridPos.y >= 0 && gridPos.y < dimensions.height) {
+        if (
+          gridPos.x >= 0 &&
+          gridPos.x < dimensions.width &&
+          gridPos.y >= 0 &&
+          gridPos.y < dimensions.height
+        ) {
           onSquareClick(gridPos);
         }
       }
     };
-    
-    canvas.addEventListener('click', handleClick);
-    return () => canvas.removeEventListener('click', handleClick);
+
+    canvas.addEventListener("click", handleClick);
+    return () => canvas.removeEventListener("click", handleClick);
   }, [camera, gl, raycaster, dimensions, onSquareClick]);
 
   return null;
@@ -248,7 +252,14 @@ export const Board3DView: React.FC = () => {
           far: 100,
         }}
         shadows
-        gl={{ antialias: true }}
+        gl={{
+          antialias: true,
+          powerPreference: "high-performance",
+          stencil: false,
+          depth: true,
+          alpha: false,
+        }}
+        frameloop="always"
       >
         <color attach="background" args={["#1a1a2e"]} />
         <CameraSetup
@@ -270,16 +281,13 @@ export const Board3DView: React.FC = () => {
         />
         <directionalLight position={[-5, 8, -3]} intensity={0.4} />
 
-        <ClickHandler 
-          dimensions={dimensions} 
-          onSquareClick={handleSquareClick} 
+        <ClickHandler
+          dimensions={dimensions}
+          onSquareClick={handleSquareClick}
         />
-        
+
         <GeometryProvider>
-          <BoardMesh
-            board={state.board}
-            legalMoves={legalTargets}
-          />
+          <BoardMesh board={state.board} legalMoves={legalTargets} />
 
           {pieces.map((piece) => (
             <Piece3D
