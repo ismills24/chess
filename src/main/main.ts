@@ -59,10 +59,13 @@ app.on("activate", () => {
 
 ipcMain.handle("maps:save", async (_evt, json: string) => {
   const win = BrowserWindow.getFocusedWindow();
+  const mapsDir = app.isPackaged
+    ? path.join(process.resourcesPath, "assets", "maps")
+    : path.join(app.getAppPath(), "assets", "maps");
   const { filePath, canceled } = await dialog.showSaveDialog(win!, {
     title: "Save Map JSON",
     filters: [{ name: "Map JSON", extensions: ["json"] }],
-    defaultPath: "map.json",
+    defaultPath: path.join(mapsDir, "map.json"),
   });
   if (canceled || !filePath) return false;
   await fs.writeFile(filePath, json, "utf-8");
