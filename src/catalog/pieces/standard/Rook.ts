@@ -26,3 +26,4 @@ export class Rook extends PieceBase {
 }
 
 
+

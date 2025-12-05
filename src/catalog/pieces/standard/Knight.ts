@@ -30,3 +30,4 @@ export class Knight extends PieceBase {
 }
 
 
+

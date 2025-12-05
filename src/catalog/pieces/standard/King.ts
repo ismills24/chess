@@ -30,3 +30,4 @@ export class King extends PieceBase {
 }
 
 
+

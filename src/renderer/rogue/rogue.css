@@ -1,0 +1,621 @@
+/* Roguelike Chess Styles */
+
+.rogue-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #e8e8e8;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Header */
+.rogue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid #e94560;
+}
+
+.rogue-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #e94560;
+    text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+.rogue-stats {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.stat {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.stat.debug-toggle {
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.stat.debug-toggle:hover {
+    background: rgba(233, 69, 96, 0.2);
+    border-color: #e94560;
+}
+
+.stat.debug-toggle.active {
+    background: rgba(233, 69, 96, 0.3);
+    border-color: #e94560;
+    color: #e94560;
+}
+
+/* Main Content */
+.rogue-main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    overflow: hidden;
+}
+
+/* Map View */
+.map-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    max-width: 800px;
+    width: 100%;
+}
+
+.map-view h2 {
+    font-size: 32px;
+    margin: 0;
+    color: #fff;
+}
+
+.roster-preview {
+    width: 100%;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.roster-preview h3 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    color: #aaa;
+}
+
+.roster-pieces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+
+.empty-roster {
+    color: #888;
+    font-style: italic;
+}
+
+.map-choices {
+    display: flex;
+    gap: 24px;
+}
+
+.map-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 48px;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 200px;
+}
+
+.map-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.shop-button {
+    background: linear-gradient(135deg, #2d5a27 0%, #1e3d1a 100%);
+    border-color: #4caf50;
+}
+
+.shop-button:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
+}
+
+.encounter-button {
+    background: linear-gradient(135deg, #8b2020 0%, #5a1515 100%);
+    border-color: #e94560;
+}
+
+.encounter-button:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(233, 69, 96, 0.4);
+}
+
+.button-icon {
+    font-size: 48px;
+}
+
+.button-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.button-hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Shop View */
+.shop-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    max-width: 500px;
+    width: 100%;
+    padding: 32px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 16px;
+    border: 2px solid #4caf50;
+}
+
+.shop-view h2 {
+    font-size: 28px;
+    margin: 0;
+}
+
+.shop-info {
+    display: flex;
+    gap: 24px;
+    font-size: 16px;
+}
+
+.shop-info strong {
+    color: #4caf50;
+}
+
+.shop-offer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    width: 100%;
+}
+
+.shop-offer h3 {
+    margin: 0;
+    color: #aaa;
+}
+
+.offer-cost {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffd700;
+}
+
+.buy-button {
+    padding: 16px 48px;
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.buy-button:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.5);
+}
+
+.buy-button:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+
+.shop-empty {
+    text-align: center;
+    color: #888;
+    padding: 24px;
+}
+
+.leave-button {
+    padding: 12px 32px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.leave-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Encounter View */
+.encounter-view {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.encounter-info {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.turn-indicator {
+    font-size: 20px;
+    font-weight: 700;
+    padding: 8px 24px;
+    border-radius: 8px;
+}
+
+.turn-indicator.player-turn {
+    background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+    animation: pulse 1.5s infinite;
+}
+
+.turn-indicator.ai-turn {
+    background: linear-gradient(135deg, #e94560 0%, #8b2020 100%);
+}
+
+.turn-number {
+    font-size: 16px;
+    color: #888;
+    display: flex;
+    align-items: center;
+}
+
+.encounter-board {
+    flex: 1;
+    min-height: 0;
+}
+
+.encounter-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 24px;
+    color: #888;
+}
+
+/* Game Over View */
+.gameover-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 48px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 16px;
+    border: 2px solid #e94560;
+}
+
+.gameover-view h2 {
+    font-size: 48px;
+    margin: 0;
+    color: #e94560;
+    text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+}
+
+.gameover-view p {
+    font-size: 18px;
+    color: #aaa;
+}
+
+.restart-button {
+    padding: 16px 48px;
+    font-size: 20px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #e94560 0%, #8b2020 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.restart-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(233, 69, 96, 0.5);
+}
+
+/* Piece Card */
+.piece-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-width: 80px;
+}
+
+.piece-icon {
+    width: 48px;
+    height: 48px;
+    filter: brightness(1.2);
+}
+
+.piece-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.piece-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.piece-abilities {
+    font-size: 16px;
+}
+
+.piece-details {
+    font-size: 12px;
+    color: #888;
+}
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+    }
+}
+
+/* =============================================================================
+   Debug Panel - Roguelike Theme Override
+   ============================================================================= */
+
+/* Hide the default floating toggle - we use the header button instead */
+.encounter-board .debug-panel-toggle {
+    display: none;
+}
+
+.encounter-board .debug-panel {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 400px;
+    max-height: 50vh;
+    background: rgba(10, 10, 20, 0.95);
+    border: 1px solid #e94560;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.encounter-board .debug-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #e94560 0%, #8b2020 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.encounter-board .debug-panel-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.encounter-board .debug-panel-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.encounter-board .debug-panel-close:hover {
+    opacity: 1;
+}
+
+.encounter-board .debug-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.encounter-board .debug-panel-empty {
+    padding: 24px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.encounter-board .debug-panel-moves {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.encounter-board .debug-move-entry {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.encounter-board .debug-move-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.encounter-board .debug-move-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.encounter-board .debug-move-number {
+    font-weight: 700;
+    color: #e94560;
+    font-size: 12px;
+}
+
+.encounter-board .debug-move-stats {
+    flex: 1;
+    font-size: 12px;
+    color: #888;
+}
+
+.encounter-board .debug-move-time strong {
+    color: #4caf50;
+}
+
+.encounter-board .debug-move-toggle {
+    color: #666;
+    font-size: 10px;
+}
+
+.encounter-board .debug-move-details {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.encounter-board .debug-event-summary {
+    margin-bottom: 12px;
+}
+
+.encounter-board .debug-event-summary strong {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.encounter-board .debug-event-type-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.encounter-board .debug-event-type-badge {
+    padding: 3px 8px;
+    background: rgba(233, 69, 96, 0.2);
+    border: 1px solid rgba(233, 69, 96, 0.4);
+    border-radius: 4px;
+    font-size: 10px;
+    color: #e94560;
+}
+
+.encounter-board .debug-events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.encounter-board .debug-event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.encounter-board .debug-event-index {
+    color: #555;
+    font-family: monospace;
+    min-width: 24px;
+}
+
+.encounter-board .debug-event-type {
+    color: #e94560;
+    font-weight: 600;
+    min-width: 100px;
+}
+
+.encounter-board .debug-event-details {
+    color: #aaa;
+    flex: 1;
+}
+
+.encounter-board .debug-event-player-action {
+    padding: 2px 6px;
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    border-radius: 3px;
+    font-size: 9px;
+    color: #4caf50;
+    text-transform: uppercase;
+}
+
+/* Scrollbar styling for debug panel */
+.encounter-board .debug-panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.encounter-board .debug-panel-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.encounter-board .debug-panel-content::-webkit-scrollbar-thumb {
+    background: #e94560;
+    border-radius: 3px;
+}
+
+.encounter-board .debug-panel-content::-webkit-scrollbar-thumb:hover {
+    background: #ff6b8a;
+}
+

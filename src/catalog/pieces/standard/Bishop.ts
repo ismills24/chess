@@ -26,3 +26,4 @@ export class Bishop extends PieceBase {
 }
 
 
+
