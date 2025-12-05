@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createActor } from "xstate";
 import { rogueMachine, createRogueActor, RogueActor } from "../rogueMachine";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
@@ -17,10 +17,13 @@ describe("RogueMachine", () => {
             expect(snapshot.value).toBe("map");
         });
 
-        it("should initialize with 4 roster pieces", () => {
+        it("should initialize with a roster of pieces", () => {
             actor.start();
             const snapshot = actor.getSnapshot();
-            expect(snapshot.context.roster.length).toBe(4);
+            // With 10 piece value, 2 ability value, min 2 pawns, and 1 King
+            // Roster size can vary based on random selection (typically 3-11 pieces)
+            expect(snapshot.context.roster.length).toBeGreaterThanOrEqual(3);
+            expect(snapshot.context.roster.length).toBeLessThanOrEqual(11);
         });
 
         it("should initialize with 0 money", () => {
@@ -68,12 +71,12 @@ describe("RogueMachine", () => {
         it("should not allow buying without money", () => {
             const beforeSnapshot = actor.getSnapshot();
             expect(beforeSnapshot.context.money).toBe(0);
-            expect(beforeSnapshot.context.roster.length).toBe(4);
+            const initialRosterSize = beforeSnapshot.context.roster.length;
 
             actor.send({ type: "BUY_PIECE" });
 
             const afterSnapshot = actor.getSnapshot();
-            expect(afterSnapshot.context.roster.length).toBe(4); // No change
+            expect(afterSnapshot.context.roster.length).toBe(initialRosterSize); // No change
         });
 
         it("should transition back to map on LEAVE_SHOP", () => {
@@ -96,7 +99,8 @@ describe("RogueMachine", () => {
 
         it("should track encounter roster IDs", () => {
             const snapshot = actor.getSnapshot();
-            expect(snapshot.context.encounterRosterIds.length).toBe(4);
+            // Should match the initial roster size
+            expect(snapshot.context.encounterRosterIds.length).toBe(snapshot.context.roster.length);
         });
 
         it("should be in waitingForPlayerTurn state initially", () => {
@@ -145,7 +149,8 @@ describe("RogueMachine", () => {
             
             // Note: Getting to gameOver requires losing all pieces in an encounter
             // For unit testing purposes, we verify the restart action works
-            expect(testActor.getSnapshot().context.roster.length).toBe(4);
+            const snapshot = testActor.getSnapshot();
+            expect(snapshot.context.roster.length).toBeGreaterThanOrEqual(3);
         });
     });
 
@@ -159,7 +164,7 @@ describe("RogueMachine", () => {
             // Context starts with 0 money, so buying shouldn't work
             const ctx = snapshot.getSnapshot().context;
             expect(ctx.money).toBe(0);
-            expect(ctx.roster.length).toBe(4);
+            expect(ctx.roster.length).toBeGreaterThanOrEqual(3);
         });
     });
 });

@@ -19,7 +19,7 @@ import { LastPieceStandingRuleSet } from "../catalog/rulesets/LastPieceStanding"
 import { ShopOffer, createShopOffer, canBuyPiece, buyPiece } from "./shop/shop";
 import { generateEnemyRoster } from "./encounter/encounter";
 import { generateCombatBoard } from "./encounter/boardGeneration";
-import { createRandomRosterPiece } from "./util/roster";
+import { generateValueBasedRoster } from "./util/roster";
 
 // =============================================================================
 // Types
@@ -53,11 +53,8 @@ export type RogueEvent =
 // =============================================================================
 
 function createInitialRoster(): Piece[] {
-    const roster: Piece[] = [];
-    for (let i = 0; i < 4; i++) {
-        roster.push(createRandomRosterPiece());
-    }
-    return roster;
+    // Starting roster: 10 piece value, 2 ability value, minimum 2 pawns, with King
+    return generateValueBasedRoster(10, 2, 2, PlayerColor.White, true);
 }
 
 function createInitialContext(): RogueContext {
