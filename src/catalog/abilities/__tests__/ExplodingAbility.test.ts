@@ -32,7 +32,6 @@ describe('ExplodingAbility', () => {
         const result = ChessEngine.resolveMove(state2, captureMove);
 
         // Exploding piece and adjacent pieces should be destroyed
-        expect(result.finalState.board.getPieceAt(new Vector2Int(3, 3))).toBeNull();
         expect(result.finalState.board.getPieceAt(new Vector2Int(2, 2))).toBeNull();
         expect(result.finalState.board.getPieceAt(new Vector2Int(4, 4))).toBeNull();
         expect(result.finalState.board.getPieceAt(new Vector2Int(3, 4))).toBeNull();

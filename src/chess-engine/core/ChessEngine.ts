@@ -157,7 +157,6 @@ export class ChessEngine {
         const mover = state.board.getPieceAt(move.from);
         if (!mover) {
             // Invalid move - return empty array
-            console.log(`[ChessEngine.buildMoveEvents] No mover at ${move.from.toString()}`);
             return [];
         }
 
@@ -167,10 +166,7 @@ export class ChessEngine {
         const target = state.board.getPieceAt(move.to);
         if (target) {
             // Capture event
-            console.log(`[ChessEngine.buildMoveEvents] Creating CaptureEvent: ${mover.id} captures ${target.id} at ${move.to.toString()}`);
             events.push(new CaptureEvent(mover, target, actor, true));
-        } else {
-            console.log(`[ChessEngine.buildMoveEvents] No target at ${move.to.toString()}, creating MoveEvent only`);
         }
 
         // Move event
@@ -185,7 +181,6 @@ export class ChessEngine {
             )
         );
 
-        console.log(`[ChessEngine.buildMoveEvents] Created ${events.length} events`);
         return events;
     }
 }

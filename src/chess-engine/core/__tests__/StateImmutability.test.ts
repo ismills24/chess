@@ -127,7 +127,12 @@ describe('StateImmutability', () => {
             piece1.id
         );
         const newState = EventApplier.applyEvent(moveEvent, initialState);
-        const captureEvent = new CaptureEvent(piece1, piece2, PlayerColor.White, true);
+        // Get piece1 from the new state at its new position for the capture event
+        const movedPiece1 = newState.board.getPieceAt(new Vector2Int(5, 5));
+        if (!movedPiece1) {
+            throw new Error("Piece1 should be at (5,5) after move");
+        }
+        const captureEvent = new CaptureEvent(movedPiece1, piece2, PlayerColor.White, true);
         const stateAfterCapture = EventApplier.applyEvent(captureEvent, newState);
         expect(initialState.board.getPieceAt(new Vector2Int(2, 2))).not.toBeNull();
         expect(newState.board.getPieceAt(new Vector2Int(2, 2))).not.toBeNull();

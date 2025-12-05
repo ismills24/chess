@@ -6,9 +6,6 @@ import { GameState } from "../../chess-engine/state/GameState";
 import { createPiece, createTile, applyAbility } from "../../catalog/registry/Catalog";
 
 export function loadMap(def: MapDefinition): GameState {
-    console.log(`[MapLoader] ===== LOADING MAP =====`);
-    console.log(`[MapLoader] Map definition:`, JSON.stringify(def, null, 2));
-
     // Create board with default tiles
     const board = new Board(def.width, def.height, () => createTile("StandardTile"));
 
@@ -45,7 +42,6 @@ function makePiece(def: PlacedPiece, pos: Vector2Int) {
     let piece = createPiece(def.type, color, pos);
 
     // Wrap in abilities if any (decorators are now called abilities)
-    console.log(`[MapLoader] Applying abilities to ${piece.name}:`, def.decorators);
     for (const abilityId of def.decorators) {
         piece = applyAbility(abilityId, piece);
     }

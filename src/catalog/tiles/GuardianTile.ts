@@ -29,9 +29,16 @@ export class GuardianTile extends BaseTile implements Listener {
         // Consume the guardian tile
         if (event instanceof CaptureEvent) {
             if (event.target.position.equals(this.position)) {
+                // Get current tile from state to ensure we have the right reference
+                const currentTile = ctx.state.board.getTile(this.position);
+                if (!currentTile || currentTile.id !== this.id) {
+                    // Tile has already been changed, don't process
+                    return event;
+                }
                 // Cancel capture and consume tile
                 return new TileChangedEvent(
                     this.position,
+                    currentTile,
                     new StandardTile(this.position),
                     event.actor
                 );
@@ -46,9 +53,17 @@ export class GuardianTile extends BaseTile implements Listener {
             const occupant = ctx.state.board.getPieceAt(this.position);
             if (!occupant) return event;
 
+            // Get current tile from state to ensure we have the right reference
+            const currentTile = ctx.state.board.getTile(this.position);
+            if (!currentTile || currentTile.id !== this.id) {
+                // Tile has already been changed, don't process
+                return event;
+            }
+
             // Cancel move and consume tile
             return new TileChangedEvent(
                 this.position,
+                currentTile,
                 new StandardTile(this.position),
                 event.actor
             );

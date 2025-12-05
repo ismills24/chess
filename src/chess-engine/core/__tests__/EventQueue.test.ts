@@ -152,22 +152,38 @@ describe('EventQueue', () => {
     });
 
     it('should handle chain reactions', () => {
+        // Set up board with multiple pieces for chain reaction
+        const boardWithChain = new Board(8, 8, () => createMockTile("tile", new Vector2Int(0, 0)));
+        const piece2 = createMockPiece("piece2", PlayerColor.White, new Vector2Int(2, 2));
+        const piece3 = createMockPiece("piece3", PlayerColor.White, new Vector2Int(3, 3));
+        boardWithChain.placePiece(piece1, new Vector2Int(1, 1));
+        boardWithChain.placePiece(piece2, new Vector2Int(2, 2));
+        boardWithChain.placePiece(piece3, new Vector2Int(3, 3));
+        const stateWithChain = new GameState(boardWithChain, PlayerColor.White, 1, []);
+
         let chainCount = 0;
         const chainListener: Listener = {
             priority: 0,
             onAfterEvent(ctx, event) {
                 chainCount++;
                 if (chainCount < 3 && event instanceof DestroyEvent) {
-                    // Generate another destroy event
-                    const newPiece = createMockPiece(`piece${chainCount}`, PlayerColor.White, new Vector2Int(chainCount, chainCount));
-                    return [new DestroyEvent(newPiece, "Chain reaction", PlayerColor.White, "chain")];
+                    // Generate another destroy event for the next piece in the chain
+                    let nextPiece: Piece | null = null;
+                    if (chainCount === 1) {
+                        nextPiece = ctx.state.board.getPieceAt(new Vector2Int(2, 2));
+                    } else if (chainCount === 2) {
+                        nextPiece = ctx.state.board.getPieceAt(new Vector2Int(3, 3));
+                    }
+                    if (nextPiece) {
+                        return [new DestroyEvent(nextPiece, "Chain reaction", PlayerColor.White, "chain")];
+                    }
                 }
                 return [];
             },
         };
 
         const destroyEvent = new DestroyEvent(piece1, "Initial", PlayerColor.White, "source");
-        const result = EventQueue.process(initialState, [destroyEvent], [chainListener]);
+        const result = EventQueue.process(stateWithChain, [destroyEvent], [chainListener]);
         expect(result.eventLog.length).toBeGreaterThanOrEqual(3);
     });
 

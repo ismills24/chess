@@ -24,7 +24,6 @@ export class GreedyAI implements AI {
             return null;
         }
 
-        const start = performance.now();
         let bestScore = Number.NEGATIVE_INFINITY;
         const bestMoves: Move[] = [];
 
@@ -43,24 +42,14 @@ export class GreedyAI implements AI {
 
         const end = performance.now();
         const choice = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-        console.log(
-            `[GreedyAI] Selected move among ${bestMoves.length} options (score=${bestScore}). Time=${end - start}ms`
-        );
         return choice;
     }
 
-    /**
-     * Simulate a move by resolving it through ChessEngine and advancing the turn.
-     * This matches the old Simulation.simulateTurn() behavior - we need to advance
-     * the turn so the AI evaluates positions from the opponent's perspective.
-     */
     private simulateTurn(state: GameState, move: Move): GameState {
         // Resolve the move
         const moveResult = ChessEngine.resolveMove(state, move);
         let newState = moveResult.finalState;
         
-        // Advance the turn (critical for correct evaluation)
-        // The next player is the opponent of the player who just moved
         const nextPlayer = state.currentPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
         const turnAdvancedEvent = new TurnAdvancedEvent(nextPlayer, state.turnNumber + 1);
         const turnResult = ChessEngine.resolveEvent(newState, turnAdvancedEvent);

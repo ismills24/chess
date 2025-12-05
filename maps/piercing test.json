@@ -8,7 +8,9 @@
       "color": "White",
       "x": 0,
       "y": 0,
-      "decorators": ["Piercing"]
+      "decorators": [
+        "Piercing"
+      ]
     },
     {
       "type": "King",
@@ -36,6 +38,20 @@
       "color": "Black",
       "x": 4,
       "y": 7,
+      "decorators": []
+    },
+    {
+      "type": "Bishop",
+      "color": "Black",
+      "x": 0,
+      "y": 3,
+      "decorators": []
+    },
+    {
+      "type": "Queen",
+      "color": "Black",
+      "x": 0,
+      "y": 4,
       "decorators": []
     }
   ],

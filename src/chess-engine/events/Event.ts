@@ -2,11 +2,11 @@ import { PlayerColor } from "../primitives/PlayerColor";
 import { Vector2Int } from "../primitives/Vector2Int";
 import { Piece, Tile } from "../state/types";
 
+import { GameState } from "../state/GameState";
+
 /**
  * Base class for all events in the system.
  * Immutable, with a clear source and description.
- * 
- * Note: Renamed from GameEvent to Event for the new architecture.
  */
 export abstract class Event {
     readonly id: string;
@@ -27,6 +27,15 @@ export abstract class Event {
         this.description = params.description ?? "";
         this.sourceId = params.sourceId;
     }
+
+    /**
+     * Check if this event is still valid given the current state.
+     * Used to filter out events that target pieces/tiles that no longer exist.
+     * 
+     * @param state - Current game state
+     * @returns True if the event is still valid and should be applied
+     */
+    abstract isStillValid(state: GameState): boolean;
 }
 
 // --------------------- Concrete event types ---------------------
@@ -54,6 +63,19 @@ export class MoveEvent extends Event {
         this.to = to;
         this.piece = piece;
     }
+
+    isStillValid(state: GameState): boolean {
+        // Check that the piece still exists at the from position
+        const pieceAtFrom = state.board.getPieceAt(this.from);
+        if (!pieceAtFrom) {
+            return false;
+        }
+        // Check that it's the same piece (by ID)
+        if (pieceAtFrom.id !== this.piece.id) {
+            return false;
+        }
+        return true;
+    }
 }
 
 export class CaptureEvent extends Event {
@@ -70,6 +92,20 @@ export class CaptureEvent extends Event {
         this.attacker = attacker;
         this.target = target;
     }
+
+    isStillValid(state: GameState): boolean {
+        // Check that the attacker still exists at its position
+        const attackerAtPos = state.board.getPieceAt(this.attacker.position);
+        if (!attackerAtPos || attackerAtPos.id !== this.attacker.id) {
+            return false;
+        }
+        // Check that the target still exists at its position
+        const targetAtPos = state.board.getPieceAt(this.target.position);
+        if (!targetAtPos || targetAtPos.id !== this.target.id) {
+            return false;
+        }
+        return true;
+    }
 }
 
 export class DestroyEvent extends Event {
@@ -83,6 +119,19 @@ export class DestroyEvent extends Event {
             sourceId,
         });
         this.target = target;
+    }
+
+    isStillValid(state: GameState): boolean {
+        // Check that the target still exists at its position
+        const targetAtPos = state.board.getPieceAt(this.target.position);
+        if (!targetAtPos) {
+            return false;
+        }
+        // Check that it's the same piece (by ID)
+        if (targetAtPos.id !== this.target.id) {
+            return false;
+        }
+        return true;
     }
 }
 
@@ -100,6 +149,11 @@ export class TurnAdvancedEvent extends Event {
         this.nextPlayer = nextPlayer;
         this.turnNumber = turnNumber;
     }
+
+    isStillValid(state: GameState): boolean {
+        // Turn events are always valid (informational)
+        return true;
+    }
 }
 
 export class TurnStartEvent extends Event {
@@ -115,6 +169,11 @@ export class TurnStartEvent extends Event {
         });
         this.player = player;
         this.turnNumber = turnNumber;
+    }
+
+    isStillValid(state: GameState): boolean {
+        // Turn events are always valid (informational)
+        return true;
     }
 }
 
@@ -132,21 +191,45 @@ export class TurnEndEvent extends Event {
         this.player = player;
         this.turnNumber = turnNumber;
     }
+
+    isStillValid(state: GameState): boolean {
+        // Turn events are always valid (informational)
+        return true;
+    }
 }
 
 export class TileChangedEvent extends Event {
     readonly position: Vector2Int;
+    readonly oldTile: Tile;
     readonly newTile: Tile;
 
-    constructor(position: Vector2Int, newTile: Tile, actor: PlayerColor) {
+    constructor(position: Vector2Int, oldTile: Tile, newTile: Tile, actor: PlayerColor) {
         super({
             actor,
             isPlayerAction: false,
-            description: `Tile at ${position.toString()} changed to ${newTile.constructor.name}`,
+            description: `Tile at ${position.toString()} changed from ${oldTile.constructor.name} to ${newTile.constructor.name}`,
             sourceId: newTile.id,
         });
         this.position = position;
+        this.oldTile = oldTile;
         this.newTile = newTile;
+    }
+
+    isStillValid(state: GameState): boolean {
+        // Check that the position is in bounds
+        if (!state.board.isInBounds(this.position)) {
+            return false;
+        }
+        // Check that the current tile matches the expected old tile
+        const currentTile = state.board.getTile(this.position);
+        if (!currentTile) {
+            return false;
+        }
+        // Check that it's the same tile (by ID)
+        if (currentTile.id !== this.oldTile.id) {
+            return false;
+        }
+        return true;
     }
 }
 
@@ -173,6 +256,19 @@ export class PieceChangedEvent extends Event {
         this.newPiece = newPiece;
         this.position = position;
     }
+
+    isStillValid(state: GameState): boolean {
+        // Check that the old piece still exists at the position
+        const pieceAtPos = state.board.getPieceAt(this.position);
+        if (!pieceAtPos) {
+            return false;
+        }
+        // Check that it's the same piece (by ID)
+        if (pieceAtPos.id !== this.oldPiece.id) {
+            return false;
+        }
+        return true;
+    }
 }
 
 export class TimeOutEvent extends Event {
@@ -186,6 +282,11 @@ export class TimeOutEvent extends Event {
             sourceId,
         });
         this.expiredPlayer = expiredPlayer;
+    }
+
+    isStillValid(state: GameState): boolean {
+        // Timeout events are always valid (informational)
+        return true;
     }
 }
 
@@ -201,6 +302,11 @@ export class GameOverEvent extends Event {
             sourceId,
         });
         this.losingPlayer = losingPlayer;
+    }
+
+    isStillValid(state: GameState): boolean {
+        // Game over events are always valid (informational)
+        return true;
     }
 }
 
