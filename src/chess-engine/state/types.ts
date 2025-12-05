@@ -27,3 +27,4 @@ export interface Tile {
     getRestrictedSquares?(state: any): any; // MovementRestrictions - will be properly typed later
 }
 
+

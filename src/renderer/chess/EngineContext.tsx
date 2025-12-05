@@ -84,16 +84,17 @@ export const EngineProvider: React.FC<{ children: React.ReactNode; existing?: Ch
     );
 };
 
-export function useEngine(): EngineBundle {
+export function useEngine(): EngineBundle & { manager: ChessManagerBundle['manager'] } {
     const ctx = useContext(EngineCtx);
     if (!ctx) throw new Error("useEngine must be used within EngineProvider");
     
-    // Return legacy-compatible interface
+    // Return legacy-compatible interface plus manager access
     return {
         engine: null, // Not used in new architecture
         getState: ctx.getState,
         rules: ctx.rules,
         submitHumanMove: ctx.submitHumanMove,
+        manager: ctx.manager, // Expose manager for debug panel
     };
 }
 

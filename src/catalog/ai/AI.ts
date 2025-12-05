@@ -17,3 +17,4 @@ export interface AI {
     getMove(state: GameState, legalMoves: Move[]): Move | null;
 }
 
+

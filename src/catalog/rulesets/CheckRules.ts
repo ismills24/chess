@@ -4,7 +4,7 @@ import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { Move } from "../../chess-engine/primitives/Move";
 import { King } from "../pieces/standard/King";
 import { Pawn } from "../pieces/standard/Pawn";
-import { Piece } from "../pieces/Piece";
+import { Piece as CatalogPiece } from "../pieces/Piece";
 
 /**
  * Helper class for checking chess rules like check and checkmate.
@@ -28,7 +28,9 @@ export class CheckRules {
                     return true;
                 }
             } else {
-                if (piece.getCandidateMoves(state).moves.some((m) => m.to.equals(king.position))) {
+                // Cast to Catalog Piece which has getCandidateMoves
+                const catalogPiece = piece as CatalogPiece;
+                if (catalogPiece.getCandidateMoves && catalogPiece.getCandidateMoves(state).moves.some((m: Move) => m.to.equals(king.position))) {
                     return true;
                 }
             }

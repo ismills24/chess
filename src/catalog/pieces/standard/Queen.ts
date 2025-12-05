@@ -31,3 +31,4 @@ export class Queen extends PieceBase {
     }
 }
 
+
