@@ -24,3 +24,4 @@ export interface Piece {
     clone(): Piece;
 }
 
+

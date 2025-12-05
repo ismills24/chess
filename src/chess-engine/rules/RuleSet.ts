@@ -23,3 +23,4 @@ export interface RuleSet {
     isGameOver(state: GameState): { over: boolean; winner: PlayerColor | null };
 }
 
+

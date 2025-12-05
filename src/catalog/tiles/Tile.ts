@@ -15,3 +15,4 @@ export interface Tile {
     getRestrictedSquares(state: GameState): MovementRestrictions | null;
 }
 
+
