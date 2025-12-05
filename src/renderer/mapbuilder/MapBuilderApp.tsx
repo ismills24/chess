@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BoardEditor } from "./BoardEditor";
 import { Palette, Tool } from "./Palette";
 import { MapDefinition } from "./types";
 import { emptyMap } from "./serializer";
+import { AssetManager, AssetInfo } from "../../asset-manager";
 import "./styles.css";
 
 type Mode = "white" | "black" | "tiles";
@@ -13,6 +14,28 @@ export const MapBuilderApp: React.FC<{
     const [mode, setMode] = useState<Mode>("white");
     const [map, setMap] = useState<MapDefinition>(() => emptyMap(8, 8));
     const [tool, setTool] = useState<Tool>({ kind: "erase" });
+    const [savedMaps, setSavedMaps] = useState<AssetInfo[]>([]);
+    const [selectedMapName, setSelectedMapName] = useState<string>("");
+
+    useEffect(() => {
+        AssetManager.getMaps().then(setSavedMaps);
+    }, []);
+
+    const onLoadFromAssets = async (mapName: string) => {
+        if (!mapName) return;
+        const loaded = await AssetManager.readMap<MapDefinition>(mapName);
+        if (loaded) {
+            setMap(loaded);
+            setSelectedMapName(mapName);
+            if (onMapChanged) onMapChanged(loaded);
+        }
+    };
+
+    const refreshMapList = async () => {
+        AssetManager.invalidateCategory("maps");
+        const maps = await AssetManager.getMaps();
+        setSavedMaps(maps);
+    };
     
 
     const setSize = (width: number, height: number) => {
@@ -27,8 +50,9 @@ export const MapBuilderApp: React.FC<{
 
     const onSave = async () => {
         const ok = await window.maps.saveJSON(map);
-        if (ok && onMapChanged) {
-          onMapChanged(map); // notify parent
+        if (ok) {
+          await refreshMapList();
+          if (onMapChanged) onMapChanged(map);
         }
       };
 
@@ -36,7 +60,8 @@ export const MapBuilderApp: React.FC<{
         const loaded = await window.maps.openJSON<MapDefinition>();
         if (loaded) {
           setMap(loaded);
-          if (onMapChanged) onMapChanged(loaded); // notify parent too!
+          setSelectedMapName("");
+          if (onMapChanged) onMapChanged(loaded);
         }
       };
 
@@ -93,6 +118,23 @@ export const MapBuilderApp: React.FC<{
                         onClick={() => setMap({ ...map, startingPlayer: "Black" })}
                     >
                         Black
+                    </button>
+                </div>
+
+                <div className="sectionTitle">Saved Maps</div>
+                <div className="toolRow">
+                    <select
+                        value={selectedMapName}
+                        onChange={(e) => onLoadFromAssets(e.target.value)}
+                        style={{ flex: 1 }}
+                    >
+                        <option value="">-- Select Map --</option>
+                        {savedMaps.map((m) => (
+                            <option key={m.name} value={m.name}>{m.name}</option>
+                        ))}
+                    </select>
+                    <button className="btn" onClick={refreshMapList} title="Refresh list">
+                        ↻
                     </button>
                 </div>
 
