@@ -224,7 +224,12 @@ const BouncerIndicator: React.FC = () => {
       meshRef.current.position.y = bounce;
       // Squash-and-stretch: height shrinks as width/depth expand (volume preservation illusion)
       const squash = 1 - bounce * 2;
-      meshRef.current.scale.set(1 + bounce, squash, 1 + bounce);
+      const baseScale = 0.12;
+      meshRef.current.scale.set(
+        (1 + bounce) * baseScale,
+        squash * baseScale,
+        (1 + bounce) * baseScale
+      );
     }
   });
 
