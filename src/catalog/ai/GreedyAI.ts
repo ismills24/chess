@@ -19,7 +19,7 @@ export class GreedyAI implements AI {
         this.depth = Math.max(1, depth);
     }
 
-    getMove(state: GameState, legalMoves: Move[]): Move | null {
+    getMove(state: GameState, legalMoves: Move[]): Move | null | Promise<Move | null> {
         if (legalMoves.length === 0) {
             return null;
         }
@@ -40,7 +40,6 @@ export class GreedyAI implements AI {
             }
         }
 
-        const end = performance.now();
         const choice = bestMoves[Math.floor(Math.random() * bestMoves.length)];
         return choice;
     }

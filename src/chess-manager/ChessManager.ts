@@ -213,13 +213,18 @@ export class ChessManager {
      * 
      * @param playerColor - The player color for the AI
      * @param ai - The AI implementation to use
-     * @returns Result with success status, new state, and event log
+     * @returns Result with success status, new state, and event log.
+     *          Returns a Promise if the AI is async.
      */
     playAITurn(playerColor: PlayerColor, ai: AI): {
         success: boolean;
         newState: GameState;
         eventLog: readonly GameEvent[];
-    } {
+    } | Promise<{
+        success: boolean;
+        newState: GameState;
+        eventLog: readonly GameEvent[];
+    }> {
         const state = this.currentState;
 
         // Verify it's the AI's turn
@@ -234,10 +239,27 @@ export class ChessManager {
         // Get legal moves for the current player
         const legalMoves = this.getLegalMoves();
 
-        // Let AI select a move
-        const move = ai.getMove(state, legalMoves);
+        // Let AI select a move (can be sync or async)
+        const moveResult = ai.getMove(state, legalMoves);
 
-        if (!move) {
+        // Handle both sync and async cases
+        if (moveResult instanceof Promise) {
+            return moveResult.then((move) => {
+                if (!move) {
+                    return {
+                        success: false,
+                        newState: state,
+                        eventLog: [],
+                    };
+                }
+
+                // Execute the move with turn advancement (standard chess behavior)
+                return this.playMove(move, true);
+            });
+        }
+
+        // Synchronous case
+        if (!moveResult) {
             return {
                 success: false,
                 newState: state,
@@ -246,7 +268,7 @@ export class ChessManager {
         }
 
         // Execute the move with turn advancement (standard chess behavior)
-        return this.playMove(move, true);
+        return this.playMove(moveResult, true);
     }
 }
 

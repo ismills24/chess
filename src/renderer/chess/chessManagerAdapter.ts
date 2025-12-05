@@ -8,8 +8,8 @@ import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { RuleSet } from "../../chess-engine/rules/RuleSet";
 import { LastPieceStandingRuleSet } from "../../catalog/rulesets/LastPieceStanding";
 import { GreedyAI } from "../../catalog/ai/GreedyAI";
+import { ParallelGreedyAI } from "../../catalog/ai/ParallelGreedyAI";
 import { createPiece, createTile } from "../../catalog/registry/Catalog";
-import { PieceId } from "../../catalog/registry/Catalog";
 
 /**
  * Small adapter to wire up ChessManager + Catalog for the UI.
@@ -89,7 +89,7 @@ export function createChessManagerBundleFromState(
     const getState = () => manager.currentState;
 
     // Create AI only if we have a human player (not HvH mode)
-    const ai = humanPlayer !== null ? new GreedyAI(rules, 3) : null;
+    const ai = humanPlayer !== null ? new ParallelGreedyAI(rules, 5) : null;
     const aiPlayer = humanPlayer !== null 
         ? (humanPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White)
         : null;
@@ -119,8 +119,8 @@ export function createChessManagerBundleFromState(
 
         // If game continues and it's now AI's turn (and we have an AI), let AI play
         if (ai !== null && aiPlayer !== null && !manager.isGameOver() && manager.currentState.currentPlayer === aiPlayer) {
-            setTimeout(() => {
-                const aiResult = manager.playAITurn(aiPlayer, ai);
+            setTimeout(async () => {
+                const aiResult = await manager.playAITurn(aiPlayer, ai);
                 if (aiResult.success) {
                     // Notify subscribers after AI move
                     // Use a small delay to ensure state is fully updated
