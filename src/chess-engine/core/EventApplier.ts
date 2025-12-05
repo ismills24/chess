@@ -28,6 +28,12 @@ export class EventApplier {
      * @returns New GameState after applying the event
      */
     static applyEvent(event: Event, currentState: GameState): GameState {
+        // Safety check: validate event before applying
+        if (!event.isStillValid(currentState)) {
+            // Return state unchanged if event is invalid
+            return currentState;
+        }
+
         const board = currentState.board.clone();
         let nextPlayer = currentState.currentPlayer;
         let turnNumber = currentState.turnNumber;
@@ -36,20 +42,16 @@ export class EventApplier {
             // Re-resolve from the cloned board, do not trust payload object identity
             const piece = board.getPieceAt(event.from);
             if (piece) {
-                console.log(`[EventApplier] Moving piece ${piece.id} from ${event.from.toString()} to ${event.to.toString()}`);
                 board.movePiece(event.from, event.to);
                 piece.movesMade++;
             } else {
-                console.log(`[EventApplier] WARNING: No piece found at ${event.from.toString()} for MoveEvent`);
             }
         } else if (event instanceof CaptureEvent) {
             const pos = event.target.position;
             const targetPiece = board.getPieceAt(pos);
             if (targetPiece) {
-                console.log(`[EventApplier] Capturing piece ${targetPiece.id} at ${pos.toString()}`);
                 board.removePiece(pos);
             } else {
-                console.log(`[EventApplier] WARNING: No piece found at ${pos.toString()} for CaptureEvent`);
             }
         } else if (event instanceof DestroyEvent) {
             const pos = event.target.position;

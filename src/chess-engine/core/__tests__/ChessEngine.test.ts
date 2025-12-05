@@ -147,8 +147,11 @@ describe('ChessEngine', () => {
             priority: 0,
             onAfterEvent(ctx, event) {
                 if (event instanceof MoveEvent) {
-                    // Generate destroy event
-                    return [new DestroyEvent(event.piece, "Chain", event.actor, "chain")];
+                    // Get the piece from the updated state at its new position
+                    const movedPiece = ctx.state.board.getPieceAt(event.to);
+                    if (movedPiece) {
+                        return [new DestroyEvent(movedPiece, "Chain", event.actor, "chain")];
+                    }
                 }
                 return [];
             },

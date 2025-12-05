@@ -269,6 +269,15 @@ describe('EventQueue Edge Cases', () => {
     });
 
     it('should handle multi-listener chain reaction', () => {
+        // Set up board with pieces for chain reaction
+        const boardWithChain = new Board(8, 8, () => createMockTile("tile", new Vector2Int(0, 0)));
+        const chainPieceA = createMockPiece("chainA", PlayerColor.White, new Vector2Int(0, 0));
+        const chainPieceB = createMockPiece("chainB", PlayerColor.White, new Vector2Int(0, 1));
+        boardWithChain.placePiece(piece1, new Vector2Int(1, 1));
+        boardWithChain.placePiece(chainPieceA, new Vector2Int(0, 0));
+        boardWithChain.placePiece(chainPieceB, new Vector2Int(0, 1));
+        const stateWithChain = new GameState(boardWithChain, PlayerColor.White, 1, []);
+
         let chainA = 0;
         let chainB = 0;
         const chainListenerA: Listener = {
@@ -276,12 +285,15 @@ describe('EventQueue Edge Cases', () => {
             onAfterEvent(ctx, event) {
                 if (event instanceof DestroyEvent && chainA < 2) {
                     chainA++;
-                    return [new DestroyEvent(
-                        createMockPiece("chainA", PlayerColor.White, new Vector2Int(0, 0)),
-                        "Chain A",
-                        event.actor,
-                        "chainA"
-                    )];
+                    const targetPiece = ctx.state.board.getPieceAt(new Vector2Int(0, 0));
+                    if (targetPiece) {
+                        return [new DestroyEvent(
+                            targetPiece,
+                            "Chain A",
+                            event.actor,
+                            "chainA"
+                        )];
+                    }
                 }
                 return [];
             },
@@ -291,19 +303,22 @@ describe('EventQueue Edge Cases', () => {
             onAfterEvent(ctx, event) {
                 if (event instanceof DestroyEvent && chainB < 2) {
                     chainB++;
-                    return [new DestroyEvent(
-                        createMockPiece("chainB", PlayerColor.White, new Vector2Int(0, 1)),
-                        "Chain B",
-                        event.actor,
-                        "chainB"
-                    )];
+                    const targetPiece = ctx.state.board.getPieceAt(new Vector2Int(0, 1));
+                    if (targetPiece) {
+                        return [new DestroyEvent(
+                            targetPiece,
+                            "Chain B",
+                            event.actor,
+                            "chainB"
+                        )];
+                    }
                 }
                 return [];
             },
         };
 
         const initialDestroy = new DestroyEvent(piece1, "Initial", PlayerColor.White, "source");
-        const result = EventQueue.process(initialState, [initialDestroy], [chainListenerA, chainListenerB]);
+        const result = EventQueue.process(stateWithChain, [initialDestroy], [chainListenerA, chainListenerB]);
         expect(result.eventLog.length).toBeGreaterThanOrEqual(3);
         expect(chainA).toBeGreaterThan(0);
         expect(chainB).toBeGreaterThan(0);
@@ -334,7 +349,11 @@ describe('EventQueue Edge Cases', () => {
             priority: 0,
             onAfterEvent(ctx, event) {
                 if (event instanceof MoveEvent) {
-                    return [new DestroyEvent(event.piece, "After move", event.actor, "order")];
+                    // Get the piece from the updated state at its new position
+                    const movedPiece = ctx.state.board.getPieceAt(event.to);
+                    if (movedPiece) {
+                        return [new DestroyEvent(movedPiece, "After move", event.actor, "order")];
+                    }
                 }
                 return [];
             },

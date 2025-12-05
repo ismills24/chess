@@ -16,12 +16,6 @@ export const ClockView: React.FC = () => {
 	const [ticking, setTicking] = useState<boolean>(() => (clock ? !!clock.ticking : false));
 	const intervalRef = useRef<number | null>(null);
 
-	useEffect(() => {
-		try {
-			console.log(`[ClockView] mounted; engine? ${!!engine}, clock? ${!!clock}`);
-		} catch {}
-	}, []);
-
 	// Subscribe to engine publishes to refresh ticking state quickly on events
 	useEffect(() => {
 		try {
@@ -32,7 +26,6 @@ export const ClockView: React.FC = () => {
 				const c = (engine as any).gameClock;
 				const newTicking = Boolean(c?.ticking);
 				const newRemaining = c ? c.getRemaining() : 0;
-				console.log(`[ClockView] event received; ticking=${newTicking}, remaining=${newRemaining}ms`);
 				setTicking(newTicking);
 				setRemainingMs(newRemaining);
 			};
@@ -42,7 +35,6 @@ export const ClockView: React.FC = () => {
 			if (c) {
 				const initialTicking = Boolean(c.ticking);
 				const initialRemaining = c.getRemaining();
-				console.log(`[ClockView] initial state; ticking=${initialTicking}, remaining=${initialRemaining}ms`);
 				setTicking(initialTicking);
 				setRemainingMs(initialRemaining);
 			}
@@ -59,31 +51,23 @@ export const ClockView: React.FC = () => {
 		try {
 			const c = (engine as any).gameClock;
 			if (!c) {
-				console.log(`[ClockView] interval setup: no clock`);
 				return;
 			}
 			if (ticking) {
-				console.log(`[ClockView] starting interval (ticking=true)`);
 				if (intervalRef.current != null) (globalThis as any).clearInterval(intervalRef.current);
 				intervalRef.current = (globalThis as any).setInterval(() => {
 					try {
 						const rem = c.getRemaining();
 						setRemainingMs(rem);
-						// Log every second to debug
-						if (Math.floor(rem / 1000) % 10 === 0 && rem % 1000 < 100) {
-							console.log(`[ClockView] interval tick: remaining=${rem}ms (${formatMs(rem)})`);
-						}
 					} catch (e) {
 						console.error(`[ClockView] interval tick error`, e);
 					}
 				}, 100);
 				return () => {
-					console.log(`[ClockView] cleaning up interval`);
 					if (intervalRef.current != null) (globalThis as any).clearInterval(intervalRef.current);
 					intervalRef.current = null;
 				};
 			} else {
-				console.log(`[ClockView] stopping interval (ticking=false)`);
 				if (intervalRef.current != null) (globalThis as any).clearInterval(intervalRef.current);
 				intervalRef.current = null;
 			}
@@ -93,7 +77,6 @@ export const ClockView: React.FC = () => {
 	}, [engine, ticking]);
 
 	if (!clock) {
-		console.log(`[ClockView] no clock present; hiding`);
 		return null;
 	}
 

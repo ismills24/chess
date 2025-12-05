@@ -91,10 +91,12 @@ describe('EventApplier', () => {
     });
 
     it('should apply TileChangedEvent', () => {
-        const newTile = createMockTile("newTile", new Vector2Int(4, 4));
-        const tileChangedEvent = new TileChangedEvent(new Vector2Int(4, 4), newTile, PlayerColor.White);
+        const position = new Vector2Int(4, 4);
+        const oldTile = initialState.board.getTile(position);
+        const newTile = createMockTile("newTile", position);
+        const tileChangedEvent = new TileChangedEvent(position, oldTile, newTile, PlayerColor.White);
         const result = EventApplier.applyEvent(tileChangedEvent, initialState);
-        const changedTile = result.board.getTile(new Vector2Int(4, 4));
+        const changedTile = result.board.getTile(position);
         expect(changedTile.id).toBe("newTile");
     });
 

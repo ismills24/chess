@@ -21,19 +21,22 @@ export class PiercingAbility extends AbilityBase implements Listener {
 
     onBeforeEvent(ctx: ListenerContext, event: GameEvent): GameEvent | GameEvent[] | null {
         if (!(event instanceof CaptureEvent)) return event;
-        if (!event.isPlayerAction) return event;
+        if (!event.isPlayerAction){ 
+            return event;
+        }
         if (!this.isOurCapture(event, ctx.state)) {
             return event;
         }
+        
 
-        // Calculate landing square: same distance beyond target as attacker was from target
-        // landing = target + (target - attacker) = 2*target - attacker
-        const dx = event.target.position.x - event.attacker.position.x;
-        const dy = event.target.position.y - event.attacker.position.y;
-        const landingSquare = new Vector2Int(
-            event.target.position.x + dx,
-            event.target.position.y + dy
-        );
+        // Calculate landing square: one step beyond target in the same direction
+        // Get unit direction vector from attacker to target
+        const unitStep = this.computeUnitStep(event.attacker, event.target);
+        if (!unitStep) {
+            return event;
+        }
+        // Landing square is one step beyond the target
+        const landingSquare = event.target.position.add(unitStep);
         const inBounds = ctx.state.board.isInBounds(landingSquare);
         if (!inBounds) {
             return event;
@@ -44,38 +47,49 @@ export class PiercingAbility extends AbilityBase implements Listener {
             return event;
         }
 
-        // Replace capture with pierce sequence: destroy target + destroy landing piece (if exists) + move attacker
+        // Replace capture with pierce sequence: jump over target (leave it untouched) and capture landing piece
         const events: GameEvent[] = [];
         // Get pieces from state to ensure fresh references
-        const targetFromState = ctx.state.board.getPieceAt(event.target.position);
         const attackerFromState = ctx.state.board.getPieceAt(event.attacker.position);
-        if (!targetFromState || !attackerFromState) {
-            console.log(`[PiercingAbility] Missing pieces: target=${!!targetFromState}, attacker=${!!attackerFromState}`);
+        if (!attackerFromState) {
             return event;
         }
         
-        console.log(`[PiercingAbility] Creating pierce sequence: attacker at ${event.attacker.position.toString()}, target at ${event.target.position.toString()}, landing at ${landingSquare.toString()} (dx=${dx}, dy=${dy})`);
-        
-        // Destroy the target (pierced through) - must be explicit since we're replacing the CaptureEvent
-        events.push(new DestroyEvent(targetFromState, "Pierced through", event.actor, this.id));
-        // Destroy landing piece if it exists (do this before moving attacker)
-        if (landingPiece) {
+        // If there's an enemy piece on the landing square, capture it first
+        if (landingPiece && landingPiece.owner !== this.inner.owner) {
             const landingFromState = ctx.state.board.getPieceAt(landingSquare);
             if (landingFromState) {
-                events.push(new DestroyEvent(landingFromState, "Pierced", event.actor, this.id));
+                // Create capture event for the landing piece
+                // Set isPlayerAction to false so we don't recursively intercept it
+                events.push(new CaptureEvent(attackerFromState, landingFromState, event.actor, false));
             }
         }
-        // Move attacker to landing square - use current position from state (not event, which might be stale)
+        
+        // Move attacker to landing square (jumps over the first target, leaving it untouched)
         events.push(new MoveEvent(attackerFromState.position, landingSquare, attackerFromState, event.actor, event.isPlayerAction, this.id));
         
-        console.log(`[PiercingAbility] Returning ${events.length} events: ${events.map(e => e.constructor.name).join(', ')}`);
-        return events; // Return array to cancel original and enqueue all new events
+        return events; // Return array to cancel original capture and enqueue new events
     }
 
     private isOurCapture(ev: CaptureEvent, state: GameState): boolean {
         if (!ev.attacker) return false;
-        const attackerAtPos = state.board.getPieceAt(ev.attacker.position);
-        return attackerAtPos?.id === this.id;
+        
+        // Check if this ability is in the attacker's ability chain
+        // The attacker in the event is the piece from the board when the event was created
+        let current: any = ev.attacker;
+        while (current) {
+            if (current.id === this.id) {
+                return true;
+            }
+            // Check if this is an ability wrapper (has innerPiece property)
+            if (current.innerPiece) {
+                current = current.innerPiece;
+            } else {
+                break;
+            }
+        }
+        
+        return false;
     }
 
     private computeUnitStep(attacker: StatePiece, target: StatePiece): Vector2Int | null {

@@ -127,16 +127,12 @@ export class EventQueue {
                              e.piece.id === event.attacker.id
                     );
                     if (moveEventIndex !== -1) {
-                        console.log(`[EventQueue] Cancelling MoveEvent at index ${moveEventIndex} for cancelled CaptureEvent`);
                         // Remove it immediately - more reliable than cancellation tracking
                         queue.splice(moveEventIndex, 1);
-                    } else {
-                        console.log(`[EventQueue] WARNING: Could not find MoveEvent to cancel for CaptureEvent`);
                     }
                 }
                 
                 if (replacementEvents && replacementEvents.length > 0) {
-                    console.log(`[EventQueue] Enqueueing ${replacementEvents.length} replacement events at front of queue`);
                     // Enqueue replacement events at the FRONT of the queue (process them first)
                     // This ensures replacement events are processed before any remaining events
                     // Note: unshift adds in reverse order, so we need to reverse the array first
@@ -174,11 +170,15 @@ export class EventQueue {
                 }
             }
 
+            // Check if event is still valid before applying
+            if (!modifiedEvent.isStillValid(currentState)) {
+                console.log(`[EventQueue] Event invalid, skipping: ${modifiedEvent.constructor.name} (${modifiedEvent.description})`);
+                continue;
+            }
+
             // Apply event to state
-            console.log(`[EventQueue] Applying event: ${modifiedEvent.constructor.name} (${modifiedEvent.description})`);
             currentState = EventApplier.applyEvent(modifiedEvent, currentState);
             eventLog.push(modifiedEvent);
-            console.log(`[EventQueue] Event applied, state updated`);
 
             // Update context with new state
             const afterContext: ListenerContext = {

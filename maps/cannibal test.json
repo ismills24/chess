@@ -59,7 +59,9 @@
       "color": "White",
       "x": 4,
       "y": 1,
-      "decorators": []
+      "decorators": [
+        "Cannibal"
+      ]
     },
     {
       "type": "King",

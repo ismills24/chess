@@ -21,38 +21,37 @@ export class CannibalAbility extends AbilityBase {
         const movesOnFriendlyPieces: Move[] = [];
         const originalMoves = this.inner.getCandidateMoves(state);
         
-        // Keep all non-enemy moves (empty squares)
+        // Keep all empty square moves (non-capture moves to empty squares)
         for (const move of originalMoves.moves) {
-            const isEnemy = originalMoves.movesOnEnemyPieces.some(m => m.to.equals(move.to));
-            if (!isEnemy) {
+            const isEnemyCapture = originalMoves.movesOnEnemyPieces.some(m => m.to.equals(move.to));
+            const isFriendlyBlock = originalMoves.movesOnFriendlyPieces.some(m => m.to.equals(move.to));
+            
+            // Keep moves to empty squares (not enemy captures, not friendly blocks)
+            if (!isEnemyCapture && !isFriendlyBlock) {
                 moves.push(move);
             }
         }
         
-        // Add capture moves for friendly pieces that are in capture positions
-        // For pieces like pawns, we need to check diagonal positions for friendly pieces
-        const piecePos = this.inner.position;
-        const owner = this.inner.owner;
-        
-        // Check all adjacent squares for friendly pieces (cannibals can capture friendly in any direction)
-        const directions = [
-            new Vector2Int(-1, -1), new Vector2Int(0, -1), new Vector2Int(1, -1),
-            new Vector2Int(-1, 0), new Vector2Int(1, 0),
-            new Vector2Int(-1, 1), new Vector2Int(0, 1), new Vector2Int(1, 1),
-        ];
-        
-        for (const dir of directions) {
-            const pos = piecePos.add(dir);
-            if (!state.board.isInBounds(pos)) continue;
-            
-            const target = state.board.getPieceAt(pos);
-            if (target && target.owner === owner) {
-                // Create capture move for friendly piece
-                const captureMove = new Move(piecePos, pos, this.inner, true);
+        // Convert friendly piece blocks to capture moves
+        // These are positions where the piece would normally be blocked by a friendly piece
+        // For cannibals, these become valid capture targets
+        for (const friendlyBlockMove of originalMoves.movesOnFriendlyPieces) {
+            const target = state.board.getPieceAt(friendlyBlockMove.to);
+            if (target && target.owner === this.inner.owner) {
+                // Convert to capture move
+                const captureMove = new Move(
+                    friendlyBlockMove.from,
+                    friendlyBlockMove.to,
+                    this.inner,
+                    true // isCapture = true
+                );
                 moves.push(captureMove);
                 movesOnFriendlyPieces.push(captureMove);
             }
         }
+        
+        // Remove all enemy captures (cannibals cannot capture enemies)
+        // movesOnEnemyPieces are already excluded from the moves array above
         
         return new CandidateMoves(moves, movesOnFriendlyPieces, []);
     }
