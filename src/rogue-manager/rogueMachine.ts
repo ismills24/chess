@@ -79,8 +79,8 @@ function startEncounter(roster: Piece[]): {
     // Track original IDs
     const encounterRosterIds = playerPieces.map(p => p.id);
     
-    // Generate the combat board
-    const board = generateCombatBoard(playerPieces, enemyPieces);
+    // Generate the combat board (6x6 default)
+    const board = generateCombatBoard(playerPieces, enemyPieces, 6, 6);
     
     // Create initial game state (White = player goes first)
     const initialState = new GameState(board, PlayerColor.White, 1, []);
