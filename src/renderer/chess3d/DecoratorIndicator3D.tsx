@@ -21,7 +21,6 @@ export const DecoratorIndicator3D: React.FC<DecoratorIndicator3DProps> = ({
   const groupRef = useRef<THREE.Group>(null);
 
   const xOffset = total > 1 ? (index - (total - 1) / 2) * 0.28 : 0;
-  const labelZOffset = 0.38 + index * 0.1;
 
   useFrame((state) => {
     if (groupRef.current) {
@@ -39,7 +38,7 @@ export const DecoratorIndicator3D: React.FC<DecoratorIndicator3DProps> = ({
         {config.render()}
       </group>
       <Html
-        position={[0, 0.01, labelZOffset]}
+        position={[xOffset, 1.05, 0]}
         center
         style={{
           fontSize: "10px",
@@ -81,13 +80,13 @@ function getDecoratorConfig(id: AbilityId): DecoratorConfig {
       return {
         render: () => <ScapegoatIndicator />,
         spin: false,
-        labelColor: "#66aaff",
+        labelColor: "#bb99ff",
       };
     case "Piercing":
       return {
         render: () => <PiercingIndicator />,
         spin: false,
-        labelColor: "#ffee66",
+        labelColor: "#00ffff",
       };
     case "Bouncer":
       return {
@@ -197,104 +196,177 @@ const ExplodingIndicator: React.FC = () => {
 
 const ScapegoatIndicator: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
+  const innerOrbRef = useRef<THREE.Mesh>(null);
+  const ringsRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y =
-        Math.sin(state.clock.elapsedTime * 1.5) * 0.3;
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.5;
+    }
+    if (innerOrbRef.current) {
+      const pulse = 0.8 + Math.sin(state.clock.elapsedTime * 3) * 0.2;
+      innerOrbRef.current.scale.setScalar(pulse);
+    }
+    if (ringsRef.current) {
+      ringsRef.current.rotation.x = state.clock.elapsedTime * 1.2;
+      ringsRef.current.rotation.z = state.clock.elapsedTime * 0.8;
     }
   });
 
   return (
-    <group ref={groupRef} scale={0.09}>
-      <mesh position={[0, 0, 0.15]}>
-        <cylinderGeometry args={[0.9, 1.1, 2.2, 6]} />
+    <group ref={groupRef} scale={0.11}>
+      <mesh ref={innerOrbRef}>
+        <sphereGeometry args={[0.5, 32, 32]} />
         <meshStandardMaterial
-          color="#3377dd"
-          emissive="#2255aa"
+          color="#7744ff"
+          emissive="#5522dd"
+          emissiveIntensity={0.8}
+          transparent
+          opacity={0.9}
+        />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[0.7, 32, 32]} />
+        <meshStandardMaterial
+          color="#aa88ff"
+          emissive="#8866ee"
           emissiveIntensity={0.3}
+          transparent
+          opacity={0.25}
         />
       </mesh>
-      <mesh position={[0, 0.3, 0.25]}>
-        <sphereGeometry args={[0.7, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial
-          color="#4488ee"
-          emissive="#3366cc"
-          emissiveIntensity={0.3}
-        />
-      </mesh>
-      <mesh position={[0, 0, 0.35]}>
-        <torusGeometry args={[0.65, 0.12, 8, 6]} />
-        <meshStandardMaterial
-          color="#5599ff"
-          emissive="#4488ee"
-          emissiveIntensity={0.4}
-        />
-      </mesh>
-      <mesh position={[0, 0, 0.4]}>
-        <sphereGeometry args={[0.25, 12, 12]} />
-        <meshStandardMaterial
-          color="#88bbff"
-          emissive="#6699ff"
-          emissiveIntensity={0.5}
-        />
-      </mesh>
+      <group ref={ringsRef}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.85, 0.04, 16, 48]} />
+          <meshStandardMaterial
+            color="#bb99ff"
+            emissive="#9977ff"
+            emissiveIntensity={0.6}
+          />
+        </mesh>
+        <mesh rotation={[Math.PI / 3, Math.PI / 4, 0]}>
+          <torusGeometry args={[0.75, 0.03, 16, 48]} />
+          <meshStandardMaterial
+            color="#cc99ff"
+            emissive="#aa77ff"
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+        <mesh rotation={[-Math.PI / 4, Math.PI / 3, Math.PI / 6]}>
+          <torusGeometry args={[0.65, 0.025, 16, 48]} />
+          <meshStandardMaterial
+            color="#ddaaff"
+            emissive="#bb88ff"
+            emissiveIntensity={0.4}
+          />
+        </mesh>
+      </group>
+      {[0, 1, 2, 3].map((i) => {
+        const angle = (i * Math.PI * 2) / 4;
+        return (
+          <mesh
+            key={i}
+            position={[Math.cos(angle) * 0.9, 0, Math.sin(angle) * 0.9]}
+            rotation={[0, -angle + Math.PI / 2, 0]}
+          >
+            <octahedronGeometry args={[0.12, 0]} />
+            <meshStandardMaterial
+              color="#eeddff"
+              emissive="#ccaaff"
+              emissiveIntensity={0.7}
+            />
+          </mesh>
+        );
+      })}
     </group>
   );
 };
 
 const PiercingIndicator: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
+  const trailRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
     if (groupRef.current) {
-      const flash = (Math.sin(state.clock.elapsedTime * 10) + 1) / 2;
-      groupRef.current.children.forEach((child) => {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 2;
+    }
+    if (trailRef.current) {
+      const pulse = 0.6 + Math.sin(state.clock.elapsedTime * 8) * 0.4;
+      trailRef.current.children.forEach((child, i) => {
         const mesh = child as THREE.Mesh;
         if (mesh.material) {
           const mat = mesh.material as THREE.MeshStandardMaterial;
-          if (mat.emissiveIntensity !== undefined) {
-            mat.emissiveIntensity = 0.4 + flash * 0.5;
-          }
+          mat.opacity = pulse * (1 - i * 0.15);
         }
       });
     }
   });
 
   return (
-    <group ref={groupRef} scale={0.07}>
-      <mesh position={[0.3, 0.9, 0]} rotation={[0, 0, -0.5]}>
-        <boxGeometry args={[0.4, 1.3, 0.15]} />
+    <group ref={groupRef} scale={0.1}>
+      <mesh position={[0, 0.6, 0]}>
+        <coneGeometry args={[0.25, 0.8, 4]} />
         <meshStandardMaterial
-          color="#ffee00"
-          emissive="#ffcc00"
-          emissiveIntensity={0.6}
+          color="#00ffff"
+          emissive="#00dddd"
+          emissiveIntensity={0.9}
+          metalness={0.8}
+          roughness={0.2}
         />
       </mesh>
-      <mesh position={[-0.1, 0, 0]} rotation={[0, 0, 0.5]}>
-        <boxGeometry args={[0.4, 1.3, 0.15]} />
+      <mesh position={[0, 0, 0]}>
+        <cylinderGeometry args={[0.12, 0.2, 0.8, 8]} />
         <meshStandardMaterial
-          color="#ffee00"
-          emissive="#ffcc00"
-          emissiveIntensity={0.6}
+          color="#00eeff"
+          emissive="#00ccdd"
+          emissiveIntensity={0.7}
+          metalness={0.9}
+          roughness={0.1}
         />
       </mesh>
-      <mesh position={[0.2, -0.9, 0]} rotation={[0, 0, -0.5]}>
-        <boxGeometry args={[0.4, 1.3, 0.15]} />
+      <mesh position={[0, -0.5, 0]}>
+        <cylinderGeometry args={[0.08, 0.12, 0.6, 8]} />
         <meshStandardMaterial
-          color="#ffee00"
-          emissive="#ffcc00"
+          color="#00ddff"
+          emissive="#00bbcc"
           emissiveIntensity={0.6}
+          metalness={0.9}
+          roughness={0.1}
         />
       </mesh>
-      <mesh position={[0.05, -1.7, 0]} rotation={[0, 0, 0]}>
-        <coneGeometry args={[0.3, 0.7, 4]} />
-        <meshStandardMaterial
-          color="#ffee00"
-          emissive="#ffcc00"
-          emissiveIntensity={0.6}
-        />
-      </mesh>
+      <group ref={trailRef}>
+        {[0, 1, 2, 3].map((i) => (
+          <mesh key={i} position={[0, -0.9 - i * 0.18, 0]}>
+            <sphereGeometry args={[0.08 - i * 0.015, 8, 8]} />
+            <meshStandardMaterial
+              color="#00ffff"
+              emissive="#00ffff"
+              emissiveIntensity={1}
+              transparent
+              opacity={0.8 - i * 0.15}
+            />
+          </mesh>
+        ))}
+      </group>
+      {[0, 1, 2].map((i) => {
+        const angle = (i * Math.PI * 2) / 3;
+        return (
+          <mesh
+            key={`fin-${i}`}
+            position={[Math.cos(angle) * 0.15, -0.3, Math.sin(angle) * 0.15]}
+            rotation={[0, -angle, Math.PI / 6]}
+          >
+            <boxGeometry args={[0.02, 0.35, 0.12]} />
+            <meshStandardMaterial
+              color="#00ddff"
+              emissive="#00bbdd"
+              emissiveIntensity={0.5}
+              metalness={0.7}
+              roughness={0.3}
+            />
+          </mesh>
+        );
+      })}
     </group>
   );
 };
