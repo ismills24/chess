@@ -1,14 +1,23 @@
 <!doctype html>
-<html>
+<html lang="en" class="dark">
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="color-scheme" content="dark" />
   <title>Chess</title>
+  <style>
+    html, body, #root {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #050508;
+      color: #eaeaf2;
+    }
+  </style>
 </head>
 
 <body>
   <div id="root"></div>
-  <!-- Vite will inject renderer.tsx -->
   <script type="module" src="/src/renderer/renderer.tsx"></script>
 </body>
 

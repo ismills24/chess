@@ -15,6 +15,7 @@ import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { LastPieceStandingRuleSet } from "../../catalog/rulesets/LastPieceStanding";
 import { Piece } from "../../catalog/pieces/Piece";
 import { iconForPiece, iconForAbility, abilityIdsForPiece, PieceId } from "../../catalog/registry/Catalog";
+import { Button, Text, Card, Badge, Stack, IconButton } from "../ui";
 import "./rogue.css";
 
 // =============================================================================
@@ -39,7 +40,11 @@ function useRogueActor(actor: RogueActor): RogueSnapshot {
 // Main App Component
 // =============================================================================
 
-export const RogueApp: React.FC = () => {
+interface RogueAppProps {
+    onModeChange?: (mode: "builder" | "play" | "rogue") => void;
+}
+
+export const RogueApp: React.FC<RogueAppProps> = ({ onModeChange }) => {
     // Create actor once on mount
     const [actor] = useState(() => {
         const a = createRogueActor();
@@ -79,17 +84,39 @@ export const RogueApp: React.FC = () => {
     return (
         <div className="rogue-app">
             <header className="rogue-header">
-                <h1>Roguelike Chess</h1>
-                <div className="rogue-stats">
-                    <span className="stat">💰 ${snapshot.context.money}</span>
-                    <span className="stat">⚔️ {snapshot.context.roster.length} pieces</span>
+                <div className="rogue-header__left">
+                    <Text as="h1" variant="heading" className="rogue-title">Roguelike Chess</Text>
+                </div>
+                <div className="rogue-header__right">
+                    <div className="rogue-stats">
+                        <div className="rogue-stat rogue-stat--gold">
+                            <span className="rogue-stat__icon">💰</span>
+                            <span className="rogue-stat__value">${snapshot.context.money}</span>
+                        </div>
+                        <div className="rogue-stat">
+                            <span className="rogue-stat__icon">⚔️</span>
+                            <span className="rogue-stat__value">{snapshot.context.roster.length} pieces</span>
+                        </div>
+                    </div>
                     {isEncounter && (
-                        <button 
-                            className={`stat debug-toggle ${debugOpen ? 'active' : ''}`}
+                        <IconButton 
+                            variant={debugOpen ? "solid" : "ghost"}
+                            size="sm"
                             onClick={() => setDebugOpen(!debugOpen)}
+                            title="Toggle Debug Panel"
                         >
-                            🐛 Debug
-                        </button>
+                            🐛
+                        </IconButton>
+                    )}
+                    {onModeChange && (
+                        <div className="rogue-nav">
+                            <Button variant="ghost" size="sm" onClick={() => onModeChange("builder")}>
+                                🗺️
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => onModeChange("play")}>
+                                ▶️
+                            </Button>
+                        </div>
                     )}
                 </div>
             </header>
@@ -144,42 +171,41 @@ interface MapViewProps {
     onGoToEncounter: () => void;
 }
 
-const MapView: React.FC<MapViewProps> = ({ roster, money, onGoToShop, onGoToEncounter }) => {
+const MapView: React.FC<MapViewProps> = ({ roster, onGoToShop, onGoToEncounter }) => {
     return (
         <div className="map-view">
-            <h2>Choose Your Path</h2>
-            
-            <div className="roster-preview">
-                <h3>Your Army</h3>
-                <div className="roster-pieces">
-                    {roster.map((piece, i) => (
-                        <PieceCard key={piece.id} piece={piece} />
-                    ))}
-                    {roster.length === 0 && (
-                        <p className="empty-roster">No pieces remaining!</p>
-                    )}
+            <div className="map-content">
+                <Text as="h2" variant="heading" align="center" className="map-title">Choose Your Path</Text>
+                
+                <div className="roster-section">
+                    <Text as="h3" variant="caption" color="muted" className="roster-label">YOUR ARMY</Text>
+                    <div className="roster-grid">
+                        {roster.map((piece) => (
+                            <PieceCard key={piece.id} piece={piece} />
+                        ))}
+                        {roster.length === 0 && (
+                            <Text color="muted" className="roster-empty">No pieces remaining!</Text>
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            <div className="map-choices">
-                <button 
-                    className="map-button shop-button"
-                    onClick={onGoToShop}
-                >
-                    <span className="button-icon">🏪</span>
-                    <span className="button-text">Visit Shop</span>
-                    <span className="button-hint">Buy new pieces ($1 each)</span>
-                </button>
+                <div className="path-choices">
+                    <button className="path-button path-button--shop" onClick={onGoToShop}>
+                        <span className="path-button__icon">🏪</span>
+                        <span className="path-button__label">Visit Shop</span>
+                        <span className="path-button__hint">Buy new pieces ($1 each)</span>
+                    </button>
 
-                <button 
-                    className="map-button encounter-button"
-                    onClick={onGoToEncounter}
-                    disabled={roster.length === 0}
-                >
-                    <span className="button-icon">⚔️</span>
-                    <span className="button-text">Battle!</span>
-                    <span className="button-hint">Win to earn $1</span>
-                </button>
+                    <button 
+                        className="path-button path-button--battle"
+                        onClick={onGoToEncounter}
+                        disabled={roster.length === 0}
+                    >
+                        <span className="path-button__icon">⚔️</span>
+                        <span className="path-button__label">Battle!</span>
+                        <span className="path-button__hint">Win to earn $1</span>
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -202,41 +228,54 @@ const ShopView: React.FC<ShopViewProps> = ({ money, roster, offer, onBuy, onLeav
 
     return (
         <div className="shop-view">
-            <h2>🏪 Shop</h2>
-            
-            <div className="shop-info">
-                <p>Your Money: <strong>${money}</strong></p>
-                <p>Roster Size: <strong>{roster.length}/6</strong></p>
+            <div className="shop-card">
+                <div className="shop-header">
+                    <Text as="h2" variant="heading">🏪 Shop</Text>
+                </div>
+                
+                <div className="shop-info">
+                    <div className="shop-info__item">
+                        <Text variant="caption" color="muted">YOUR MONEY</Text>
+                        <Text variant="subheading" color="success">${money}</Text>
+                    </div>
+                    <div className="shop-info__item">
+                        <Text variant="caption" color="muted">ROSTER</Text>
+                        <Text variant="subheading">{roster.length}/6</Text>
+                    </div>
+                </div>
+
+                {offer ? (
+                    <div className="shop-offer">
+                        <Text variant="caption" color="muted" className="shop-offer__label">TODAY'S OFFER</Text>
+                        <PieceCard piece={offer.piece} showDetails size="lg" />
+                        <div className="shop-offer__price">
+                            <Text variant="heading" color="warning">${offer.cost}</Text>
+                        </div>
+                        <Button 
+                            variant="success"
+                            size="lg"
+                            onClick={onBuy}
+                            disabled={!canBuy}
+                            className="shop-buy-btn"
+                        >
+                            {canBuy 
+                                ? "Buy Piece" 
+                                : roster.length >= 6 
+                                    ? "Roster Full!" 
+                                    : "Not Enough Money"}
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="shop-empty">
+                        <Text color="muted">You already bought from this shop!</Text>
+                        <Text variant="caption" color="muted">Win an encounter to refresh.</Text>
+                    </div>
+                )}
+
+                <Button variant="ghost" onClick={onLeave} className="shop-leave-btn">
+                    ← Leave Shop
+                </Button>
             </div>
-
-            {offer ? (
-                <div className="shop-offer">
-                    <h3>Today's Offer</h3>
-                    <PieceCard piece={offer.piece} showDetails />
-                    <p className="offer-cost">Cost: ${offer.cost}</p>
-                    
-                    <button 
-                        className="buy-button"
-                        onClick={onBuy}
-                        disabled={!canBuy}
-                    >
-                        {canBuy 
-                            ? "Buy Piece" 
-                            : roster.length >= 6 
-                                ? "Roster Full!" 
-                                : "Not Enough Money"}
-                    </button>
-                </div>
-            ) : (
-                <div className="shop-empty">
-                    <p>You already bought from this shop!</p>
-                    <p>Win an encounter to refresh the shop.</p>
-                </div>
-            )}
-
-            <button className="leave-button" onClick={onLeave}>
-                Leave Shop
-            </button>
         </div>
     );
 };
@@ -301,7 +340,11 @@ const EncounterView: React.FC<EncounterViewProps> = ({ snapshot, onPlayerMove, d
     }, [chessManager]);
 
     if (!chessManager || !bundle) {
-        return <div className="encounter-loading">Loading encounter...</div>;
+        return (
+            <div className="encounter-loading">
+                <Text variant="subheading" color="muted">Loading encounter...</Text>
+            </div>
+        );
     }
 
     const currentPlayer = chessManager.currentState.currentPlayer;
@@ -310,11 +353,11 @@ const EncounterView: React.FC<EncounterViewProps> = ({ snapshot, onPlayerMove, d
 
     return (
         <div className="encounter-view">
-            <div className="encounter-info">
-                <span className={`turn-indicator ${isPlayerTurn ? "player-turn" : "ai-turn"}`}>
+            <div className="encounter-hud">
+                <div className={`turn-indicator ${isPlayerTurn ? "turn-indicator--player" : "turn-indicator--enemy"}`}>
                     {isPlayerTurn ? "Your Turn" : "Enemy Turn..."}
-                </span>
-                <span className="turn-number">Turn {turnNumber}</span>
+                </div>
+                <div className="turn-counter">Turn {turnNumber}</div>
             </div>
 
             <div className="encounter-board">
@@ -338,11 +381,14 @@ interface GameOverViewProps {
 const GameOverView: React.FC<GameOverViewProps> = ({ onRestart }) => {
     return (
         <div className="gameover-view">
-            <h2>💀 Game Over</h2>
-            <p>You lost all your pieces!</p>
-            <button className="restart-button" onClick={onRestart}>
-                Start New Run
-            </button>
+            <div className="gameover-card">
+                <div className="gameover-icon">💀</div>
+                <Text as="h2" variant="heading" className="gameover-title">Game Over</Text>
+                <Text color="muted" className="gameover-message">You lost all your pieces!</Text>
+                <Button variant="primary" size="lg" onClick={onRestart}>
+                    Start New Run
+                </Button>
+            </div>
         </div>
     );
 };
@@ -354,40 +400,37 @@ const GameOverView: React.FC<GameOverViewProps> = ({ onRestart }) => {
 interface PieceCardProps {
     piece: Piece;
     showDetails?: boolean;
+    size?: "sm" | "lg";
 }
 
-const PieceCard: React.FC<PieceCardProps> = ({ piece, showDetails = false }) => {
+const PieceCard: React.FC<PieceCardProps> = ({ piece, showDetails = false, size = "sm" }) => {
     const abilities = abilityIdsForPiece(piece);
     const pieceName = piece.name;
     const pieceIcon = `/assets/${iconForPiece(pieceName as PieceId)}-w.svg`;
 
     return (
-        <div className="piece-card">
+        <div className={`piece-card ${size === "lg" ? "piece-card--lg" : ""}`}>
             <img 
                 src={pieceIcon} 
                 alt={pieceName}
-                className="piece-icon"
+                className="piece-card__icon"
                 onError={(e) => {
-                    // Fallback if image doesn't load
                     (e.target as HTMLImageElement).style.display = 'none';
                 }}
             />
-            <div className="piece-info">
-                <span className="piece-name">{pieceName}</span>
+            <div className="piece-card__info">
+                <span className="piece-card__name">{pieceName}</span>
                 {abilities.length > 0 && (
-                    <span className="piece-abilities">
+                    <span className="piece-card__abilities">
                         {abilities.map(a => iconForAbility(a)).join(" ")}
                     </span>
                 )}
             </div>
             {showDetails && (
-                <div className="piece-details">
-                    <span>Value: {piece.getValue()}</span>
-                </div>
+                <span className="piece-card__value">Value: {piece.getValue()}</span>
             )}
         </div>
     );
 };
 
 export default RogueApp;
-
