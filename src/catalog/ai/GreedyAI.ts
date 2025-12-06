@@ -46,8 +46,8 @@ export class GreedyAI implements AI {
     }
 
     private simulateTurn(state: GameState, move: Move): GameState {
-        // Resolve the move
-        const moveResult = ChessEngine.resolveMove(state, move);
+        // Work on a cloned state so simulations don't mutate the caller's state
+        const moveResult = ChessEngine.resolveMove(state.clone(), move);
         let newState = moveResult.finalState;
         
         const nextPlayer = state.currentPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White;

@@ -7,7 +7,7 @@ import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { RuleSet } from "../../chess-engine/rules/RuleSet";
 import { LastPieceStandingRuleSet } from "../../catalog/rulesets/LastPieceStanding";
-import { GreedyAI } from "../../catalog/ai/GreedyAI";
+import { EfficientAI } from "../../catalog/ai/EfficientAI";
 import { createPiece, createTile } from "../../catalog/registry/Catalog";
 import { PieceId } from "../../catalog/registry/Catalog";
 
@@ -89,7 +89,7 @@ export function createChessManagerBundleFromState(
     const getState = () => manager.currentState;
 
     // Create AI only if we have a human player (not HvH mode)
-    const ai = humanPlayer !== null ? new GreedyAI(rules, 3) : null;
+    const ai = humanPlayer !== null ? new EfficientAI(rules, { depth: 3, timeLimitMs: 1000 }) : null;
     const aiPlayer = humanPlayer !== null 
         ? (humanPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White)
         : null;

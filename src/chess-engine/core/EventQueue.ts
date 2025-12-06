@@ -4,6 +4,8 @@ import { Listener, ListenerContext } from "../listeners";
 import { EventApplier } from "./EventApplier";
 import { Vector2Int } from "../primitives/Vector2Int";
 
+const MAX_EVENTS_PER_RESOLUTION = 1000;
+
 /**
  * Processes events through a linear listener queue.
  * 
@@ -54,17 +56,34 @@ export class EventQueue {
     ): {
         finalState: GameState;
         eventLog: readonly GameEvent[];
+        aborted?: boolean;
     } {
         let currentState = initialState;
         const eventLog: GameEvent[] = [];
         const queue: GameEvent[] = [...initialEvents];
         const pendingCancellations: PendingCancellation[] = [];
 
-        while (queue.length > 0) {
-            const event = queue.shift()!;
+        // Collect and sort listeners by priority (lower = earlier) once per queue run
+        const sortedListeners = [...listeners].sort((a, b) => a.priority - b.priority);
 
-            // Collect and sort listeners by priority (lower = earlier)
-            const sortedListeners = [...listeners].sort((a, b) => a.priority - b.priority);
+        let processedEvents = 0;
+
+        while (queue.length > 0) {
+            processedEvents++;
+            if (processedEvents > MAX_EVENTS_PER_RESOLUTION) {
+                const recent = eventLog.slice(-20).map(e => e.description ?? e.constructor.name);
+                console.warn(
+                    `[EventQueue] Aborting resolution: exceeded max events (${MAX_EVENTS_PER_RESOLUTION}). Recent events:`,
+                    recent
+                );
+                return {
+                    finalState: currentState,
+                    eventLog: Object.freeze(eventLog),
+                    aborted: true,
+                };
+            }
+
+            const event = queue.shift()!;
 
             // Create context for listeners
             const context: ListenerContext = {
