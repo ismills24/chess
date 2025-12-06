@@ -49,7 +49,7 @@ const BoardMeshInner: React.FC<BoardMeshProps> = ({
         const worldPos = gridToWorld(pos, dimensions);
         const isLight = (x + y) % 2 === 0;
         const tile = board.getTile(pos);
-        const tileId = tileIdForInstance(tile);
+        const tileId = tileIdForInstance(tile as any);
         const baseColor = isLight ? LIGHT_COLOR : DARK_COLOR;
         const color = TILE_COLORS[tileId] ?? baseColor;
 

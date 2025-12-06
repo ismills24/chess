@@ -22,7 +22,7 @@ export const BoardView: React.FC = () => {
     if (!piece) return new Set<string>();
     if (piece.owner !== state.currentPlayer) return new Set<string>();
     return new Set(
-      rules.getLegalMoves(state, piece).map((m) => `${m.to.x},${m.to.y}`)
+      rules.getLegalMoves(state, piece as any).map((m) => `${m.to.x},${m.to.y}`)
     );
   }, [selected, state, rules]);
 
@@ -72,9 +72,9 @@ export const BoardView: React.FC = () => {
       const isLegal = legalTargets.has(`${x},${y}`);
 
       const tile = state.board.getTile(pos);
-      const tileId = tileIdForInstance(tile);
+      const tileId = tileIdForInstance(tile as any);
       const tileIcon = tileId === "StandardTile" ? "" : iconForTile(tileId);
-      const abilities = p ? abilityIdsForPiece(p) : [];
+      const abilities = p ? abilityIdsForPiece(p as any) : [];
 
       cells.push(
         <div
