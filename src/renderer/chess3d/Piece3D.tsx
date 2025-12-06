@@ -26,6 +26,7 @@ type AnimType = "slide" | "jump" | "spin" | "bounce";
 
 const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected }) => {
   const meshRef = useRef<THREE.Group | null>(null);
+  const isInitialMountRef = useRef(true);
 
   // Keep a mutable Vector3 of the currently rendered position to avoid per-frame React state updates
   const renderedPosRef = useRef<THREE.Vector3>(
@@ -82,11 +83,15 @@ const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected })
     const wp = gridToWorld(piece.position, dimensions);
     renderedPosRef.current.set(wp.x, 0.05, wp.z);
     if (meshRef.current) meshRef.current.position.copy(renderedPosRef.current);
+    isInitialMountRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When piece position changes, start an animation from current rendered -> new target
   useEffect(() => {
+    // Skip animation on initial mount
+    if (isInitialMountRef.current) return;
+
     const wp = gridToWorld(piece.position, dimensions);
     const now = performance.now();
     animRef.current.start.copy(renderedPosRef.current);
