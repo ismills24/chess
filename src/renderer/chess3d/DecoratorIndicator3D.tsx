@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import { Html } from "@react-three/drei";
 import { AbilityId } from "../../catalog/registry/Catalog";
 import * as THREE from "three";
 
@@ -9,6 +10,8 @@ interface DecoratorIndicator3DProps {
   total: number;
 }
 
+const BASE_HEIGHT = 1.35;
+
 export const DecoratorIndicator3D: React.FC<DecoratorIndicator3DProps> = ({
   decoratorId,
   index,
@@ -17,31 +20,46 @@ export const DecoratorIndicator3D: React.FC<DecoratorIndicator3DProps> = ({
   const config = getDecoratorConfig(decoratorId);
   const groupRef = useRef<THREE.Group>(null);
 
-  // Center-align multiple decorators: offset = (index - midpoint) * spacing
-  const xOffset = total > 1 ? (index - (total - 1) / 2) * 0.25 : 0;
+  const xOffset = total > 1 ? (index - (total - 1) / 2) * 0.28 : 0;
 
   useFrame((state) => {
     if (groupRef.current) {
-      // Sine wave float: base height + sin(time * speed + phase) * amplitude
       groupRef.current.position.y =
-        1.1 + Math.sin(state.clock.elapsedTime * 2 + index) * 0.05;
+        BASE_HEIGHT + Math.sin(state.clock.elapsedTime * 2 + index) * 0.04;
       if (config.spin) {
-        // Constant angular velocity: increment rotation each frame
-        groupRef.current.rotation.y += 0.02;
+        groupRef.current.rotation.y += 0.015;
       }
     }
   });
 
   return (
-    <group ref={groupRef} position={[xOffset, 1.1, 0]}>
-      {config.render()}
-    </group>
+    <>
+      <group ref={groupRef} position={[xOffset, BASE_HEIGHT, 0]}>
+        {config.render()}
+      </group>
+      <Html
+        position={[xOffset, 1.05, 0]}
+        center
+        style={{
+          fontSize: "10px",
+          fontWeight: "bold",
+          color: config.labelColor,
+          textShadow: "0 0 3px #000, 0 0 3px #000",
+          whiteSpace: "nowrap",
+          userSelect: "none",
+          pointerEvents: "none",
+        }}
+      >
+        {decoratorId}
+      </Html>
+    </>
   );
 };
 
 interface DecoratorConfig {
   render: () => React.ReactNode;
   spin?: boolean;
+  labelColor: string;
 }
 
 function getDecoratorConfig(id: AbilityId): DecoratorConfig {
@@ -50,65 +68,70 @@ function getDecoratorConfig(id: AbilityId): DecoratorConfig {
       return {
         render: () => <MarksmanIndicator />,
         spin: true,
+        labelColor: "#ff6666",
       };
     case "Exploding":
       return {
         render: () => <ExplodingIndicator />,
         spin: false,
+        labelColor: "#ffaa44",
       };
     case "Scapegoat":
       return {
         render: () => <ScapegoatIndicator />,
         spin: false,
+        labelColor: "#bb99ff",
       };
     case "Piercing":
       return {
         render: () => <PiercingIndicator />,
         spin: false,
+        labelColor: "#00ffff",
       };
     case "Bouncer":
       return {
         render: () => <BouncerIndicator />,
-        spin: true,
+        spin: false,
+        labelColor: "#ff8844",
       };
     case "Cannibal":
       return {
         render: () => <CannibalIndicator />,
         spin: false,
+        labelColor: "#ffbb66",
       };
     default:
       return {
         render: () => <DefaultIndicator />,
+        labelColor: "#aaaaaa",
       };
   }
 }
 
 const MarksmanIndicator: React.FC = () => (
-  <group scale={0.15}>
+  <group scale={0.12}>
     <mesh>
-      <torusGeometry args={[1, 0.15, 8, 24]} />
+      <torusGeometry args={[1, 0.1, 8, 32]} />
       <meshStandardMaterial
-        color="#ff4444"
+        color="#ff2222"
         emissive="#ff0000"
-        emissiveIntensity={0.3}
+        emissiveIntensity={0.5}
       />
     </mesh>
-    {/* Rotate 90° around X to orient crosshair vertical bar along Z axis */}
-    <mesh rotation={[Math.PI / 2, 0, 0]}>
-      <cylinderGeometry args={[0.08, 0.08, 2, 8]} />
+    <mesh>
+      <torusGeometry args={[0.55, 0.07, 8, 32]} />
       <meshStandardMaterial
-        color="#ff4444"
+        color="#ff2222"
         emissive="#ff0000"
-        emissiveIntensity={0.3}
+        emissiveIntensity={0.5}
       />
     </mesh>
-    {/* Rotate 90° around X, then 90° around Z for perpendicular crosshair bar */}
-    <mesh rotation={[Math.PI / 2, 0, Math.PI / 2]}>
-      <cylinderGeometry args={[0.08, 0.08, 2, 8]} />
+    <mesh>
+      <sphereGeometry args={[0.18, 12, 12]} />
       <meshStandardMaterial
         color="#ff4444"
         emissive="#ff0000"
-        emissiveIntensity={0.3}
+        emissiveIntensity={0.6}
       />
     </mesh>
   </group>
@@ -119,168 +142,363 @@ const ExplodingIndicator: React.FC = () => {
 
   useFrame((state) => {
     if (groupRef.current) {
-      // Pulsing scale: base + sin(time * speed) * amplitude
-      const scale = 1 + Math.sin(state.clock.elapsedTime * 4) * 0.2;
-      groupRef.current.scale.setScalar(scale * 0.12);
+      const pulse = 1 + Math.sin(state.clock.elapsedTime * 5) * 0.12;
+      groupRef.current.scale.setScalar(pulse * 0.1);
     }
   });
 
   return (
-    <group ref={groupRef} scale={0.12}>
-      {/* Hexagonal distribution: 6 points at angles i * 60° (π/3 radians) */}
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <mesh
-          key={i}
-          position={[
-            // Polar to cartesian: x = radius * cos(angle)
-            Math.cos((i * Math.PI) / 3) * 0.8,
-            0,
-            // Polar to cartesian: z = radius * sin(angle)
-            Math.sin((i * Math.PI) / 3) * 0.8,
-          ]}
-        >
-          <octahedronGeometry args={[0.4]} />
-          <meshStandardMaterial
-            color="#ff8800"
-            emissive="#ff4400"
-            emissiveIntensity={0.5}
-          />
-        </mesh>
-      ))}
+    <group ref={groupRef} scale={0.1}>
       <mesh>
-        <sphereGeometry args={[0.5, 16, 16]} />
+        <icosahedronGeometry args={[0.6, 0]} />
         <meshStandardMaterial
-          color="#ffcc00"
+          color="#ffdd00"
           emissive="#ff8800"
-          emissiveIntensity={0.4}
+          emissiveIntensity={0.7}
+        />
+      </mesh>
+      {[0, 1, 2, 3, 4, 5].map((i) => {
+        const angle = (i * Math.PI * 2) / 6;
+        return (
+          <mesh
+            key={i}
+            position={[Math.cos(angle) * 0.7, 0, Math.sin(angle) * 0.7]}
+            rotation={[0, -angle, Math.PI / 2]}
+          >
+            <coneGeometry args={[0.25, 0.8, 4]} />
+            <meshStandardMaterial
+              color="#ff6600"
+              emissive="#ff4400"
+              emissiveIntensity={0.6}
+            />
+          </mesh>
+        );
+      })}
+      <mesh position={[0, 0.7, 0]}>
+        <coneGeometry args={[0.25, 0.8, 4]} />
+        <meshStandardMaterial
+          color="#ff6600"
+          emissive="#ff4400"
+          emissiveIntensity={0.6}
+        />
+      </mesh>
+      <mesh position={[0, -0.7, 0]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.25, 0.8, 4]} />
+        <meshStandardMaterial
+          color="#ff6600"
+          emissive="#ff4400"
+          emissiveIntensity={0.6}
         />
       </mesh>
     </group>
   );
 };
 
-const ScapegoatIndicator: React.FC = () => (
-  <group scale={0.13}>
-    <mesh>
-      <cylinderGeometry args={[0.8, 1.2, 0.3, 6]} />
-      <meshStandardMaterial
-        color="#4488ff"
-        emissive="#2266cc"
-        emissiveIntensity={0.3}
-      />
-    </mesh>
-    <mesh position={[0, 0.3, 0]}>
-      <sphereGeometry args={[0.5, 16, 16]} />
-      <meshStandardMaterial
-        color="#66aaff"
-        emissive="#4488ff"
-        emissiveIntensity={0.3}
-      />
-    </mesh>
-  </group>
-);
-
-const PiercingIndicator: React.FC = () => {
+const ScapegoatIndicator: React.FC = () => {
   const groupRef = useRef<THREE.Group>(null);
+  const innerOrbRef = useRef<THREE.Mesh>(null);
+  const ringsRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
     if (groupRef.current) {
-      // Wobble rotation: sin wave oscillates between -0.3 and +0.3 radians
-      groupRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 3) * 0.3;
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.5;
+    }
+    if (innerOrbRef.current) {
+      const pulse = 0.8 + Math.sin(state.clock.elapsedTime * 3) * 0.2;
+      innerOrbRef.current.scale.setScalar(pulse);
+    }
+    if (ringsRef.current) {
+      ringsRef.current.rotation.x = state.clock.elapsedTime * 1.2;
+      ringsRef.current.rotation.z = state.clock.elapsedTime * 0.8;
     }
   });
 
   return (
-    <group ref={groupRef} scale={0.12}>
-      {/* Rotate 45° around Z for diagonal arrowhead orientation */}
-      <mesh rotation={[0, 0, Math.PI / 4]}>
-        <coneGeometry args={[0.4, 1.5, 4]} />
+    <group ref={groupRef} scale={0.11}>
+      <mesh ref={innerOrbRef}>
+        <sphereGeometry args={[0.5, 32, 32]} />
         <meshStandardMaterial
-          color="#ffff00"
-          emissive="#ffcc00"
-          emissiveIntensity={0.5}
+          color="#7744ff"
+          emissive="#5522dd"
+          emissiveIntensity={0.8}
+          transparent
+          opacity={0.9}
         />
       </mesh>
-      {/* Secondary arrow point at 45° rotation matching the main arrow */}
-      <mesh position={[0, -0.5, 0]} rotation={[0, 0, Math.PI / 4]}>
-        <coneGeometry args={[0.3, 0.6, 4]} />
+      <mesh>
+        <sphereGeometry args={[0.7, 32, 32]} />
         <meshStandardMaterial
-          color="#ffff00"
-          emissive="#ffcc00"
-          emissiveIntensity={0.5}
+          color="#aa88ff"
+          emissive="#8866ee"
+          emissiveIntensity={0.3}
+          transparent
+          opacity={0.25}
         />
       </mesh>
+      <group ref={ringsRef}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.85, 0.04, 16, 48]} />
+          <meshStandardMaterial
+            color="#bb99ff"
+            emissive="#9977ff"
+            emissiveIntensity={0.6}
+          />
+        </mesh>
+        <mesh rotation={[Math.PI / 3, Math.PI / 4, 0]}>
+          <torusGeometry args={[0.75, 0.03, 16, 48]} />
+          <meshStandardMaterial
+            color="#cc99ff"
+            emissive="#aa77ff"
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+        <mesh rotation={[-Math.PI / 4, Math.PI / 3, Math.PI / 6]}>
+          <torusGeometry args={[0.65, 0.025, 16, 48]} />
+          <meshStandardMaterial
+            color="#ddaaff"
+            emissive="#bb88ff"
+            emissiveIntensity={0.4}
+          />
+        </mesh>
+      </group>
+      {[0, 1, 2, 3].map((i) => {
+        const angle = (i * Math.PI * 2) / 4;
+        return (
+          <mesh
+            key={i}
+            position={[Math.cos(angle) * 0.9, 0, Math.sin(angle) * 0.9]}
+            rotation={[0, -angle + Math.PI / 2, 0]}
+          >
+            <octahedronGeometry args={[0.12, 0]} />
+            <meshStandardMaterial
+              color="#eeddff"
+              emissive="#ccaaff"
+              emissiveIntensity={0.7}
+            />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+};
+
+const PiercingIndicator: React.FC = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const trailRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 2;
+    }
+    if (trailRef.current) {
+      const pulse = 0.6 + Math.sin(state.clock.elapsedTime * 8) * 0.4;
+      trailRef.current.children.forEach((child, i) => {
+        const mesh = child as THREE.Mesh;
+        if (mesh.material) {
+          const mat = mesh.material as THREE.MeshStandardMaterial;
+          mat.opacity = pulse * (1 - i * 0.15);
+        }
+      });
+    }
+  });
+
+  return (
+    <group ref={groupRef} scale={0.1}>
+      <mesh position={[0, 0.6, 0]}>
+        <coneGeometry args={[0.25, 0.8, 4]} />
+        <meshStandardMaterial
+          color="#00ffff"
+          emissive="#00dddd"
+          emissiveIntensity={0.9}
+          metalness={0.8}
+          roughness={0.2}
+        />
+      </mesh>
+      <mesh position={[0, 0, 0]}>
+        <cylinderGeometry args={[0.12, 0.2, 0.8, 8]} />
+        <meshStandardMaterial
+          color="#00eeff"
+          emissive="#00ccdd"
+          emissiveIntensity={0.7}
+          metalness={0.9}
+          roughness={0.1}
+        />
+      </mesh>
+      <mesh position={[0, -0.5, 0]}>
+        <cylinderGeometry args={[0.08, 0.12, 0.6, 8]} />
+        <meshStandardMaterial
+          color="#00ddff"
+          emissive="#00bbcc"
+          emissiveIntensity={0.6}
+          metalness={0.9}
+          roughness={0.1}
+        />
+      </mesh>
+      <group ref={trailRef}>
+        {[0, 1, 2, 3].map((i) => (
+          <mesh key={i} position={[0, -0.9 - i * 0.18, 0]}>
+            <sphereGeometry args={[0.08 - i * 0.015, 8, 8]} />
+            <meshStandardMaterial
+              color="#00ffff"
+              emissive="#00ffff"
+              emissiveIntensity={1}
+              transparent
+              opacity={0.8 - i * 0.15}
+            />
+          </mesh>
+        ))}
+      </group>
+      {[0, 1, 2].map((i) => {
+        const angle = (i * Math.PI * 2) / 3;
+        return (
+          <mesh
+            key={`fin-${i}`}
+            position={[Math.cos(angle) * 0.15, -0.3, Math.sin(angle) * 0.15]}
+            rotation={[0, -angle, Math.PI / 6]}
+          >
+            <boxGeometry args={[0.02, 0.35, 0.12]} />
+            <meshStandardMaterial
+              color="#00ddff"
+              emissive="#00bbdd"
+              emissiveIntensity={0.5}
+              metalness={0.7}
+              roughness={0.3}
+            />
+          </mesh>
+        );
+      })}
     </group>
   );
 };
 
 const BouncerIndicator: React.FC = () => {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (meshRef.current) {
-      // Bounce height: |sin(time)| creates always-positive bounce curve
-      const bounce = Math.abs(Math.sin(state.clock.elapsedTime * 5)) * 0.1;
-      meshRef.current.position.y = bounce;
-      // Squash-and-stretch: height shrinks as width/depth expand (volume preservation illusion)
-      const squash = 1 - bounce * 2;
-      const baseScale = 0.12;
-      meshRef.current.scale.set(
-        (1 + bounce) * baseScale,
-        squash * baseScale,
-        (1 + bounce) * baseScale
-      );
+    if (groupRef.current) {
+      const bounce = Math.abs(Math.sin(state.clock.elapsedTime * 5)) * 0.08;
+      groupRef.current.position.y = bounce;
+      const squash = 1 - bounce;
+      groupRef.current.scale.set(1 + bounce * 0.5, squash, 1 + bounce * 0.5);
     }
   });
 
   return (
-    <mesh ref={meshRef} scale={0.12}>
-      <sphereGeometry args={[1, 16, 16]} />
-      <meshStandardMaterial
-        color="#ff8844"
-        emissive="#ff6622"
-        emissiveIntensity={0.3}
-      />
-    </mesh>
+    <group ref={groupRef} scale={1}>
+      <mesh scale={0.11}>
+        <sphereGeometry args={[1, 24, 24]} />
+        <meshStandardMaterial
+          color="#ff6622"
+          emissive="#cc4400"
+          emissiveIntensity={0.3}
+        />
+      </mesh>
+      <mesh scale={0.11}>
+        <torusGeometry args={[1.005, 0.025, 6, 24]} />
+        <meshStandardMaterial color="#111111" />
+      </mesh>
+      <mesh scale={0.11} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.005, 0.025, 6, 24]} />
+        <meshStandardMaterial color="#111111" />
+      </mesh>
+      <mesh scale={0.11} rotation={[0, 0, Math.PI / 2]}>
+        <torusGeometry args={[1.005, 0.025, 6, 24]} />
+        <meshStandardMaterial color="#111111" />
+      </mesh>
+    </group>
   );
 };
 
 const CannibalIndicator: React.FC = () => {
-  const topRef = useRef<THREE.Mesh>(null);
-  const bottomRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    // Chomping motion: jaws rotate in opposite directions via sin wave
-    const chomp = Math.sin(state.clock.elapsedTime * 3) * 0.15;
-    if (topRef.current) topRef.current.rotation.x = -chomp;
-    if (bottomRef.current) bottomRef.current.rotation.x = chomp;
+    if (groupRef.current) {
+      const wobble = Math.sin(state.clock.elapsedTime * 3) * 0.04;
+      groupRef.current.rotation.z = wobble;
+    }
   });
 
   return (
-    <group scale={0.12}>
-      <mesh ref={topRef} position={[0, 0.3, 0]}>
-        <sphereGeometry args={[0.6, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+    <group ref={groupRef} scale={0.1}>
+      <mesh position={[0, 0.45, 0]}>
+        <sphereGeometry args={[0.7, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial
-          color="#cc44cc"
-          emissive="#aa22aa"
-          emissiveIntensity={0.3}
+          color="#d4a56a"
+          emissive="#8b6914"
+          emissiveIntensity={0.2}
         />
       </mesh>
-      {/* Bottom jaw: rotate 180° around X to flip hemisphere upside down */}
-      <mesh ref={bottomRef} position={[0, -0.3, 0]} rotation={[Math.PI, 0, 0]}>
-        <sphereGeometry args={[0.6, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[0.65, 0.65, 0.1, 32]} />
         <meshStandardMaterial
-          color="#cc44cc"
-          emissive="#aa22aa"
-          emissiveIntensity={0.3}
+          color="#d4a56a"
+          emissive="#8b6914"
+          emissiveIntensity={0.2}
         />
       </mesh>
-      {[-0.3, 0, 0.3].map((x, i) => (
-        <mesh key={i} position={[x, 0, 0.4]}>
-          <coneGeometry args={[0.1, 0.25, 4]} />
-          <meshStandardMaterial color="#ffffff" />
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <mesh
+          key={`sesame-${i}`}
+          position={[
+            Math.cos((i * Math.PI) / 3 + 0.3) * 0.35,
+            0.72,
+            Math.sin((i * Math.PI) / 3 + 0.3) * 0.35,
+          ]}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <capsuleGeometry args={[0.03, 0.06, 4, 8]} />
+          <meshStandardMaterial color="#f5f5dc" />
         </mesh>
       ))}
+      <mesh position={[0, 0.25, 0]}>
+        <cylinderGeometry args={[0.72, 0.72, 0.15, 32]} />
+        <meshStandardMaterial
+          color="#44aa44"
+          emissive="#228822"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      <mesh position={[0, 0.05, 0]}>
+        <cylinderGeometry args={[0.68, 0.68, 0.25, 32]} />
+        <meshStandardMaterial
+          color="#8b4513"
+          emissive="#5a2d0a"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      <mesh position={[0, -0.1, 0]}>
+        <cylinderGeometry args={[0.65, 0.65, 0.08, 32]} />
+        <meshStandardMaterial
+          color="#ff6644"
+          emissive="#cc3311"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      <mesh position={[0, -0.22, 0]}>
+        <cylinderGeometry args={[0.68, 0.68, 0.15, 32]} />
+        <meshStandardMaterial
+          color="#ffcc00"
+          emissive="#cc9900"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      <mesh position={[0, -0.45, 0]} rotation={[Math.PI, 0, 0]}>
+        <sphereGeometry args={[0.7, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial
+          color="#d4a56a"
+          emissive="#8b6914"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      <mesh position={[0, -0.5, 0]}>
+        <cylinderGeometry args={[0.65, 0.65, 0.1, 32]} />
+        <meshStandardMaterial
+          color="#d4a56a"
+          emissive="#8b6914"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
     </group>
   );
 };

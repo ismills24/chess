@@ -164,6 +164,25 @@ const TileIndicator: React.FC<TileIndicatorProps> = React.memo(
     const color = TILE_INDICATOR_COLORS[tileId];
     if (!color) return null;
 
+    if (tileId === "GuardianTile") {
+      return (
+        <group position={position}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.35, 0.44, 32]} />
+            <meshBasicMaterial color="#ffd700" transparent opacity={0.8} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, Math.PI / 4]}>
+            <ringGeometry args={[0.28, 0.32, 4]} />
+            <meshBasicMaterial color="#ffee55" transparent opacity={0.9} />
+          </mesh>
+          <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[0.12, 16]} />
+            <meshBasicMaterial color="#ffcc00" transparent opacity={0.7} />
+          </mesh>
+        </group>
+      );
+    }
+
     return (
       <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.38, 0.45, 4]} />
