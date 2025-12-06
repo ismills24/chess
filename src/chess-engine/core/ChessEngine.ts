@@ -1,5 +1,5 @@
 import { GameState } from "../state/GameState";
-import { Move } from "../primitives/Move";
+import { Move, MoveType } from "../primitives/Move";
 import { PlayerColor } from "../primitives/PlayerColor";
 import { GameEvent, MoveEvent, CaptureEvent, TurnStartEvent, TurnEndEvent, TurnAdvancedEvent } from "../events/EventRegistry";
 import { Listener } from "../listeners";
@@ -168,7 +168,6 @@ export class ChessEngine {
             // Capture event
             events.push(new CaptureEvent(mover, target, actor, true));
         }
-
         // Move event
         events.push(
             new MoveEvent(
@@ -177,7 +176,8 @@ export class ChessEngine {
                 mover,
                 actor,
                 true,
-                mover.id
+                mover.id,
+                move.type === MoveType.JUMP ? "jump" : "slide"
             )
         );
 

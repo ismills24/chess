@@ -46,7 +46,7 @@ export class ScapegoatAbility extends AbilityBase implements Listener {
             // Cancel the original event and generate self-destruction
             // Return array to cancel original CaptureEvent and enqueue self-destruction
             // EventQueue will automatically cancel the associated MoveEvent if this was a CaptureEvent
-            return [new DestroyEvent(selfFromState, "Died protecting ally", event.actor, this.id)];
+            return [new DestroyEvent(selfFromState, "Died protecting ally", event.actor, this.id, "scapegoat")];
         }
 
         return event;

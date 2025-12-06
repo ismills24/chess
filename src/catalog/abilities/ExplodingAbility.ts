@@ -70,7 +70,7 @@ export class ExplodingAbility extends AbilityBase implements Listener {
         const explodingPiece = state.board.getPieceAt(explosionPos);
         if (explodingPiece && explodingPiece.id === this.id) {
             // Include destroy event for the exploding piece itself
-            events.push(new DestroyEvent(explodingPiece, "Exploded", actor, this.id));
+            events.push(new DestroyEvent(explodingPiece, "Exploded", actor, this.id, "explosion"));
         }
 
         // Use the explosion position (where the piece was when it exploded)
@@ -80,7 +80,7 @@ export class ExplodingAbility extends AbilityBase implements Listener {
 
             const occupant = state.board.getPieceAt(pos);
             if (occupant) {
-                events.push(new DestroyEvent(occupant, "Exploded by neighbor", actor, this.id));
+                events.push(new DestroyEvent(occupant, "Exploded by neighbor", actor, this.id, "explosion"));
             }
         }
 
