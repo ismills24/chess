@@ -229,7 +229,7 @@ export const rogueMachine = rogueSetup.createMachine({
     context: createInitialContext,
     on: {
         SURRENDER: {
-            target: "map",
+            target: "#rogue.map",
             actions: "resetGame",
         },
     },
