@@ -25,6 +25,7 @@ import { StandardTile } from "../tiles/StandardTile";
 import { GuardianTile } from "../tiles/GuardianTile";
 import { SlipperyTile } from "../tiles/SlipperyTile";
 import { FogTile } from "../tiles/FogTile";
+import { WallTile } from "../tiles/WallTile";
 
 type PieceConstructor<T extends Piece = Piece> = new (owner: PlayerColor, position: Vector2Int) => T;
 type AbilityConstructor<T extends AbilityBase = AbilityBase> = new (innerPiece: Piece, id?: string, ...args: any[]) => T;
@@ -132,6 +133,12 @@ const tileDefinitions = [
         icon: "☁️",
         create: (position?: Vector2Int, id?: string) => new FogTile(position, id),
         klass: FogTile as TileConstructor,
+    },
+    {
+        id: "WallTile",
+        icon: "🏛️",
+        create: (position?: Vector2Int, id?: string) => new WallTile(position, id),
+        klass: WallTile as TileConstructor,
     },
 ] as const;
 

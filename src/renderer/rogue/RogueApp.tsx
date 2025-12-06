@@ -69,6 +69,7 @@ export const RogueApp: React.FC<RogueAppProps> = ({ onModeChange }) => {
     const handleGoToEncounter = useCallback(() => actor.send({ type: "GO_TO_ENCOUNTER" }), [actor]);
     const handleBuy = useCallback(() => actor.send({ type: "BUY_PIECE" }), [actor]);
     const handleLeaveShop = useCallback(() => actor.send({ type: "LEAVE_SHOP" }), [actor]);
+    const handleSurrender = useCallback(() => actor.send({ type: "SURRENDER" }), [actor]);
     const handleRestart = useCallback(() => actor.send({ type: "RESTART" }), [actor]);
     const handlePlayerMove = useCallback((move: Move) => {
         actor.send({ type: "PLAYER_MOVE", move });
@@ -97,6 +98,10 @@ export const RogueApp: React.FC<RogueAppProps> = ({ onModeChange }) => {
                             <span className="rogue-stat__icon">⚔️</span>
                             <span className="rogue-stat__value">{snapshot.context.roster.length} pieces</span>
                         </div>
+                        <button className="rogue-stat rogue-stat--surrender" onClick={handleSurrender}>
+                            <span className="rogue-stat__icon">🏳️</span>
+                            <span className="rogue-stat__value">Surrender</span>
+                        </button>
                     </div>
                     {isEncounter && (
                         <IconButton 

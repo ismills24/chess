@@ -128,7 +128,7 @@ const ClickHandler: React.FC<{
 
 export const Board3DView: React.FC = () => {
   const state = useEngineState();
-  const { rules, submitHumanMove } = useEngine();
+  const { manager, submitHumanMove } = useEngine();
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(
     null
   );
@@ -145,29 +145,35 @@ export const Board3DView: React.FC = () => {
     [dimensions]
   );
 
-  const legalTargets = useMemo(() => {
-    if (!selected) return new Set<string>();
+  const legalMovesMap = useMemo(() => {
+    if (!selected) return new Map<string, Move>();
     const piece = state.board.getPieceAt(
       new Vector2Int(selected.x, selected.y)
     );
-    if (!piece) return new Set<string>();
-    if (piece.owner !== state.currentPlayer) return new Set<string>();
-    return new Set(
-      rules.getLegalMoves(state, piece).map((m) => `${m.to.x},${m.to.y}`)
-    );
-  }, [selected, state, rules]);
+    if (!piece) return new Map<string, Move>();
+    if (piece.owner !== state.currentPlayer) return new Map<string, Move>();
+    const moves = manager.getLegalMovesForPiece(piece);
+    const map = new Map<string, Move>();
+    for (const move of moves) {
+      map.set(`${move.to.x},${move.to.y}`, move);
+    }
+    return map;
+  }, [selected, state, manager]);
+
+  const legalTargets = useMemo(() => {
+    return new Set(legalMovesMap.keys());
+  }, [legalMovesMap]);
 
   const handleSquareClick = useCallback(
     (pos: Vector2Int) => {
       const piece = state.board.getPieceAt(pos);
 
       if (selected) {
-        if (legalTargets.has(`${pos.x},${pos.y}`)) {
-          const from = new Vector2Int(selected.x, selected.y);
-          const mover = state.board.getPieceAt(from);
-          if (mover) {
-            const mv = new Move(from, pos, mover);
-            submitHumanMove(mv);
+        const moveKey = `${pos.x},${pos.y}`;
+        if (legalMovesMap.has(moveKey)) {
+          const actualMove = legalMovesMap.get(moveKey);
+          if (actualMove) {
+            submitHumanMove(actualMove);
             setSelected(null);
           }
           return;
@@ -183,7 +189,7 @@ export const Board3DView: React.FC = () => {
         }
       }
     },
-    [selected, legalTargets, state, submitHumanMove]
+    [selected, legalMovesMap, state, submitHumanMove]
   );
 
   const pieces = state.board.getAllPieces();

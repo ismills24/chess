@@ -13,6 +13,7 @@ const TILE_COLORS: Record<string, THREE.Color> = {
   SlipperyTile: new THREE.Color("#a8d8ea"),
   GuardianTile: new THREE.Color("#c9a227"),
   FogTile: new THREE.Color("#888888"),
+  WallTile: new THREE.Color("#5c4033"),
 };
 
 interface BoardMeshProps {
@@ -157,6 +158,7 @@ const TILE_INDICATOR_COLORS: Record<string, string> = {
   SlipperyTile: "#00bfff",
   GuardianTile: "#ffd700",
   FogTile: "#666666",
+  WallTile: "#5c4033",
 };
 
 const TileIndicator: React.FC<TileIndicatorProps> = React.memo(
@@ -178,6 +180,23 @@ const TileIndicator: React.FC<TileIndicatorProps> = React.memo(
           <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <circleGeometry args={[0.12, 16]} />
             <meshBasicMaterial color="#ffcc00" transparent opacity={0.7} />
+          </mesh>
+        </group>
+      );
+    }
+
+    if (tileId === "WallTile") {
+      return (
+        <group position={position} castShadow scale={2.3}>
+          {/* Base slab */}
+          <mesh position={[0, 0.15, 0]}>
+            <boxGeometry args={[0.25, 0.3, 0.08]} />
+            <meshStandardMaterial color="#4a3a2a" />
+          </mesh>
+          {/* Small base/platform */}
+          <mesh position={[0, 0.05, 0]}>
+            <boxGeometry args={[0.3, 0.1, 0.1]} />
+            <meshStandardMaterial color="#5c4033" />
           </mesh>
         </group>
       );

@@ -1,6 +1,7 @@
 import { PlayerColor } from "../primitives/PlayerColor";
 import { Vector2Int } from "../primitives/Vector2Int";
 import { Piece, Tile } from "../state/types";
+import { MovementPatterns } from "../rules/MovementPatterns";
 
 import { GameState } from "../state/GameState";
 
@@ -14,18 +15,21 @@ export abstract class Event {
     readonly actor: PlayerColor;
     readonly isPlayerAction: boolean;
     readonly description: string;
+    readonly subtype: string;
 
     constructor(params: {
         actor: PlayerColor;
         isPlayerAction?: boolean;
         description: string;
         sourceId: string;
+        subtype: string;
     }) {
         this.id = crypto.randomUUID();
         this.actor = params.actor;
         this.isPlayerAction = params.isPlayerAction ?? false;
         this.description = params.description ?? "";
         this.sourceId = params.sourceId;
+        this.subtype = params.subtype ?? "";
     }
 
     /**
@@ -51,13 +55,15 @@ export class MoveEvent extends Event {
         piece: Piece,
         actor: PlayerColor,
         isPlayerAction: boolean,
-        sourceId: string
+        sourceId: string,
+        subtype?: string
     ) {
         super({
             actor,
             isPlayerAction,
             description: `${piece.name} moves ${from.toString()} → ${to.toString()}`,
             sourceId,
+            subtype,
         });
         this.from = from;
         this.to = to;
@@ -74,6 +80,24 @@ export class MoveEvent extends Event {
         if (pieceAtFrom.id !== this.piece.id) {
             return false;
         }
+        
+        // Check tile restrictions
+        const { allRestrictedSquares, obstacleSquares } = MovementPatterns.collectTileRestrictions(state);
+        
+        // Never allow landing on any restricted square (obstacle or target)
+        if (allRestrictedSquares.has(`${this.to.x},${this.to.y}`)) {
+            return false;
+        }
+        
+        // For slide moves, check if path passes through obstacles
+        if (this.subtype === "slide") {
+            const path = MovementPatterns.getLinearPath(this.from, this.to);
+            // Check if any square along the path is an obstacle
+            if (path.some((pos) => obstacleSquares.has(`${pos.x},${pos.y}`))) {
+                return false;
+            }
+        }
+        
         return true;
     }
 }
@@ -82,12 +106,13 @@ export class CaptureEvent extends Event {
     readonly attacker: Piece;
     readonly target: Piece;
 
-    constructor(attacker: Piece, target: Piece, actor: PlayerColor, isPlayerAction: boolean) {
+    constructor(attacker: Piece, target: Piece, actor: PlayerColor, isPlayerAction: boolean, subtype?: string) {
         super({
             actor,
             isPlayerAction,
             description: `${attacker.name} captures ${target.name}`,
             sourceId: attacker.id,
+            subtype,
         });
         this.attacker = attacker;
         this.target = target;
@@ -111,12 +136,13 @@ export class CaptureEvent extends Event {
 export class DestroyEvent extends Event {
     readonly target: Piece;
 
-    constructor(target: Piece, reason: string, actor: PlayerColor, sourceId: string) {
+    constructor(target: Piece, reason: string, actor: PlayerColor, sourceId: string, subtype?: string) {
         super({
             actor,
             isPlayerAction: false,
             description: `Destroy ${target.name}: ${reason}`,
             sourceId,
+            subtype,
         });
         this.target = target;
     }
@@ -139,12 +165,13 @@ export class TurnAdvancedEvent extends Event {
     readonly nextPlayer: PlayerColor;
     readonly turnNumber: number;
 
-    constructor(nextPlayer: PlayerColor, turnNumber: number) {
+    constructor(nextPlayer: PlayerColor, turnNumber: number, subtype?: string) {
         super({
             actor: nextPlayer,
             isPlayerAction: false,
             description: `Turn ${turnNumber} → ${nextPlayer}`,
             sourceId: "",
+            subtype,
         });
         this.nextPlayer = nextPlayer;
         this.turnNumber = turnNumber;
@@ -160,12 +187,13 @@ export class TurnStartEvent extends Event {
     readonly player: PlayerColor;
     readonly turnNumber: number;
 
-    constructor(player: PlayerColor, turnNumber: number) {
+    constructor(player: PlayerColor, turnNumber: number, subtype?: string) {
         super({
             actor: player,
             isPlayerAction: false,
             description: `Turn ${turnNumber} start for ${player}`,
             sourceId: "",
+            subtype,
         });
         this.player = player;
         this.turnNumber = turnNumber;
@@ -181,12 +209,13 @@ export class TurnEndEvent extends Event {
     readonly player: PlayerColor;
     readonly turnNumber: number;
 
-    constructor(player: PlayerColor, turnNumber: number) {
+    constructor(player: PlayerColor, turnNumber: number, subtype?: string) {
         super({
             actor: player,
             isPlayerAction: false,
             description: `Turn ${turnNumber} end for ${player}`,
             sourceId: "",
+            subtype,
         });
         this.player = player;
         this.turnNumber = turnNumber;
@@ -203,12 +232,13 @@ export class TileChangedEvent extends Event {
     readonly oldTile: Tile;
     readonly newTile: Tile;
 
-    constructor(position: Vector2Int, oldTile: Tile, newTile: Tile, actor: PlayerColor) {
+    constructor(position: Vector2Int, oldTile: Tile, newTile: Tile, actor: PlayerColor, subtype?: string) {
         super({
             actor,
             isPlayerAction: false,
             description: `Tile at ${position.toString()} changed from ${oldTile.constructor.name} to ${newTile.constructor.name}`,
             sourceId: newTile.id,
+            subtype,
         });
         this.position = position;
         this.oldTile = oldTile;
@@ -244,13 +274,15 @@ export class PieceChangedEvent extends Event {
         position: Vector2Int,
         actor: PlayerColor,
         sourceId: string,
-        isPlayerAction = false
+        isPlayerAction = false,
+        subtype?: string
     ) {
         super({
             actor,
             isPlayerAction,
             description: `Transform ${oldPiece.name} → ${newPiece.name} at ${position.toString()}`,
             sourceId,
+            subtype,
         });
         this.oldPiece = oldPiece;
         this.newPiece = newPiece;
@@ -274,12 +306,13 @@ export class PieceChangedEvent extends Event {
 export class TimeOutEvent extends Event {
     readonly expiredPlayer: PlayerColor;
 
-    constructor(expiredPlayer: PlayerColor, sourceId: string = "") {
+    constructor(expiredPlayer: PlayerColor, sourceId: string = "", subtype?: string) {
         super({
             actor: expiredPlayer,
             isPlayerAction: false,
             description: `Time expired for ${expiredPlayer}`,
             sourceId,
+            subtype,
         });
         this.expiredPlayer = expiredPlayer;
     }
@@ -293,13 +326,14 @@ export class TimeOutEvent extends Event {
 export class GameOverEvent extends Event {
     readonly losingPlayer: PlayerColor;
 
-    constructor(losingPlayer: PlayerColor, sourceId: string = "") {
+    constructor(losingPlayer: PlayerColor, sourceId: string = "", subtype?: string) {
         const winner = losingPlayer === PlayerColor.White ? PlayerColor.Black : PlayerColor.White;
         super({
             actor: losingPlayer,
             isPlayerAction: false,
             description: `Game Over - ${losingPlayer} loses, ${winner} wins`,
             sourceId,
+            subtype,
         });
         this.losingPlayer = losingPlayer;
     }

@@ -172,7 +172,6 @@ export class EventQueue {
 
             // Check if event is still valid before applying
             if (!modifiedEvent.isStillValid(currentState)) {
-                console.log(`[EventQueue] Event invalid, skipping: ${modifiedEvent.constructor.name} (${modifiedEvent.description})`);
                 continue;
             }
 

@@ -38,6 +38,8 @@ export interface RogueContext {
     encounterRosterIds: string[];
     /** The winner of the last encounter (null if not determined) */
     lastEncounterWinner: PlayerColor | null;
+    /** Current round number (starts at 1, increments after each encounter) */
+    round: number;
 }
 
 export type RogueEvent =
@@ -46,6 +48,7 @@ export type RogueEvent =
     | { type: "BUY_PIECE" }
     | { type: "LEAVE_SHOP" }
     | { type: "PLAYER_MOVE"; move: Move }
+    | { type: "SURRENDER" }
     | { type: "RESTART" };
 
 // =============================================================================
@@ -54,7 +57,7 @@ export type RogueEvent =
 
 function createInitialRoster(): Piece[] {
     // Starting roster: 10 piece value, 2 ability value, minimum 2 pawns, with King
-    return generateValueBasedRoster(10, 2, 2, PlayerColor.White, true);
+    return generateValueBasedRoster(10, 0, 2, PlayerColor.White, true);
 }
 
 function createInitialContext(): RogueContext {
@@ -65,22 +68,29 @@ function createInitialContext(): RogueContext {
         chessManager: null,
         encounterRosterIds: [],
         lastEncounterWinner: null,
+        round: 1,
     };
 }
 
-function startEncounter(roster: Piece[]): { 
+function startEncounter(roster: Piece[], round: number): { 
     chessManager: ChessManager; 
     encounterRosterIds: string[];
 } {
     // Clone roster pieces for the encounter (so we don't mutate the originals)
     const playerPieces = roster.map(p => p.clone());
-    const enemyPieces = generateEnemyRoster();
+    
+    // Calculate enemy scaling based on round
+    // Base: 8 piece value, 0 ability value
+    // Scaling: +2 piece value per round, +1 ability value every other round
+    const enemyPieceValue = 8 + (round - 1) * 2;
+    const enemyAbilityValue = Math.floor((round - 1) / 2);
+    const enemyPieces = generateEnemyRoster(enemyPieceValue, enemyAbilityValue);
     
     // Track original IDs
     const encounterRosterIds = playerPieces.map(p => p.id);
     
-    // Generate the combat board
-    const board = generateCombatBoard(playerPieces, enemyPieces);
+    // Generate the combat board (6x6 default)
+    const board = generateCombatBoard(playerPieces, enemyPieces, 6, 6);
     
     // Create initial game state (White = player goes first)
     const initialState = new GameState(board, PlayerColor.White, 1, []);
@@ -92,29 +102,6 @@ function startEncounter(roster: Piece[]): {
     return { chessManager, encounterRosterIds };
 }
 
-function getSurvivingRoster(
-    originalRoster: Piece[],
-    encounterRosterIds: string[],
-    chessManager: ChessManager
-): Piece[] {
-    // Get IDs of player pieces still on the board
-    const survivingIds = new Set(
-        chessManager.currentState.board
-            .getAllPieces(PlayerColor.White)
-            .map(p => p.id)
-    );
-    
-    // Filter original roster to only pieces that survived
-    // We use the original roster pieces (not the clones) to preserve state
-    return originalRoster.filter(piece => {
-        // Find the corresponding encounter piece ID
-        const index = originalRoster.indexOf(piece);
-        if (index >= 0 && index < encounterRosterIds.length) {
-            return survivingIds.has(encounterRosterIds[index]);
-        }
-        return false;
-    });
-}
 
 // =============================================================================
 // State Machine
@@ -139,7 +126,7 @@ const rogueSetup = setup({
         }),
         
         startEncounterAction: assign(({ context }) => {
-            const { chessManager, encounterRosterIds } = startEncounter(context.roster);
+            const { chessManager, encounterRosterIds } = startEncounter(context.roster, context.round);
             return {
                 chessManager,
                 encounterRosterIds,
@@ -177,29 +164,20 @@ const rogueSetup = setup({
             const winner = context.chessManager.getWinner();
             
             if (winner === PlayerColor.White) {
-                // Player won - get surviving pieces and reward
-                const survivingRoster = getSurvivingRoster(
-                    context.roster,
-                    context.encounterRosterIds,
-                    context.chessManager
-                );
+                // Player won - keep all pieces, give reward, and advance to next round
                 return {
-                    roster: survivingRoster,
+                    roster: context.roster,
                     money: context.money + 1, // Win reward
                     chessManager: null,
                     encounterRosterIds: [],
                     lastEncounterWinner: PlayerColor.White,
                     shopOffer: createShopOffer(), // Generate new shop offer
+                    round: context.round + 1, // Advance to next round
                 };
             } else {
-                // Player lost - update roster (may be empty)
-                const survivingRoster = getSurvivingRoster(
-                    context.roster,
-                    context.encounterRosterIds,
-                    context.chessManager
-                );
+                // Player lost - keep all pieces, don't advance round
                 return {
-                    roster: survivingRoster,
+                    roster: context.roster,
                     chessManager: null,
                     encounterRosterIds: [],
                     lastEncounterWinner: PlayerColor.Black,
@@ -249,6 +227,12 @@ export const rogueMachine = rogueSetup.createMachine({
     id: "rogue",
     initial: "map",
     context: createInitialContext,
+    on: {
+        SURRENDER: {
+            target: "#rogue.map",
+            actions: "resetGame",
+        },
+    },
     states: {
         map: {
             always: [

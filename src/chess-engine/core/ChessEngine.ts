@@ -1,11 +1,12 @@
 import { GameState } from "../state/GameState";
-import { Move } from "../primitives/Move";
+import { Move, MoveType } from "../primitives/Move";
 import { PlayerColor } from "../primitives/PlayerColor";
 import { GameEvent, MoveEvent, CaptureEvent, TurnStartEvent, TurnEndEvent, TurnAdvancedEvent } from "../events/EventRegistry";
 import { Listener } from "../listeners";
 import { EventQueue } from "./EventQueue";
 import { RuleSet } from "../rules/RuleSet";
-import { Piece, Tile } from "../state/types";
+import { MovementPatterns } from "../rules/MovementPatterns";
+import { Piece } from "../state/types";
 
 /**
  * Pure, stateless chess engine.
@@ -123,7 +124,26 @@ export class ChessEngine {
         piece: Piece,
         ruleset: RuleSet
     ): Move[] {
-        return ruleset.getLegalMoves(state, piece);
+        const baseMoves = ruleset.getLegalMoves(state, piece);
+        const { allRestrictedSquares, obstacleSquares } = MovementPatterns.collectTileRestrictions(state);
+        
+        const restrictedMoves = baseMoves.filter((move) => {
+            // Never allow landing on any restricted square (obstacle or target)
+            if (allRestrictedSquares.has(`${move.to.x},${move.to.y}`)) {
+                return false;
+            }
+            
+            // Sliding moves stop at obstacle squares along the path
+            if (move.type === MoveType.SLIDE) {
+                const path = MovementPatterns.getLinearPath(move.from, move.to);
+                // Check if any square along the path is an obstacle
+                return !path.some((pos) => obstacleSquares.has(`${pos.x},${pos.y}`));
+            }
+            
+            // Jumping moves can pass through restricted squares, but not land on them
+            return true;
+        });
+        return restrictedMoves;
     }
 
     /**
@@ -168,7 +188,6 @@ export class ChessEngine {
             // Capture event
             events.push(new CaptureEvent(mover, target, actor, true));
         }
-
         // Move event
         events.push(
             new MoveEvent(
@@ -177,7 +196,8 @@ export class ChessEngine {
                 mover,
                 actor,
                 true,
-                mover.id
+                mover.id,
+                move.type === MoveType.JUMP ? "jump" : "slide"
             )
         );
 

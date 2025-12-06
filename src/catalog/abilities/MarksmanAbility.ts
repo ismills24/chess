@@ -56,7 +56,7 @@ export class MarksmanAbility extends AbilityBase implements Listener {
         if (!targetFromState) return event; // Target already gone
         
         this.rangedAttacksLeft--;
-        return new DestroyEvent(targetFromState, "Marksman ranged attack", event.actor, this.id);
+        return new DestroyEvent(targetFromState, "Marksman ranged attack", event.actor, this.id, "marksman");
     }
 
     protected createAbilityClone(inner: Piece): Piece {

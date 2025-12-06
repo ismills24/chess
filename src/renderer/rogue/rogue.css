@@ -63,6 +63,23 @@
     color: #ffcc00;
 }
 
+.rogue-stat--surrender {
+    cursor: pointer;
+    border-color: #a02040;
+    background: rgba(160,32,64,0.15);
+    transition: all 0.2s ease;
+}
+
+.rogue-stat--surrender:hover {
+    background: rgba(255,77,106,0.25);
+    border-color: #ff4d6a;
+    box-shadow: 0 4px 16px rgba(255,77,106,0.3);
+}
+
+.rogue-stat--surrender .rogue-stat__value {
+    color: #ff8090;
+}
+
 .rogue-stat__icon {
     font-size: 14px;
 }
