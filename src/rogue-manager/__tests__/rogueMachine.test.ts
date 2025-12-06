@@ -36,6 +36,8 @@ describe("RogueMachine", () => {
             actor.start();
             const snapshot = actor.getSnapshot();
             expect(snapshot.context.shopOffer).not.toBeNull();
+            expect(snapshot.context.shopOffer?.pieces.length).toBe(2);
+            expect(snapshot.context.shopOffer?.decorators.length).toBe(3);
         });
     });
 
@@ -72,8 +74,9 @@ describe("RogueMachine", () => {
             const beforeSnapshot = actor.getSnapshot();
             expect(beforeSnapshot.context.money).toBe(0);
             const initialRosterSize = beforeSnapshot.context.roster.length;
+            expect(beforeSnapshot.context.shopOffer).not.toBeNull();
 
-            actor.send({ type: "BUY_PIECE" });
+            actor.send({ type: "BUY_PIECE", pieceIndex: 0 });
 
             const afterSnapshot = actor.getSnapshot();
             expect(afterSnapshot.context.roster.length).toBe(initialRosterSize); // No change
@@ -155,7 +158,7 @@ describe("RogueMachine", () => {
     });
 
     describe("shop purchase with money", () => {
-        it("should allow buying when player has money and roster < 6", () => {
+        it("should allow buying when player has money and roster < 12", () => {
             // We need to simulate winning an encounter to get money
             // For now, we test the canBuyPiece logic directly
             const snapshot = createRogueActor();

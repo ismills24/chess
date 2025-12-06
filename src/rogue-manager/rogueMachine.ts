@@ -16,7 +16,7 @@ import { GameState } from "../chess-engine/state/GameState";
 import { ChessManager } from "../chess-manager/ChessManager";
 import { GreedyAI } from "../catalog/ai/GreedyAI";
 import { LastPieceStandingRuleSet } from "../catalog/rulesets/LastPieceStanding";
-import { ShopOffer, createShopOffer, canBuyPiece, buyPiece } from "./shop/shop";
+import { ShopOffer, createShopOffer, canBuyPiece, buyPiece, canBuyDecorator, buyDecorator, canSellPiece, sellPiece } from "./shop/shop";
 import { generateEnemyRoster } from "./encounter/encounter";
 import { generateCombatBoard } from "./encounter/boardGeneration";
 import { generateValueBasedRoster } from "./util/roster";
@@ -45,7 +45,9 @@ export interface RogueContext {
 export type RogueEvent =
     | { type: "GO_TO_SHOP" }
     | { type: "GO_TO_ENCOUNTER" }
-    | { type: "BUY_PIECE" }
+    | { type: "BUY_PIECE"; pieceIndex: number }
+    | { type: "BUY_DECORATOR"; decoratorIndex: number; targetPieceId: string }
+    | { type: "SELL_PIECE"; pieceId: string }
     | { type: "LEAVE_SHOP" }
     | { type: "PLAYER_MOVE"; move: Move }
     | { type: "SURRENDER" }
@@ -113,15 +115,36 @@ const rogueSetup = setup({
         events: RogueEvent;
     },
     actions: {
-        buyPieceAction: assign(({ context }) => {
-            if (!context.shopOffer || !canBuyPiece(context.money, context.roster)) {
+        buyPieceAction: assign(({ context, event }) => {
+            if (event.type !== "BUY_PIECE" || !context.shopOffer || !canBuyPiece(context.money, context.roster, context.shopOffer, event.pieceIndex)) {
                 return {};
             }
-            const result = buyPiece(context.money, context.roster, context.shopOffer);
+            const result = buyPiece(context.money, context.roster, context.shopOffer, event.pieceIndex);
             return {
                 money: result.money,
                 roster: result.roster,
-                shopOffer: null, // Clear offer after purchase
+                shopOffer: result.offer,
+            };
+        }),
+        buyDecoratorAction: assign(({ context, event }) => {
+            if (event.type !== "BUY_DECORATOR" || !context.shopOffer || !canBuyDecorator(context.money, context.roster, context.shopOffer, event.decoratorIndex, event.targetPieceId)) {
+                return {};
+            }
+            const result = buyDecorator(context.money, context.roster, context.shopOffer, event.decoratorIndex, event.targetPieceId);
+            return {
+                money: result.money,
+                roster: result.roster,
+                shopOffer: result.offer,
+            };
+        }),
+        sellPieceAction: assign(({ context, event }) => {
+            if (event.type !== "SELL_PIECE" || !canSellPiece(context.roster, event.pieceId)) {
+                return {};
+            }
+            const result = sellPiece(context.money, context.roster, event.pieceId);
+            return {
+                money: result.money,
+                roster: result.roster,
             };
         }),
         
@@ -167,7 +190,7 @@ const rogueSetup = setup({
                 // Player won - keep all pieces, give reward, and advance to next round
                 return {
                     roster: context.roster,
-                    money: context.money + 1, // Win reward
+                    money: context.money + (2 + context.round), // Win reward based on round
                     chessManager: null,
                     encounterRosterIds: [],
                     lastEncounterWinner: PlayerColor.White,
@@ -188,8 +211,24 @@ const rogueSetup = setup({
         resetGame: assign(() => createInitialContext()),
     },
     guards: {
-        canBuyPiece: ({ context }) => {
-            return canBuyPiece(context.money, context.roster) && context.shopOffer !== null;
+        canBuyPiece: ({ context, event }) => {
+            if (event.type !== "BUY_PIECE" || !context.shopOffer) {
+                return false;
+            }
+            return canBuyPiece(context.money, context.roster, context.shopOffer, event.pieceIndex);
+        },
+
+        canBuyDecorator: ({ context, event }) => {
+            if (event.type !== "BUY_DECORATOR" || !context.shopOffer) {
+                return false;
+            }
+            return canBuyDecorator(context.money, context.roster, context.shopOffer, event.decoratorIndex, event.targetPieceId);
+        },
+        canSellPiece: ({ context, event }) => {
+            if (event.type !== "SELL_PIECE") {
+                return false;
+            }
+            return canSellPiece(context.roster, event.pieceId);
         },
         
         isPlayerTurn: ({ context }) => {
@@ -257,6 +296,14 @@ export const rogueMachine = rogueSetup.createMachine({
                 BUY_PIECE: {
                     actions: "buyPieceAction",
                     guard: "canBuyPiece",
+                },
+                BUY_DECORATOR: {
+                    actions: "buyDecoratorAction",
+                    guard: "canBuyDecorator",
+                },
+                SELL_PIECE: {
+                    actions: "sellPieceAction",
+                    guard: "canSellPiece",
                 },
                 LEAVE_SHOP: {
                     target: "map",

@@ -99,7 +99,8 @@ interface RogueContext {
 type RogueEvent =
     | { type: "GO_TO_SHOP" }
     | { type: "GO_TO_ENCOUNTER" }
-    | { type: "BUY_PIECE" }
+    | { type: "BUY_PIECE"; pieceIndex: number }
+    | { type: "BUY_DECORATOR"; decoratorIndex: number; targetPieceId: string }
     | { type: "LEAVE_SHOP" }
     | { type: "PLAYER_MOVE"; move: Move }
     | { type: "RESTART" };
@@ -186,7 +187,8 @@ actor.send({ type: "GO_TO_ENCOUNTER" });
 actor.send({ type: "LEAVE_SHOP" });
 
 // Shop actions
-actor.send({ type: "BUY_PIECE" });
+actor.send({ type: "BUY_PIECE", pieceIndex: 0 });
+actor.send({ type: "BUY_DECORATOR", decoratorIndex: 0, targetPieceId: "piece-id" });
 
 // Combat actions
 actor.send({ type: "PLAYER_MOVE", move: selectedMove });
