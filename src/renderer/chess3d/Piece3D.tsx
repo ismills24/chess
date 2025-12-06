@@ -67,11 +67,13 @@ const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected })
     }
   }
 
-  // Duration per-piece (catalog override or runtime config)
+  // Duration per-piece (from catalog definition or global override)
   function getDurationForPiece(p: Piece) {
     try {
       const def = getPieceDefinition(p.name as any) as any;
-      if (def && def.animDuration) return def.animDuration as number;
+      if (def && def.animDuration !== undefined) {
+        return def.animDuration as number;
+      }
     } catch (e) {
       // ignore
     }
