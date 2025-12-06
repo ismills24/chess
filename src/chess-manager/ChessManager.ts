@@ -230,13 +230,14 @@ export class ChessManager {
      * 
      * @param playerColor - The player color for the AI
      * @param ai - The AI implementation to use
-     * @returns Result with success status, new state, event log, and timing information
+     * @returns Result with success status, new state, event log, timing information, and the move that was executed
      */
     playAITurn(playerColor: PlayerColor, ai: AI): {
         success: boolean;
         newState: GameState;
         eventLog: readonly GameEvent[];
         resolveTimeMs?: number;
+        move?: Move;
     } {
         const state = this.currentState;
 
@@ -253,9 +254,9 @@ export class ChessManager {
         const legalMoves = this.getLegalMoves();
 
         // Let AI select a move (timing for AI selection is not included in resolveTimeMs)
-        const move = ai.getMove(state, legalMoves);
+        const chosen = ai.getMove(state, legalMoves);
 
-        if (!move) {
+        if (!chosen) {
             return {
                 success: false,
                 newState: state,
@@ -263,9 +264,22 @@ export class ChessManager {
             };
         }
 
+        // Ensure AI moves have an id so renderers/adapters can correlate animations
+        const moveId = (globalThis as any).crypto && (globalThis as any).crypto.randomUUID
+            ? (globalThis as any).crypto.randomUUID()
+            : `ai-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+        const move = chosen.id ? chosen : new Move(chosen.from, chosen.to, chosen.piece, (chosen as any).isCapture, moveId);
+
         // Execute the move with turn advancement (standard chess behavior)
         // This will include timing for move resolution
-        return this.playMove(move, true);
+        const result = this.playMove(move, true);
+
+        // Include the executed move in the result so adapter can register it with animation bus
+        return {
+            ...result,
+            move,
+        };
     }
 }
 

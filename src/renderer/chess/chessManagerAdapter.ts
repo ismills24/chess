@@ -123,8 +123,8 @@ export function createChessManagerBundleFromState(
                     }
                 } catch (e) {}
 
-                // Notify subscribers that state changed (human move)
-                notifySubscribers();
+                // DON'T notify subscribers yet - wait for animation to complete first
+                // This prevents the AI move from starting before the human animation finishes
 
         // If game continues and it's now AI's turn (and we have an AI), let AI play
         if (ai !== null && aiPlayer !== null && !manager.isGameOver() && manager.currentState.currentPlayer === aiPlayer) {
@@ -136,14 +136,37 @@ export function createChessManagerBundleFromState(
 
             waitForAnimationComplete((p) => !!p.moveId && move.id && p.moveId === move.id, timeoutMs)
                 .then(() => {
+                    // Human animation completed, now notify to show the board state
+                    notifySubscribers();
+
                     const aiResult = manager.playAITurn(aiPlayer, ai);
-                    if (aiResult.success) notifySubscribers();
+                    if (aiResult.success && aiResult.move) {
+                        // Register expected animation for the AI move so renderer can correlate it
+                        try {
+                            if (aiResult.move.id && aiResult.move.piece && (aiResult.move.piece as any).id) {
+                                registerExpectedMove(aiResult.move.id, (aiResult.move.piece as any).id, { x: aiResult.move.to.x, y: aiResult.move.to.y });
+                            }
+                        } catch (e) {}
+                        // Notify again so renderer shows AI piece at new position and can animate it
+                        notifySubscribers();
+                    }
                 })
                 .catch(() => {
                     // On timeout, fall back to performing AI move immediately
                     const aiResult = manager.playAITurn(aiPlayer, ai);
-                    if (aiResult.success) notifySubscribers();
+                    if (aiResult.success && aiResult.move) {
+                        // Register expected animation for the AI move
+                        try {
+                            if (aiResult.move.id && aiResult.move.piece && (aiResult.move.piece as any).id) {
+                                registerExpectedMove(aiResult.move.id, (aiResult.move.piece as any).id, { x: aiResult.move.to.x, y: aiResult.move.to.y });
+                            }
+                        } catch (e) {}
+                        notifySubscribers();
+                    }
                 });
+        } else {
+            // No AI turn coming, notify subscribers immediately so human move renders
+            notifySubscribers();
         }
     };
 
