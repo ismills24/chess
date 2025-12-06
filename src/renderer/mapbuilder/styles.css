@@ -1,47 +1,471 @@
-.builderLayout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    height: 100vh;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto;
+/* =============================================================================
+   Map Builder Styles
+   ============================================================================= */
+
+.builder-app {
+    display: flex;
+    height: 100%;
+    background: #050508;
+    color: #eaeaf2;
 }
 
-.sidebar {
+/* =============================================================================
+   Sidebar
+   ============================================================================= */
+
+.builder-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: #08080c;
+    border-right: 1px solid #1e1e2e;
+    transition: width 0.2s ease;
+}
+
+.builder-sidebar--collapsed {
+    width: 48px;
+}
+
+.builder-sidebar__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #1e1e2e;
+}
+
+.builder-sidebar--collapsed .builder-sidebar__header {
     padding: 12px;
-    border-right: 1px solid #ddd;
-    overflow: auto;
+    justify-content: center;
 }
 
-.canvas {
+.builder-sidebar--collapsed .builder-sidebar__header h2 {
+    display: none;
+}
+
+.builder-sidebar__content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+/* =============================================================================
+   Sections
+   ============================================================================= */
+
+.builder-section {
+    margin-bottom: 16px;
+}
+
+.builder-section__label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: #6a6a82;
+}
+
+/* =============================================================================
+   Mode Tabs
+   ============================================================================= */
+
+.builder-mode-tabs {
+    display: flex;
+    background: #0c0c12;
+    border: 1px solid #1e1e2e;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.builder-mode-tab {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    background: transparent;
+    border: none;
+    color: #6a6a82;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.builder-mode-tab:hover {
+    color: #eaeaf2;
+    background: rgba(255,255,255,0.05);
+}
+
+.builder-mode-tab--active {
+    background: #1e1e2e;
+    color: #eaeaf2;
+}
+
+/* =============================================================================
+   Size Inputs
+   ============================================================================= */
+
+.builder-size-inputs {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: #fafafa;
-}
-
-.sectionTitle {
-    margin: 12px 0 6px;
-    font-weight: 700;
-    color: #444;
-}
-
-.toolRow {
-    display: flex;
     gap: 8px;
     margin-bottom: 12px;
-    flex-wrap: wrap;
 }
 
-.btn {
-    padding: 6px 10px;
-    border: 1px solid #bbb;
-    background: #fff;
+.builder-size-input {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.builder-size-input label {
+    font-size: 11px;
+    color: #6a6a82;
+}
+
+.builder-size-input input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #0c0c12;
+    border: 1px solid #1e1e2e;
     border-radius: 6px;
-    cursor: pointer;
+    color: #eaeaf2;
+    text-align: center;
 }
 
-.btn.sel {
-    border-color: #2a6;
-    background: #eaffea;
+.builder-size-input input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.builder-size-separator {
+    color: #6a6a82;
+    font-size: 16px;
+    margin-top: 16px;
+}
+
+.builder-starting-player {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* =============================================================================
+   File Operations
+   ============================================================================= */
+
+.builder-file-select {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.builder-file-select .ui-select-wrapper {
+    flex: 1;
+}
+
+.builder-file-buttons {
+    margin-top: 8px;
+}
+
+.builder-file-buttons .flex-1 {
+    flex: 1;
+}
+
+/* =============================================================================
+   Stats
+   ============================================================================= */
+
+.builder-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #1e1e2e;
+}
+
+.builder-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.builder-stat__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #eaeaf2;
+}
+
+.builder-stat__label {
+    font-size: 11px;
+    color: #6a6a82;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* =============================================================================
+   Canvas
+   ============================================================================= */
+
+.builder-canvas {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    background: radial-gradient(ellipse at center, #141420 0%, #0c0c12 100%);
+}
+
+/* =============================================================================
+   Overlay Toolbar
+   ============================================================================= */
+
+.builder-toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    background: linear-gradient(to bottom, rgba(8,8,12,0.95) 0%, rgba(8,8,12,0.85) 100%);
+    border-bottom: 1px solid rgba(30,30,46,0.6);
+    backdrop-filter: blur(12px);
+}
+
+.builder-toolbar__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.builder-toolbar__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.builder-toolbar__map-selector {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.builder-toolbar__map-selector .ui-select-wrapper {
+    width: 160px;
+}
+
+.builder-toolbar__divider {
+    width: 1px;
+    height: 24px;
+    background: #1e1e2e;
+    flex-shrink: 0;
+}
+
+.builder-toolbar__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: #eaeaf2;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 0;
+}
+
+.builder-toolbar__name:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: #1e1e2e;
+}
+
+.builder-toolbar__name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-toolbar__unsaved {
+    color: #ff4d6a;
+    font-size: 10px;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.builder-toolbar__new-badge {
+    padding: 2px 6px;
+    background: rgba(59,130,246,0.2);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #3b82f6;
+    letter-spacing: 0.5px;
+}
+
+.builder-toolbar__name-input {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.builder-toolbar__name-input .ui-input-wrapper {
+    width: 200px;
+}
+
+.builder-toolbar__status {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.builder-toolbar__status--saving {
+    color: #9a9ab0;
+}
+
+.builder-toolbar__status--saved {
+    color: #00d68f;
+    background: rgba(0,214,143,0.1);
+}
+
+.builder-toolbar__status--error {
+    color: #ff4d6a;
+    background: rgba(255,77,106,0.1);
+}
+
+.builder-clear-btn {
+    width: 100%;
+}
+
+/* =============================================================================
+   3D Editor
+   ============================================================================= */
+
+.board3d-editor {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.board3d-editor__tool-indicator {
+    position: absolute;
+    top: 70px;
+    left: 16px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+    background: rgba(8,8,12,0.9);
+    border: 1px solid #1e1e2e;
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+}
+
+.board3d-editor__mode {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6a6a82;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.board3d-editor__tool {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ff4d6a;
+}
+
+.board3d-editor__controls {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 100;
+    display: flex;
+    gap: 8px;
+}
+
+.board3d-editor__btn {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    background: rgba(8,8,12,0.9);
+    border: 1px solid #1e1e2e;
+    border-radius: 8px;
+    color: #eaeaf2;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: all 0.15s ease;
+}
+
+.board3d-editor__btn:hover {
+    background: rgba(30,30,46,0.9);
+    border-color: #2a2a3c;
+}
+
+.board3d-editor__btn--active {
+    background: rgba(59,130,246,0.2);
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.board3d-editor--drag-over {
+    outline: 3px dashed #ff4d6a;
+    outline-offset: -3px;
+}
+
+.board3d-editor__drop-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    padding: 16px 32px;
+    background: rgba(255,77,106,0.9);
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    pointer-events: none;
+    animation: pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.8; }
+}
+
+/* =============================================================================
+   Palette
+   ============================================================================= */
+
+.palette {
+    margin-bottom: 8px;
+}
+
+.palette__hint {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 10px;
 }
 
 .palette .grid {
@@ -51,45 +475,99 @@
 }
 
 .cell {
-    width: 56px;
-    height: 56px;
+    aspect-ratio: 1;
     display: grid;
     place-items: center;
-    border: 1px solid #ccc;
-    background: #fff;
+    border: 1px solid #1e1e2e;
+    background: #0c0c12;
     border-radius: 8px;
-    cursor: pointer;
+    cursor: grab;
+    transition: all 0.15s ease;
+}
+
+.cell:active {
+    cursor: grabbing;
+}
+
+.cell:hover {
+    border-color: #2a2a3c;
+    background: #141420;
+    transform: scale(1.05);
 }
 
 .cell.sel {
-    outline: 2px solid #2684ff;
+    border-color: #ff4d6a;
+    background: rgba(255,77,106,0.1);
+    box-shadow: 0 0 0 2px rgba(255,77,106,0.2);
+}
+
+.cell .icon {
+    width: 65%;
+    height: 65%;
+    filter: drop-shadow(0 0 1px rgba(255,255,255,0.6)) drop-shadow(0 0 2px rgba(255,255,255,0.3));
+}
+
+.cell .emoji {
+    font-size: 20px;
+}
+
+/* =============================================================================
+   Legacy Board Editor (2D fallback)
+   ============================================================================= */
+
+.builderLayout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: 100%;
+}
+
+.sidebar {
+    padding: 16px;
+    overflow-y: auto;
+    background: #08080c;
+    border-right: 1px solid #1e1e2e;
+}
+
+.canvas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, #141420 0%, #0c0c12 100%);
 }
 
 .board {
     display: grid;
-    grid-auto-rows: 64px;
+    grid-auto-rows: 56px;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
 .row {
     display: grid;
-    grid-template-columns: repeat(12, 64px);
+    grid-template-columns: repeat(12, 56px);
 }
 
-/* adjusts visually for up to 12; overflow OK */
 .sq {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     display: grid;
     place-items: center;
     position: relative;
+    cursor: pointer;
+    transition: all 0.1s ease;
+}
+
+.sq:hover {
+    filter: brightness(1.1);
 }
 
 .light {
-    background: #f0d9b5;
+    background: #e8d4b8;
 }
 
 .dark {
-    background: #b58863;
+    background: #b08968;
 }
 
 .pcWrap {
@@ -101,6 +579,12 @@
     height: 80%;
     pointer-events: none;
     z-index: 100;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.pc.small {
+    width: 65%;
+    height: 65%;
 }
 
 .badges {
@@ -108,66 +592,45 @@
     right: -2px;
     bottom: -2px;
     display: flex;
-    gap: 4px;
+    gap: 3px;
 }
 
 .badge {
-    background: #222;
-    color: #fff;
-    font-size: 10px;
+    background: #0c0c12;
+    color: #eaeaf2;
+    font-size: 9px;
     padding: 2px 4px;
-    border-radius: 6px;
-}
-
-.icon {
-    width: 80%;
-    height: 80%;
-}
-
-.emoji {
-    font-size: 22px;
+    border-radius: 4px;
 }
 
 .tileIcon {
     position: absolute;
-    font-size: 22px;
+    font-size: 20px;
     opacity: 0.8;
     pointer-events: none;
 }
 
-.pc.small {
-    width: 70%;
-    height: 70%;
-}
-
-.badge {
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    font-size: 14px;
-    padding: 1px 3px;
-    border-radius: 4px;
-}
 .tooltip {
     position: relative;
     display: inline-block;
-    border-bottom: 1px dotted black; /* Add dots under the hoverable text */
+    border-bottom: 1px dotted #6a6a82;
     cursor: pointer;
-  }
-  
-  /* Tooltip text */
-  .tooltiptext {
-    visibility: hidden; /* Hidden by default */
-    width: 130px;
-    background-color: black;
-    color: #fff;
+}
+
+.tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: #0c0c12;
+    color: #eaeaf2;
     text-align: center;
-    padding: 5px 0;
+    padding: 6px 8px;
     border-radius: 6px;
     position: absolute;
-    z-index: 1; /* Ensure tooltip is displayed above content */
-  }
-  
-  /* Show the tooltip text on hover */
-  .tooltip:hover .tooltiptext {
+    z-index: 1;
+    border: 1px solid #1e1e2e;
+    font-size: 12px;
+}
+
+.tooltip:hover .tooltiptext {
     visibility: visible;
-  }
+}

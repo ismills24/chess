@@ -6,6 +6,7 @@ declare global {
     interface Window {
         maps: {
             saveJSON(data: unknown): Promise<boolean>;
+            saveToFile(fileName: string, data: unknown): Promise<boolean>;
             openJSON<T = any>(): Promise<T | null>;
         };
         assets: {
