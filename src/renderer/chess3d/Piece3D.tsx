@@ -6,12 +6,14 @@ import { gridToWorld, BoardDimensions } from "./coordinates";
 // animationConstants defaults are exposed via animationConfig at runtime
 import { emitAnimationComplete } from "./animationBus";
 import { getMoveDurationForPieceName } from "./animationConfig";
-import { getPieceDefinition } from "../../catalog/registry/Catalog";
+import { getPieceAnimation, AnimType } from "../../catalog/animation";
 import { getProceduralPieceComponent } from "./pieces/ProceduralPieces";
 import { abilityIdsForPiece } from "../../catalog/registry/Catalog";
 
 
 import { DecoratorIndicator3D } from "./DecoratorIndicator3D";
+import { easeInOutCubic } from "./animationUtils";
+import { SelectionRing } from "../common/SelectionRing";
 
 
 interface Piece3DProps {
@@ -22,10 +24,6 @@ interface Piece3DProps {
   fadeStartTime?: number;
   fadeDuration?: number;
 }
-
-// use shared constants from animationConstants
-
-type AnimType = "slide" | "jump" | "spin" | "bounce";
 
 const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected, isFadingOut = false, fadeStartTime, fadeDuration = 300 }) => {
   const meshRef = useRef<THREE.Group | null>(null);
@@ -63,30 +61,8 @@ const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected, i
   // Track opacity for fade-out effect
   const opacityRef = useRef(1);
 
-  // Determine animation type and duration from Catalog definition, with config fallbacks
-  function getAnimTypeForPiece(p: Piece): AnimType {
-    try {
-      const def = getPieceDefinition(p.name as any) as any;
-      return def && def.animation ? (def.animation as AnimType) : "slide";
-    } catch (e) {
-      const n = p.name.toLowerCase();
-      if (n.includes("knight")) return "jump";
-      return "slide";
-    }
-  }
-
-  // Duration per-piece (from catalog definition or global override)
-  function getDurationForPiece(p: Piece) {
-    try {
-      const def = getPieceDefinition(p.name as any) as any;
-      if (def && def.animDuration !== undefined) {
-        return def.animDuration as number;
-      }
-    } catch (e) {
-      // ignore
-    }
-    return getMoveDurationForPieceName(p.name || "");
-  }
+  // Animation metadata is resolved from the Catalog helper; renderer applies
+  // any remaining fallbacks (e.g. duration default).
 
   // Initialize mesh position on first mount
   useEffect(() => {
@@ -123,20 +99,14 @@ const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected, i
     animRef.current.start.copy(renderedPosRef.current);
     animRef.current.target.set(wp.x, 0.05, wp.z);
     animRef.current.startTime = now;
-    animRef.current.duration = getDurationForPiece(piece);
+    const animation = getPieceAnimation(piece.name || "");
+    animRef.current.duration = animation.duration !== undefined ? animation.duration : getMoveDurationForPieceName(piece.name || "");
     animRef.current.active = true;
-    animRef.current.type = getAnimTypeForPiece(piece);
-    try {
-      const def = getPieceDefinition(piece.name as any) as any;
-      animRef.current.params = def && def.animParams ? def.animParams : undefined;
-    } catch (e) {
-      animRef.current.params = undefined;
-    }
+    animRef.current.type = animation.type;
+    animRef.current.params = animation.params;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [piece.position.x, piece.position.y, dimensions.width, dimensions.height]);
 
-  // Easing function
-  const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
   useFrame((state, delta) => {
     const anim = animRef.current;
@@ -250,20 +220,4 @@ export const Piece3D = React.memo(Piece3DInner, (prev, next) => {
   );
 });
 
-const SelectionRing: React.FC = React.memo(() => {
-  const ringRef = useRef<THREE.Mesh>(null);
-
-  useFrame((state) => {
-    if (ringRef.current) {
-      const pulse = 0.8 + Math.sin(state.clock.elapsedTime * 3) * 0.2;
-      (ringRef.current.material as THREE.MeshBasicMaterial).opacity = pulse;
-    }
-  });
-
-  return (
-    <mesh ref={ringRef} position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[0.34, 0.42, 64]} />
-      <meshBasicMaterial color="#ffcc00" transparent opacity={1} />
-    </mesh>
-  );
-});
+// SelectionRing moved to `src/renderer/common/SelectionRing.tsx`
