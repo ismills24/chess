@@ -48,6 +48,7 @@ export type RogueEvent =
     | { type: "BUY_PIECE" }
     | { type: "LEAVE_SHOP" }
     | { type: "PLAYER_MOVE"; move: Move }
+    | { type: "SURRENDER" }
     | { type: "RESTART" };
 
 // =============================================================================
@@ -226,6 +227,12 @@ export const rogueMachine = rogueSetup.createMachine({
     id: "rogue",
     initial: "map",
     context: createInitialContext,
+    on: {
+        SURRENDER: {
+            target: "#rogue.map",
+            actions: "resetGame",
+        },
+    },
     states: {
         map: {
             always: [

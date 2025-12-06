@@ -41,6 +41,19 @@
     border-radius: 8px;
 }
 
+.surrender-button {
+    cursor: pointer;
+    border: 1px solid #e94560;
+    background: rgba(233, 69, 96, 0.18);
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.surrender-button:hover {
+    background: rgba(233, 69, 96, 0.3);
+    box-shadow: 0 4px 16px rgba(233, 69, 96, 0.4);
+}
+
 .stat.debug-toggle {
     cursor: pointer;
     border: 1px solid transparent;
