@@ -238,6 +238,7 @@ export class ChessManager {
         eventLog: readonly GameEvent[];
         resolveTimeMs?: number;
     } {
+        const overallStart = performance.now();
         const state = this.currentState;
 
         // Verify it's the AI's turn
@@ -246,6 +247,7 @@ export class ChessManager {
                 success: false,
                 newState: state,
                 eventLog: [],
+                resolveTimeMs: performance.now() - overallStart,
             };
         }
 
@@ -260,12 +262,26 @@ export class ChessManager {
                 success: false,
                 newState: state,
                 eventLog: [],
+                resolveTimeMs: performance.now() - overallStart,
             };
         }
 
         // Execute the move with turn advancement (standard chess behavior)
-        // This will include timing for move resolution
-        return this.playMove(move, true);
+        const moveResult = this.playMove(move, true);
+
+        // Total time includes AI selection + move resolution
+        const totalTimeMs = performance.now() - overallStart;
+
+        // Update the just-written history entry to reflect total time (selection + resolution)
+        if (moveResult.success && this._history.length > 0) {
+            const last = this._history[this._history.length - 1];
+            last.resolveTimeMs = totalTimeMs;
+        }
+
+        return {
+            ...moveResult,
+            resolveTimeMs: totalTimeMs,
+        };
     }
 }
 

@@ -2,12 +2,21 @@ import { Vector2Int } from "../primitives/Vector2Int";
 import { Move, MoveType } from "../primitives/Move";
 import { GameState } from "../state/GameState";
 import { Piece } from "../state/types";
+import { Board } from "../state/Board";
 
 /**
  * Provides helper methods for common chess movement patterns (sliding, jumping).
  * These are primitive movement utilities used by piece implementations.
  */
 export class MovementPatterns {
+    /**
+     * Cache tile-based restrictions per board snapshot (GameState cloning produces new boards).
+     */
+    private static readonly tileRestrictionCache = new WeakMap<
+        Board,
+        { rev: number; allRestrictedSquares: Set<string>; obstacleSquares: Set<string> }
+    >();
+
     /**
      * Generate sliding moves in given directions until blocked.
      */
@@ -108,6 +117,11 @@ export class MovementPatterns {
         allRestrictedSquares: Set<string>;
         obstacleSquares: Set<string>;
     } {
+        // Memoize per Board instance; GameState cloning yields a new Board so cache stays accurate.
+        const rev = state.board.getTileRevision?.() ?? 0;
+        const cached = this.tileRestrictionCache.get(state.board);
+        if (cached && cached.rev === rev) return cached;
+
         const tileRestrictions = state.board.getAllTiles()
             .map((tile) => tile.getRestrictedSquares?.(state))
             .filter((restriction): restriction is NonNullable<typeof restriction> => restriction !== null && restriction !== undefined);
@@ -125,7 +139,9 @@ export class MovementPatterns {
             }
         }
         
-        return { allRestrictedSquares, obstacleSquares };
+        const result = { rev, allRestrictedSquares, obstacleSquares };
+        this.tileRestrictionCache.set(state.board, result);
+        return result;
     }
 }
 

@@ -14,7 +14,7 @@ import { PlayerColor } from "../chess-engine/primitives/PlayerColor";
 import { Move } from "../chess-engine/primitives/Move";
 import { GameState } from "../chess-engine/state/GameState";
 import { ChessManager } from "../chess-manager/ChessManager";
-import { GreedyAI } from "../catalog/ai/GreedyAI";
+import { EfficientAI } from "../catalog/ai/EfficientAI";
 import { LastPieceStandingRuleSet } from "../catalog/rulesets/LastPieceStanding";
 import { ShopOffer, createShopOffer, canBuyPiece, buyPiece } from "./shop/shop";
 import { generateEnemyRoster } from "./encounter/encounter";
@@ -149,7 +149,7 @@ const rogueSetup = setup({
                 return {};
             }
             const ruleset = new LastPieceStandingRuleSet();
-            const ai = new GreedyAI(ruleset, 3);
+            const ai = new EfficientAI(ruleset, { depth: 3, timeLimitMs: 10000 });
             context.chessManager.playAITurn(PlayerColor.Black, ai);
             return {
                 chessManager: context.chessManager,
