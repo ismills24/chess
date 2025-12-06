@@ -3,10 +3,11 @@ import { GameState } from "../../chess-engine/state/GameState";
 import { Move } from "../../chess-engine/primitives/Move";
 import { Piece } from "../pieces/Piece";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
+import { King } from "../pieces/standard/King";
 
 /**
- * Simple ruleset where the game ends when only one player has pieces remaining.
- * No check/checkmate rules - just survival.
+ * Simple ruleset where the game ends when a king is captured.
+ * No check/checkmate rules - just king survival.
  */
 export class LastPieceStandingRuleSet implements RuleSet {
     getLegalMoves(_state: GameState, piece: Piece): Move[] {
@@ -15,14 +16,18 @@ export class LastPieceStandingRuleSet implements RuleSet {
     }
 
     isGameOver(state: GameState): { over: boolean; winner: PlayerColor | null } {
-        const whitePieces = state.board.getAllPieces(PlayerColor.White);
-        const blackPieces = state.board.getAllPieces(PlayerColor.Black);
+        const whiteKingAlive = state.board
+            .getAllPieces(PlayerColor.White)
+            .some((p) => p instanceof King);
+        const blackKingAlive = state.board
+            .getAllPieces(PlayerColor.Black)
+            .some((p) => p instanceof King);
 
-        if (whitePieces.length === 0 && blackPieces.length === 0) {
-            return { over: true, winner: null }; // draw
-        } else if (whitePieces.length === 0) {
+        if (!whiteKingAlive && !blackKingAlive) {
+            return { over: true, winner: null }; // both kings gone -> draw
+        } else if (!whiteKingAlive) {
             return { over: true, winner: PlayerColor.Black };
-        } else if (blackPieces.length === 0) {
+        } else if (!blackKingAlive) {
             return { over: true, winner: PlayerColor.White };
         }
 
