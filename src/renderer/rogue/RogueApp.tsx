@@ -4,7 +4,7 @@
  * Integrates the rogue state machine with React and the 3D chess board view.
  */
 
-import React, { useState, useEffect, useCallback, useSyncExternalStore, useRef } from "react";
+import React, { useState, useEffect, useCallback, useSyncExternalStore, useRef, useMemo } from "react";
 import { createRogueActor, RogueActor, RogueSnapshot } from "../../rogue-manager/rogueMachine";
 import { EngineProvider } from "../chess/EngineContext";
 import { Board3DView } from "../chess3d";
@@ -15,6 +15,7 @@ import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { LastPieceStandingRuleSet } from "../../catalog/rulesets/LastPieceStanding";
 import { Piece } from "../../catalog/pieces/Piece";
 import { iconForPiece, iconForAbility, abilityIdsForPiece, PieceId } from "../../catalog/registry/Catalog";
+import { ShopOffer, MAX_ROSTER_SIZE, getPieceSellValue } from "../../rogue-manager/shop/shop";
 import "./rogue.css";
 
 // =============================================================================
@@ -62,7 +63,9 @@ export const RogueApp: React.FC = () => {
     // Memoize event handlers to prevent infinite re-renders
     const handleGoToShop = useCallback(() => actor.send({ type: "GO_TO_SHOP" }), [actor]);
     const handleGoToEncounter = useCallback(() => actor.send({ type: "GO_TO_ENCOUNTER" }), [actor]);
-    const handleBuy = useCallback(() => actor.send({ type: "BUY_PIECE" }), [actor]);
+    const handleBuyPiece = useCallback((pieceIndex: number) => actor.send({ type: "BUY_PIECE", pieceIndex }), [actor]);
+    const handleBuyDecorator = useCallback((decoratorIndex: number, targetPieceId: string) => actor.send({ type: "BUY_DECORATOR", decoratorIndex, targetPieceId }), [actor]);
+    const handleSellPiece = useCallback((pieceId: string) => actor.send({ type: "SELL_PIECE", pieceId }), [actor]);
     const handleLeaveShop = useCallback(() => actor.send({ type: "LEAVE_SHOP" }), [actor]);
     const handleSurrender = useCallback(() => actor.send({ type: "SURRENDER" }), [actor]);
     const handleRestart = useCallback(() => actor.send({ type: "RESTART" }), [actor]);
@@ -116,7 +119,9 @@ export const RogueApp: React.FC = () => {
                         money={snapshot.context.money}
                         roster={snapshot.context.roster}
                         offer={snapshot.context.shopOffer}
-                        onBuy={handleBuy}
+                        onBuyPiece={handleBuyPiece}
+                        onBuyDecorator={handleBuyDecorator}
+                        onSellPiece={handleSellPiece}
                         onLeave={handleLeaveShop}
                     />
                 )}
@@ -175,7 +180,7 @@ const MapView: React.FC<MapViewProps> = ({ roster, money, onGoToShop, onGoToEnco
                 >
                     <span className="button-icon">🏪</span>
                     <span className="button-text">Visit Shop</span>
-                    <span className="button-hint">Buy new pieces ($1 each)</span>
+                    <span className="button-hint">Buy pieces or decorators (cost = value)</span>
                 </button>
 
                 <button 
@@ -199,13 +204,28 @@ const MapView: React.FC<MapViewProps> = ({ roster, money, onGoToShop, onGoToEnco
 interface ShopViewProps {
     money: number;
     roster: Piece[];
-    offer: { piece: Piece; cost: number } | null;
-    onBuy: () => void;
+    offer: ShopOffer | null;
+    onBuyPiece: (pieceIndex: number) => void;
+    onBuyDecorator: (decoratorIndex: number, targetPieceId: string) => void;
+    onSellPiece: (pieceId: string) => void;
     onLeave: () => void;
 }
 
-const ShopView: React.FC<ShopViewProps> = ({ money, roster, offer, onBuy, onLeave }) => {
-    const canBuy = money >= 1 && roster.length < 6 && offer !== null;
+const ShopView: React.FC<ShopViewProps> = ({ money, roster, offer, onBuyPiece, onBuyDecorator, onSellPiece, onLeave }) => {
+    const sortedRoster = useMemo(() => [...roster].sort((a, b) => a.name.localeCompare(b.name)), [roster]);
+    const [selectedTargetId, setSelectedTargetId] = useState<string | null>(() => sortedRoster[0]?.id ?? null);
+
+    useEffect(() => {
+        if (!selectedTargetId && sortedRoster.length > 0) {
+            setSelectedTargetId(sortedRoster[0].id);
+        } else if (selectedTargetId && !sortedRoster.some(p => p.id === selectedTargetId)) {
+            setSelectedTargetId(sortedRoster[0]?.id ?? null);
+        }
+    }, [sortedRoster, selectedTargetId]);
+
+    const hasOffers = !!offer && (offer.pieces.length > 0 || offer.decorators.length > 0);
+    const canBuyPieceOffer = (idx: number) => !!offer && !!offer.pieces[idx] && money >= offer.pieces[idx].cost && roster.length < MAX_ROSTER_SIZE;
+    const canBuyDecoratorOffer = (idx: number) => !!offer && !!offer.decorators[idx] && selectedTargetId !== null && roster.length > 0 && money >= offer.decorators[idx].cost;
 
     return (
         <div className="shop-view">
@@ -213,27 +233,102 @@ const ShopView: React.FC<ShopViewProps> = ({ money, roster, offer, onBuy, onLeav
             
             <div className="shop-info">
                 <p>Your Money: <strong>${money}</strong></p>
-                <p>Roster Size: <strong>{roster.length}/6</strong></p>
+                <p>Roster Size: <strong>{roster.length}/{MAX_ROSTER_SIZE}</strong></p>
             </div>
 
-            {offer ? (
-                <div className="shop-offer">
-                    <h3>Today's Offer</h3>
-                    <PieceCard piece={offer.piece} showDetails />
-                    <p className="offer-cost">Cost: ${offer.cost}</p>
-                    
-                    <button 
-                        className="buy-button"
-                        onClick={onBuy}
-                        disabled={!canBuy}
-                    >
-                        {canBuy 
-                            ? "Buy Piece" 
-                            : roster.length >= 6 
-                                ? "Roster Full!" 
-                                : "Not Enough Money"}
-                    </button>
-                </div>
+            {hasOffers ? (
+                <>
+                    <div className="shop-section">
+                        <h3>Your Roster</h3>
+                        {sortedRoster.length === 0 ? (
+                            <p className="shop-empty">No pieces to sell.</p>
+                        ) : (
+                            <div className="roster-selector">
+                                {sortedRoster.map(piece => {
+                                    const isSelected = selectedTargetId === piece.id;
+                                    const sellValue = getPieceSellValue(piece);
+                                    const isKing = piece.name === "King";
+                                    return (
+                                        <div key={piece.id} className={`roster-select-card ${isSelected ? "selected" : ""}`}>
+                                            <button
+                                                className={`roster-select ${isSelected ? "selected" : ""}`}
+                                                onClick={() => setSelectedTargetId(piece.id)}
+                                            >
+                                                <PieceCard piece={piece} />
+                                            </button>
+                                            {isSelected && !isKing && (
+                                                <button
+                                                    className="sell-button"
+                                                    onClick={() => onSellPiece(piece.id)}
+                                                >
+                                                    Sell (-${sellValue})
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="shop-section">
+                        <h3>Pieces</h3>
+                        <div className="shop-offers">
+                            {offer?.pieces.map((pieceOffer, idx) => (
+                                <div className="shop-offer" key={pieceOffer.id}>
+                                    <PieceCard piece={pieceOffer.piece} showDetails />
+                                    <p className="offer-cost">Cost: ${pieceOffer.cost}</p>
+                                    
+                                    <button 
+                                        className="buy-button"
+                                        onClick={() => onBuyPiece(idx)}
+                                        disabled={!canBuyPieceOffer(idx)}
+                                    >
+                                        {canBuyPieceOffer(idx) 
+                                            ? "Buy Piece" 
+                                            : roster.length >= MAX_ROSTER_SIZE 
+                                                ? "Roster Full!" 
+                                                : "Not Enough Money"}
+                                    </button>
+                                </div>
+                            ))}
+                            {offer?.pieces.length === 0 && (
+                                <p className="shop-empty">No pieces left to purchase.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="shop-section">
+                        <h3>Decorators</h3>
+                        <p className="shop-hint">Select a piece above to apply a decorator.</p>
+
+                        <div className="shop-offers">
+                            {offer?.decorators.map((decoratorOffer, idx) => {
+                                const canBuy = canBuyDecoratorOffer(idx);
+                                return (
+                                    <div className="shop-offer" key={decoratorOffer.id}>
+                                        <div className="decorator-card">
+                                            <span className="decorator-icon">{iconForAbility(decoratorOffer.abilityId)}</span>
+                                            <span className="decorator-name">{decoratorOffer.abilityId}</span>
+                                        </div>
+                                        <p className="offer-cost">Cost: ${decoratorOffer.cost}</p>
+                                        
+                                        <button 
+                                            className="buy-button"
+                                            onClick={() => selectedTargetId && onBuyDecorator(idx, selectedTargetId)}
+                                            disabled={!canBuy}
+                                        >
+                                            {selectedTargetId ? (canBuy ? "Buy Decorator" : "Not Enough Money") : "Select a Target"}
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                            {offer?.decorators.length === 0 && (
+                                <p className="shop-empty">No decorators left to purchase.</p>
+                            )}
+                        </div>
+                    </div>
+                </>
             ) : (
                 <div className="shop-empty">
                     <p>You already bought from this shop!</p>

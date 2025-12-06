@@ -76,10 +76,12 @@
 .rogue-main {
     flex: 1;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 24px;
-    overflow: hidden;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 0 12px 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
 }
 
 /* Map View */
@@ -186,14 +188,16 @@
 .shop-view {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 24px;
-    max-width: 500px;
     width: 100%;
-    padding: 32px;
+    padding: 32px 24px;
     background: rgba(0, 0, 0, 0.4);
     border-radius: 16px;
     border: 2px solid #4caf50;
+    flex: 1;
+    min-height: 0;
+    box-sizing: border-box;
 }
 
 .shop-view h2 {
@@ -203,7 +207,8 @@
 
 .shop-info {
     display: flex;
-    gap: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
     font-size: 16px;
 }
 
@@ -211,14 +216,39 @@
     color: #4caf50;
 }
 
+.shop-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    flex: 1;
+}
+
+.shop-offers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
 .shop-offer {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 16px;
-    padding: 24px;
+    padding: 20px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
+    width: 100%;
+    flex: 1 1 240px;
+    min-width: 220px;
+    min-height: 0;
+    box-sizing: border-box;
+}
+
+.shop-offer > * {
     width: 100%;
 }
 
@@ -231,6 +261,55 @@
     font-size: 24px;
     font-weight: 700;
     color: #ffd700;
+}
+
+.roster-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.roster-select-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    flex: 1 1 200px;
+    min-width: 180px;
+    width: 100%;
+    align-self: stretch;
+}
+
+.roster-select {
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+.roster-select.selected {
+    border-color: #4caf50;
+}
+
+.sell-button {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #b23b3b 0%, #7a2626 100%);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sell-button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(178, 59, 59, 0.5);
 }
 
 .buy-button {
@@ -381,6 +460,8 @@
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     min-width: 80px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .piece-icon {

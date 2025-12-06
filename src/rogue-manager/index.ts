@@ -13,9 +13,17 @@ export {
 // Shop utilities
 export {
     type ShopOffer,
+    type ShopPieceOffer,
+    type ShopDecoratorOffer,
+    MAX_ROSTER_SIZE,
     createShopOffer,
     canBuyPiece,
     buyPiece,
+    canBuyDecorator,
+    buyDecorator,
+    getPieceSellValue,
+    canSellPiece,
+    sellPiece,
 } from "./shop/shop";
 
 // Encounter utilities
