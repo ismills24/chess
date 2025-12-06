@@ -11,6 +11,7 @@ import { Piece, Tile } from "./types";
 export class Board {
     public pieces: (Piece | null)[][];
     public tiles: Tile[][];
+    private tileRevision = 0;
 
     readonly width: number;
     readonly height: number;
@@ -73,6 +74,7 @@ export class Board {
         if (!this.isInBounds(pos)) return;
         tile.position = pos;
         this.tiles[pos.x][pos.y] = tile;
+        this.tileRevision++;
     }
 
     setTileAt(x: number, y: number, tile: Tile): void {
@@ -85,12 +87,14 @@ export class Board {
                 this.setTileAt(x, y, tile.clone());
             }
         }
+        this.tileRevision++;
     }
 
     setTilesList(tilePositions: Array<{ pos: Vector2Int; tile: Tile }>): void {
         for (const { pos, tile } of tilePositions) {
             this.setTile(pos, tile.clone());
         }
+        this.tileRevision++;
     }
 
     getAllPieces(owner?: PlayerColor): Piece[] {
@@ -120,6 +124,11 @@ export class Board {
         return pos.x >= 0 && pos.x < this.width && pos.y >= 0 && pos.y < this.height;
     }
 
+    /** Incremented whenever tiles change to help invalidate caches. */
+    getTileRevision(): number {
+        return this.tileRevision;
+    }
+
     clone(): Board {
         const clone = new Board(this.width, this.height);
 
@@ -138,6 +147,7 @@ export class Board {
             }
         }
 
+        clone.tileRevision = this.tileRevision;
         return clone;
     }
 }
