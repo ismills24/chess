@@ -64,6 +64,7 @@ export const RogueApp: React.FC = () => {
     const handleGoToEncounter = useCallback(() => actor.send({ type: "GO_TO_ENCOUNTER" }), [actor]);
     const handleBuy = useCallback(() => actor.send({ type: "BUY_PIECE" }), [actor]);
     const handleLeaveShop = useCallback(() => actor.send({ type: "LEAVE_SHOP" }), [actor]);
+    const handleSurrender = useCallback(() => actor.send({ type: "SURRENDER" }), [actor]);
     const handleRestart = useCallback(() => actor.send({ type: "RESTART" }), [actor]);
     const handlePlayerMove = useCallback((move: Move) => {
         actor.send({ type: "PLAYER_MOVE", move });
@@ -83,6 +84,12 @@ export const RogueApp: React.FC = () => {
                 <div className="rogue-stats">
                     <span className="stat">💰 ${snapshot.context.money}</span>
                     <span className="stat">⚔️ {snapshot.context.roster.length} pieces</span>
+                    <button 
+                        className="stat surrender-button"
+                        onClick={handleSurrender}
+                    >
+                        🏳️ Surrender
+                    </button>
                     {isEncounter && (
                         <button 
                             className={`stat debug-toggle ${debugOpen ? 'active' : ''}`}
