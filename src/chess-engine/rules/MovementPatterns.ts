@@ -1,5 +1,5 @@
 import { Vector2Int } from "../primitives/Vector2Int";
-import { Move } from "../primitives/Move";
+import { Move, MoveType } from "../primitives/Move";
 import { GameState } from "../state/GameState";
 import { Piece } from "../state/types";
 
@@ -60,12 +60,12 @@ export class MovementPatterns {
 
             const target = state.board.getPieceAt(pos);
             if (!target) {
-                moves.push(new Move(piece.position, pos, piece));
+                moves.push(new Move(piece.position, pos, piece, false, MoveType.JUMP));
             } else if (target.owner !== piece.owner) {
-                moves.push(new Move(piece.position, pos, piece, true));
-                movesOnEnemyPieces.push(new Move(piece.position, pos, piece, true));
+                moves.push(new Move(piece.position, pos, piece, true, MoveType.JUMP));
+                movesOnEnemyPieces.push(new Move(piece.position, pos, piece, true, MoveType.JUMP));
             } else {
-                movesOnFriendlyPieces.push(new Move(piece.position, pos, piece));
+                movesOnFriendlyPieces.push(new Move(piece.position, pos, piece, true, MoveType.JUMP));
             }
         }
         return new CandidateMoves(moves, movesOnFriendlyPieces, movesOnEnemyPieces);

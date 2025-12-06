@@ -133,13 +133,13 @@ interface EventDebugItemProps {
 const EventDebugItem: React.FC<EventDebugItemProps> = ({ event, index }) => {
     const getEventDetails = (event: GameEvent): string => {
         if (event instanceof MoveEvent) {
-            return `${event.piece.name} ${event.from.toString()} → ${event.to.toString()}`;
+            return `${event.subtype ? event.subtype + ": " : ""}${event.piece.name} ${event.from.toString()} → ${event.to.toString()}`;
         }
         if (event instanceof CaptureEvent) {
-            return `${event.attacker.name} captures ${event.target.name} at ${event.target.position.toString()}`;
+            return `${event.subtype ? event.subtype + ": " : ""}${event.attacker.name} captures ${event.target.name} at ${event.target.position.toString()}`;
         }
         if (event instanceof DestroyEvent) {
-            return `${event.target.name} destroyed at ${event.target.position.toString()}`;
+            return `${event.subtype ? event.subtype + ": " : ""}${event.target.name} destroyed at ${event.target.position.toString()}`;
         }
         if (event instanceof TurnStartEvent) {
             return `Turn ${event.turnNumber} starts (${event.player})`;

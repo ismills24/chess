@@ -61,12 +61,12 @@ export class PiercingAbility extends AbilityBase implements Listener {
             if (landingFromState) {
                 // Create capture event for the landing piece
                 // Set isPlayerAction to false so we don't recursively intercept it
-                events.push(new CaptureEvent(attackerFromState, landingFromState, event.actor, false));
+                events.push(new CaptureEvent(attackerFromState, landingFromState, event.actor, false, "piercing"));
             }
         }
         
         // Move attacker to landing square (jumps over the first target, leaving it untouched)
-        events.push(new MoveEvent(attackerFromState.position, landingSquare, attackerFromState, event.actor, event.isPlayerAction, this.id));
+        events.push(new MoveEvent(attackerFromState.position, landingSquare, attackerFromState, event.actor, event.isPlayerAction, this.id, "piercing"));
         
         return events; // Return array to cancel original capture and enqueue new events
     }
