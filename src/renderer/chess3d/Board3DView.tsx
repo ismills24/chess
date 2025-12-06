@@ -128,7 +128,7 @@ const ClickHandler: React.FC<{
 
 export const Board3DView: React.FC = () => {
   const state = useEngineState();
-  const { rules, submitHumanMove } = useEngine();
+  const { manager, submitHumanMove } = useEngine();
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(
     null
   );
@@ -152,13 +152,13 @@ export const Board3DView: React.FC = () => {
     );
     if (!piece) return new Map<string, Move>();
     if (piece.owner !== state.currentPlayer) return new Map<string, Move>();
-    const moves = rules.getLegalMoves(state, piece);
+    const moves = manager.getLegalMovesForPiece(piece);
     const map = new Map<string, Move>();
     for (const move of moves) {
       map.set(`${move.to.x},${move.to.y}`, move);
     }
     return map;
-  }, [selected, state, rules]);
+  }, [selected, state, manager]);
 
   const legalTargets = useMemo(() => {
     return new Set(legalMovesMap.keys());
