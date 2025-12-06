@@ -14,8 +14,8 @@ import { generateValueBasedRoster } from "../util/roster";
  * @returns Array of enemy pieces
  */
 export function generateEnemyRoster(
-  totalPieceValue: number = 15,
-  totalAbilityValue: number = 3,
+  totalPieceValue: number = 8,
+  totalAbilityValue: number = 0,
   minimumPawns: number = 2,
   hasKing: boolean = true
 ): Piece[] {
