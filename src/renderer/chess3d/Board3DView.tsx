@@ -166,7 +166,8 @@ export const Board3DView: React.FC = () => {
           const from = new Vector2Int(selected.x, selected.y);
           const mover = state.board.getPieceAt(from);
           if (mover) {
-            const mv = new Move(from, pos, mover);
+            const moveId = (crypto && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `m-${Date.now()}-${Math.floor(Math.random()*10000)}`;
+            const mv = new Move(from, pos, mover, false, moveId);
             submitHumanMove(mv);
             setSelected(null);
           }

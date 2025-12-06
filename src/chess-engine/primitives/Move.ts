@@ -10,17 +10,20 @@ export class Move {
     readonly to: Vector2Int;
     readonly piece: Piece;
     readonly isCapture: boolean;
+    readonly id?: string;
 
     constructor(
         from: Vector2Int,
         to: Vector2Int,
         piece: Piece,
-        isCapture: boolean = false
+        isCapture: boolean = false,
+        id?: string
     ) {
         this.from = from;
         this.to = to;
         this.piece = piece;
         this.isCapture = isCapture;
+        this.id = id;
     }
 }
 

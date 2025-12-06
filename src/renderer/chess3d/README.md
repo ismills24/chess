@@ -119,3 +119,14 @@ chess3d/
     ├── GeometryStore.tsx    # Cached geometry context
     └── ProceduralPieces.tsx # Piece geometry definitions
 ```
+
+## Animations
+
+- Animation types are now data-driven: piece definitions in the Catalog can include an `animation` field (e.g. `"jump"` or `"slide"`). If unspecified, pieces default to `slide`.
+- Runtime durations are configurable via the in-game Settings UI (Default move duration, Knight duration, and animation buffer).
+- The renderer emits an `animationComplete` event when a piece finishes its visual move; the game adapter listens for this event so AI turns can be scheduled after animations finish (event-based handshake, no hard timeouts required).
+
+Files of interest:
+- `Piece3D.tsx`: ref-based, time-driven animators (slide and jump implemented). Emits animation-complete.
+- `animationBus.ts`: small event bus for animation-complete events.
+- `animationConfig.ts`: runtime getters/setters for move durations and buffer (used by UI and adapter).

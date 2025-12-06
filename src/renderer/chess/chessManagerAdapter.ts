@@ -9,6 +9,8 @@ import { RuleSet } from "../../chess-engine/rules/RuleSet";
 import { LastPieceStandingRuleSet } from "../../catalog/rulesets/LastPieceStanding";
 import { GreedyAI } from "../../catalog/ai/GreedyAI";
 import { createPiece, createTile } from "../../catalog/registry/Catalog";
+import { waitForAnimationComplete, registerExpectedMove } from "../chess3d/animationBus";
+import { getMoveDurationForPieceName, getAnimationBufferMs } from "../chess3d/animationConfig";
 import { PieceId } from "../../catalog/registry/Catalog";
 
 /**
@@ -114,21 +116,34 @@ export function createChessManagerBundleFromState(
             return;
         }
 
-        // Notify subscribers that state changed (human move)
-        notifySubscribers();
+                // Register expected animation for this move (so renderer can correlate)
+                try {
+                    if (move.id && move.piece && (move.piece as any).id) {
+                        registerExpectedMove(move.id, (move.piece as any).id, { x: move.to.x, y: move.to.y });
+                    }
+                } catch (e) {}
+
+                // Notify subscribers that state changed (human move)
+                notifySubscribers();
 
         // If game continues and it's now AI's turn (and we have an AI), let AI play
         if (ai !== null && aiPlayer !== null && !manager.isGameOver() && manager.currentState.currentPlayer === aiPlayer) {
-            setTimeout(() => {
-                const aiResult = manager.playAITurn(aiPlayer, ai);
-                if (aiResult.success) {
-                    // Notify subscribers after AI move
-                    // Use a small delay to ensure state is fully updated
-                    setTimeout(() => {
-                        notifySubscribers();
-                    }, 10);
-                }
-            }, 100); // Small delay for better UX
+            // Wait for renderer to signal animation completion for the human move before running AI.
+            const pieceName = (move && move.piece && (move.piece as any).name) ? (move.piece as any).name : "";
+            const humanMoveDuration = getMoveDurationForPieceName(pieceName || "");
+            const buffer = getAnimationBufferMs();
+            const timeoutMs = humanMoveDuration + buffer + 1000; // fallback timeout
+
+            waitForAnimationComplete((p) => !!p.moveId && move.id && p.moveId === move.id, timeoutMs)
+                .then(() => {
+                    const aiResult = manager.playAITurn(aiPlayer, ai);
+                    if (aiResult.success) notifySubscribers();
+                })
+                .catch(() => {
+                    // On timeout, fall back to performing AI move immediately
+                    const aiResult = manager.playAITurn(aiPlayer, ai);
+                    if (aiResult.success) notifySubscribers();
+                });
         }
     };
 
