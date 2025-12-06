@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { Piece } from "../../catalog/pieces/Piece";
@@ -21,14 +21,28 @@ const Piece3DInner: React.FC<Piece3DProps> = ({
   dimensions,
   isSelected,
 }) => {
+  const meshRef = useRef<THREE.Group>(null);
+  const [animatedPos, setAnimatedPos] = useState<THREE.Vector3>(new THREE.Vector3(gridToWorld(piece.position, dimensions).x, 0, gridToWorld(piece.position, dimensions).z));
+  const targetPos = gridToWorld(piece.position, dimensions);
+
+  useFrame((_, delta) => {
+    // Smoothly interpolate position
+    setAnimatedPos(prev => {
+      const lerped = prev.clone().lerp(new THREE.Vector3(targetPos.x, 0, targetPos.z), Math.min(1, delta * 8)); // speed factor
+      return lerped;
+    });
+    if (meshRef.current) {
+      meshRef.current.position.set(animatedPos.x, animatedPos.y, animatedPos.z);
+    }
+  });
+
   const PieceComponent = getProceduralPieceComponent(piece.name);
-  const worldPos = gridToWorld(piece.position, dimensions);
   const decorators = abilityIdsForPiece(piece);
 
   if (!PieceComponent) return null;
 
   return (
-    <group position={[worldPos.x, 0.05, worldPos.z]}>
+    <group ref={meshRef}>
       <PieceComponent owner={piece.owner} />
       {isSelected && <SelectionRing />}
       {decorators.map((decoratorId, index) => (
