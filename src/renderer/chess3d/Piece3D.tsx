@@ -18,15 +18,20 @@ interface Piece3DProps {
   piece: Piece;
   dimensions: BoardDimensions;
   isSelected?: boolean;
+  isFadingOut?: boolean;
+  fadeStartTime?: number;
+  fadeDuration?: number;
 }
 
 // use shared constants from animationConstants
 
 type AnimType = "slide" | "jump" | "spin" | "bounce";
 
-const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected }) => {
+const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected, isFadingOut = false, fadeStartTime, fadeDuration = 300 }) => {
   const meshRef = useRef<THREE.Group | null>(null);
-  const isInitialMountRef = useRef(true);
+  // One-time flag to skip very early position-change animations (spawn)
+  const skipNextAnimationRef = useRef(false);
+  const skipTimerRef = useRef<number | null>(null);
 
   // Keep a mutable Vector3 of the currently rendered position to avoid per-frame React state updates
   const renderedPosRef = useRef<THREE.Vector3>(
@@ -54,6 +59,9 @@ const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected })
     active: false,
     type: "slide",
   });
+
+  // Track opacity for fade-out effect
+  const opacityRef = useRef(1);
 
   // Determine animation type and duration from Catalog definition, with config fallbacks
   function getAnimTypeForPiece(p: Piece): AnimType {
@@ -85,14 +93,30 @@ const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected })
     const wp = gridToWorld(piece.position, dimensions);
     renderedPosRef.current.set(wp.x, 0.05, wp.z);
     if (meshRef.current) meshRef.current.position.copy(renderedPosRef.current);
-    isInitialMountRef.current = false;
+    // Ensure no animation is active on initial mount and mark a short window
+    // during which position-change animations are ignored (covers extra
+    // re-renders during initial setup).
+    animRef.current.active = false;
+    skipNextAnimationRef.current = true;
+    // Clear any previous timer then set a short timeout to re-enable animations
+    if (skipTimerRef.current) window.clearTimeout(skipTimerRef.current);
+    skipTimerRef.current = window.setTimeout(() => {
+      skipNextAnimationRef.current = false;
+      skipTimerRef.current = null;
+    }, 50) as unknown as number;
+    return () => {
+      if (skipTimerRef.current) {
+        window.clearTimeout(skipTimerRef.current);
+        skipTimerRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When piece position changes, start an animation from current rendered -> new target
   useEffect(() => {
-    // Skip animation on initial mount
-    if (isInitialMountRef.current) return;
+    // If we're within the short spawn-skip window, ignore this position change
+    if (skipNextAnimationRef.current) return;
 
     const wp = gridToWorld(piece.position, dimensions);
     const now = performance.now();
@@ -117,6 +141,29 @@ const Piece3DInner: React.FC<Piece3DProps> = ({ piece, dimensions, isSelected })
   useFrame((state, delta) => {
     const anim = animRef.current;
     if (!meshRef.current) return;
+
+    // Handle fade-out effect for captured pieces
+    if (isFadingOut && fadeStartTime !== undefined) {
+      const elapsed = performance.now() - fadeStartTime;
+      const fadeProgress = Math.min(1, elapsed / fadeDuration);
+      opacityRef.current = 1 - fadeProgress; // Fade from 1 to 0
+
+      // Scale down while fading (shrink and disappear)
+      const scale = opacityRef.current;
+      meshRef.current.scale.set(scale, scale, scale);
+
+      // Apply opacity to all materials in the group by cloning and modifying
+      meshRef.current.traverse((child) => {
+        if ((child as any).material && (child as any).material !== null) {
+          const material = (child as any).material;
+          // Don't modify shared materials - instead set visible to false when fully faded
+          if (opacityRef.current <= 0.01) {
+            (child as any).visible = false;
+          }
+        }
+      });
+    }
+
     if (!anim.active) return;
 
     const now = performance.now();
@@ -196,7 +243,10 @@ export const Piece3D = React.memo(Piece3DInner, (prev, next) => {
     prev.piece.position.y === next.piece.position.y &&
     prev.isSelected === next.isSelected &&
     prev.dimensions.width === next.dimensions.width &&
-    prev.dimensions.height === next.dimensions.height
+    prev.dimensions.height === next.dimensions.height &&
+    prev.isFadingOut === next.isFadingOut &&
+    prev.fadeStartTime === next.fadeStartTime &&
+    prev.fadeDuration === next.fadeDuration
   );
 });
 

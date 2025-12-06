@@ -135,6 +135,15 @@ export const Board3DView: React.FC = () => {
   const [cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
   const fpsRef = useRef(0);
 
+  // Track pieces from the previous frame to detect captures
+  const prevPiecesRef = useRef<Map<string, any>>(new Map());
+  // Track pieces that are fading out after being captured
+  const [fadingOutPieces, setFadingOutPieces] = useState<
+    Map<string, { captureTime: number; piece: any }>
+  >(new Map());
+
+  const FADE_OUT_DURATION = 300; // ms
+
   const dimensions: BoardDimensions = useMemo(
     () => ({ width: state.board.width, height: state.board.height }),
     [state.board.width, state.board.height]
@@ -153,7 +162,7 @@ export const Board3DView: React.FC = () => {
     if (!piece) return new Set<string>();
     if (piece.owner !== state.currentPlayer) return new Set<string>();
     return new Set(
-      rules.getLegalMoves(state, piece).map((m) => `${m.to.x},${m.to.y}`)
+      rules.getLegalMoves(state, piece as any).map((m) => `${m.to.x},${m.to.y}`)
     );
   }, [selected, state, rules]);
 
@@ -186,6 +195,36 @@ export const Board3DView: React.FC = () => {
     },
     [selected, legalTargets, state, submitHumanMove]
   );
+
+  // Detect captured pieces and track them for fade-out animation
+  useEffect(() => {
+    const currentPieces = state.board.getAllPieces();
+    const currentPieceMap = new Map(
+      currentPieces.map((p) => [p.id, p])
+    );
+
+    const now = performance.now();
+
+    // Find pieces that were in prevPiecesRef but are no longer on board (captured)
+    const newFadingOut = new Map(fadingOutPieces);
+    for (const [pieceId, capturedPiece] of prevPiecesRef.current) {
+      if (!currentPieceMap.has(pieceId) && !newFadingOut.has(pieceId)) {
+        // This piece was captured - store it for fade-out animation
+        newFadingOut.set(pieceId, { captureTime: now, piece: capturedPiece });
+      }
+    }
+
+    // Clean up pieces that have finished fading out
+    for (const [pieceId, fadeData] of newFadingOut) {
+      if (now - fadeData.captureTime > FADE_OUT_DURATION) {
+        newFadingOut.delete(pieceId);
+      }
+    }
+
+    setFadingOutPieces(newFadingOut);
+    prevPiecesRef.current = currentPieceMap;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.board]);
 
   const pieces = state.board.getAllPieces();
 
@@ -293,12 +332,23 @@ export const Board3DView: React.FC = () => {
           {pieces.map((piece) => (
             <Piece3D
               key={piece.id}
-              piece={piece}
+              piece={piece as any}
               dimensions={dimensions}
               isSelected={
                 selected?.x === piece.position.x &&
                 selected?.y === piece.position.y
               }
+            />
+          ))}
+
+          {Array.from(fadingOutPieces.values()).map((fadeData) => (
+            <Piece3D
+              key={`fading-${fadeData.piece.id}`}
+              piece={fadeData.piece as any}
+              dimensions={dimensions}
+              isFadingOut={true}
+              fadeStartTime={fadeData.captureTime}
+              fadeDuration={FADE_OUT_DURATION}
             />
           ))}
         </GeometryProvider>
