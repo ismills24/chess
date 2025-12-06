@@ -1,6 +1,6 @@
 import { Tile } from "./Tile";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
-import { MovementRestrictions } from "../../chess-engine/rules/MovementPatterns";
+import { MovementRestrictions } from "../../chess-engine"
 import { GameState } from "../../chess-engine/state/GameState";
 
 /**

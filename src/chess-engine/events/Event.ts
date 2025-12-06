@@ -1,6 +1,7 @@
 import { PlayerColor } from "../primitives/PlayerColor";
 import { Vector2Int } from "../primitives/Vector2Int";
 import { Piece, Tile } from "../state/types";
+import { MovementPatterns } from "../rules/MovementPatterns";
 
 import { GameState } from "../state/GameState";
 
@@ -79,6 +80,24 @@ export class MoveEvent extends Event {
         if (pieceAtFrom.id !== this.piece.id) {
             return false;
         }
+        
+        // Check tile restrictions
+        const { allRestrictedSquares, obstacleSquares } = MovementPatterns.collectTileRestrictions(state);
+        
+        // Never allow landing on any restricted square (obstacle or target)
+        if (allRestrictedSquares.has(`${this.to.x},${this.to.y}`)) {
+            return false;
+        }
+        
+        // For slide moves, check if path passes through obstacles
+        if (this.subtype === "slide") {
+            const path = MovementPatterns.getLinearPath(this.from, this.to);
+            // Check if any square along the path is an obstacle
+            if (path.some((pos) => obstacleSquares.has(`${pos.x},${pos.y}`))) {
+                return false;
+            }
+        }
+        
         return true;
     }
 }

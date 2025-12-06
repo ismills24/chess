@@ -1,0 +1,52 @@
+{
+  "width": 8,
+  "height": 8,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "Queen",
+      "color": "White",
+      "x": 2,
+      "y": 1,
+      "decorators": []
+    },
+    {
+      "type": "Knight",
+      "color": "White",
+      "x": 0,
+      "y": 2,
+      "decorators": []
+    },
+    {
+      "type": "Knight",
+      "color": "White",
+      "x": 1,
+      "y": 2,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 2,
+      "y": 5,
+      "decorators": []
+    }
+  ],
+  "tiles": [
+    {
+      "type": "WallTile",
+      "x": 2,
+      "y": 3
+    },
+    {
+      "type": "SlipperyTile",
+      "x": 3,
+      "y": 1
+    },
+    {
+      "type": "WallTile",
+      "x": 4,
+      "y": 1
+    }
+  ]
+}
