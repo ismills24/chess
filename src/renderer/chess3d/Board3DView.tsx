@@ -11,6 +11,7 @@ import { OrbitControls } from "@react-three/drei";
 import { useEngine, useEngineState } from "../chess/EngineContext";
 import "./board3d.css";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
+import { Piece } from "../../catalog/pieces/Piece";
 import { Move } from "../../chess-engine/primitives/Move";
 import { BoardMesh } from "./BoardMesh";
 import { Piece3D } from "./Piece3D";
@@ -192,7 +193,7 @@ export const Board3DView: React.FC = () => {
     [selected, legalMovesMap, state, submitHumanMove]
   );
 
-  const pieces = state.board.getAllPieces();
+  const pieces = state.board.getAllPieces() as Piece[];
 
   const resetCamera = useCallback(() => {
     setCameraControlsEnabled(false);

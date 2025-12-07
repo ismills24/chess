@@ -333,7 +333,12 @@ interface Board3DEditorProps {
 const EDITOR_MOUSE_BUTTONS = {
     LEFT: -1 as THREE.MOUSE,
     MIDDLE: THREE.MOUSE.ROTATE,
-    RIGHT: -1 as THREE.MOUSE,
+    RIGHT: THREE.MOUSE.ROTATE,
+};
+
+const EDITOR_TOUCHES = {
+    ONE: -1 as THREE.TOUCH,
+    TWO: THREE.TOUCH.DOLLY_ROTATE,
 };
 
 export const Board3DEditor: React.FC<Board3DEditorProps> = ({
@@ -459,6 +464,9 @@ export const Board3DEditor: React.FC<Board3DEditorProps> = ({
                 <button onClick={resetCamera} className="board3d-editor__btn">
                     ⟲ Reset View
                 </button>
+                <span className="board3d-editor__hint">
+                    Right-click or two-finger drag to rotate
+                </span>
             </div>
 
             <Canvas
@@ -526,6 +534,7 @@ export const Board3DEditor: React.FC<Board3DEditorProps> = ({
                     enableZoom={true}
                     enablePan={false}
                     mouseButtons={EDITOR_MOUSE_BUTTONS}
+                    touches={EDITOR_TOUCHES}
                     minPolarAngle={Math.PI / 6}
                     maxPolarAngle={Math.PI / 2.2}
                     minDistance={4}
