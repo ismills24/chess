@@ -133,7 +133,7 @@ export const Board3DView: React.FC = () => {
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(
     null
   );
-  const [cameraControlsEnabled, setCameraControlsEnabled] = useState(false);
+  const [cameraControlsEnabled, setCameraControlsEnabled] = useState(true);
   const fpsRef = useRef(0);
 
   const dimensions: BoardDimensions = useMemo(
