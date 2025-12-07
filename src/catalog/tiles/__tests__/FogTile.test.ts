@@ -8,6 +8,7 @@ import { Board } from "../../../chess-engine/state/Board";
 import { ChessEngine } from "../../../chess-engine/core/ChessEngine";
 import { Move } from "../../../chess-engine/primitives/Move";
 import { CaptureEvent } from "../../../chess-engine/events/EventRegistry";
+import { MovementRestrictions } from 'src/chess-engine';
 
 describe('FogTile', () => {
     it('should prevent capture of occupying piece', () => {
@@ -40,9 +41,9 @@ describe('FogTile', () => {
         board.setTile(new Vector2Int(3, 3), fog);
         const state = new GameState(board, PlayerColor.Black, 1);
 
-        const restrictions = fog.getRestrictedSquares(state);
+        const restrictions: MovementRestrictions | null = fog.getRestrictedSquares(state);
         expect(restrictions).not.toBeNull();
-        expect(restrictions?.restrictedSquares.some(sq => sq.equals(new Vector2Int(3, 3)))).toBe(true);
+        expect(restrictions?.restrictedSquares.some(sq => sq.square.equals(new Vector2Int(3, 3)))).toBe(true);
     });
 });
 
