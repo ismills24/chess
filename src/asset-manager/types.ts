@@ -36,3 +36,4 @@ export const ASSET_DIRECTORIES: Record<AssetCategory, string> = {
     videos: "assets/media/videos",
 } as const;
 
+

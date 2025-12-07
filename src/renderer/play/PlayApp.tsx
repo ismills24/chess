@@ -8,6 +8,8 @@ import { MapDefinition } from "../mapbuilder/types";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { DebugPanel } from "../chess/DebugPanel";
 import { ChessManager } from "../../chess-manager/ChessManager";
+import { Button, Stack, Text, Card } from "../ui";
+import "./play.css";
 
 export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
   const [mode, setMode] = useState<"hva" | "hvh">("hva");
@@ -31,85 +33,70 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* gameKey forces bundle to rebuild */}
+    <div className="play-app">
       <EngineProvider key={gameKey} existing={bundle}>
-        <header
-          style={{
-            padding: 8,
-            borderBottom: "1px solid #ccc",
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-          }}
-        >
-          <button onClick={onNewGame}>New Game</button>
-          <UndoRedoButtons
-            bundle={bundle}
-            onBump={() => setGameKey((k) => k + 1)}
-          />
-          <span>Mode:</span>
-          <button
-            onClick={() => {
-              setMode("hva");
-              setGameKey((k) => k + 1);
-            }}
-            style={{ fontWeight: mode === "hva" ? "bold" : "normal" }}
-          >
-            Human vs AI
-          </button>
-          <button
-            onClick={() => {
-              setMode("hvh");
-              setGameKey((k) => k + 1);
-            }}
-            style={{ fontWeight: mode === "hvh" ? "bold" : "normal" }}
-          >
-            Human vs Human
-          </button>
-          <span style={{ marginLeft: 16 }}>View:</span>
-          <button
-            onClick={() => setViewMode("2d")}
-            style={{ fontWeight: viewMode === "2d" ? "bold" : "normal" }}
-          >
-            2D
-          </button>
-          <button
-            onClick={() => setViewMode("3d")}
-            style={{ fontWeight: viewMode === "3d" ? "bold" : "normal" }}
-          >
-            3D
-          </button>
+        <header className="play-header">
+          <Stack gap="sm" align="center">
+            <Button onClick={onNewGame} variant="primary" size="sm">
+              New Game
+            </Button>
+            <UndoRedoButtons bundle={bundle} />
+          </Stack>
+
+          <Stack gap="sm" align="center">
+            <div className="play-toggle-group">
+              <button
+                className={`play-toggle ${mode === "hva" ? "play-toggle--active" : ""}`}
+                onClick={() => { setMode("hva"); setGameKey((k) => k + 1); }}
+              >
+                vs AI
+              </button>
+              <button
+                className={`play-toggle ${mode === "hvh" ? "play-toggle--active" : ""}`}
+                onClick={() => { setMode("hvh"); setGameKey((k) => k + 1); }}
+              >
+                vs Human
+              </button>
+            </div>
+
+            <div className="play-toggle-group">
+              <button
+                className={`play-toggle ${viewMode === "2d" ? "play-toggle--active" : ""}`}
+                onClick={() => setViewMode("2d")}
+              >
+                2D
+              </button>
+              <button
+                className={`play-toggle ${viewMode === "3d" ? "play-toggle--active" : ""}`}
+                onClick={() => setViewMode("3d")}
+              >
+                3D
+              </button>
+            </div>
+          </Stack>
         </header>
 
-        <div style={{ flex: 1, position: "relative" }}>
+        <main className="play-board">
           {viewMode === "2d" ? <BoardView /> : <Board3DView />}
           <GameOverPopupWrapper manager={bundle.manager} humanPlayer={humanPlayer} />
           <DebugPanel isOpen={debugPanelOpen} onToggle={() => setDebugPanelOpen(!debugPanelOpen)} />
-        </div>
+        </main>
       </EngineProvider>
     </div>
   );
 };
 
-const UndoRedoButtons: React.FC<{ bundle: ReturnType<typeof createChessManagerBundleFromState>; onBump: () => void }> = ({
+const UndoRedoButtons: React.FC<{ bundle: ReturnType<typeof createChessManagerBundleFromState> }> = ({
   bundle,
-  onBump,
 }) => {
-  const onUndo = () => {
-    bundle.undo();
-  };
-  const onRedo = () => {
-    bundle.redo();
-  };
   return (
     <>
-      <button onClick={onUndo} title="Undo last move">
-        Undo
-      </button>
-      <button onClick={onRedo} title="Redo last move">
-        Redo
-      </button>
+      <Button onClick={() => bundle.undo()} variant="ghost" size="sm" title="Undo">
+        ↩
+      </Button>
+      <Button onClick={() => bundle.redo()} variant="ghost" size="sm" title="Redo">
+        ↪
+      </Button>
     </>
   );
 };
@@ -177,76 +164,23 @@ const GameOverPopupWrapper: React.FC<{
 
     // Set up interval to check game over state
     const interval = setInterval(checkGameOver, 100);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [manager, humanPlayer, state, dismissed, lastGameOverState]); // React to state changes
+    return () => clearInterval(interval);
+  }, [manager, humanPlayer, state, dismissed, lastGameOverState]);
 
   if (!showPopup) return null;
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          backgroundColor: "white",
-          padding: "40px",
-          borderRadius: "8px",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
-          textAlign: "center",
-          minWidth: "300px",
-        }}
-      >
-        {/* X button in the corner */}
+    <div className="play-gameover-overlay">
+      <div className="play-gameover-card">
         <button
-          onClick={() => {
-            setShowPopup(false);
-            setDismissed(true);
-          }}
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            background: "none",
-            border: "none",
-            fontSize: "24px",
-            cursor: "pointer",
-            color: "#666",
-            width: "30px",
-            height: "30px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 0,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#000";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#666";
-          }}
+          onClick={() => { setShowPopup(false); setDismissed(true); }}
+          className="play-gameover-close"
         >
           ×
         </button>
-        <h2
-          style={{ margin: "0 0 20px 0", fontSize: "32px", fontWeight: "bold" }}
-        >
+        <Text as="h2" variant="heading" align="center">
           {message}
-        </h2>
+        </Text>
       </div>
     </div>
   );

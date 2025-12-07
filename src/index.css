@@ -1,8 +1,117 @@
+@import "tailwindcss";
+
+:root {
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", monospace;
+  --font-display: "SF Pro Display", "Inter", system-ui, sans-serif;
+  --font-body: "SF Pro Text", "Inter", system-ui, sans-serif;
+
+  --color-void: #050508;
+  --color-abyss: #08080c;
+  --color-obsidian: #0c0c12;
+  --color-slate: #141420;
+  --color-steel: #1e1e2e;
+  --color-ash: #2a2a3c;
+  --color-smoke: #6a6a82;
+  --color-cloud: #9a9ab0;
+  --color-mist: #c8c8d8;
+  --color-snow: #eaeaf2;
+
+  --color-crimson: #ff4d6a;
+  --color-crimson-dim: #a02040;
+  --color-crimson-glow: rgba(255, 77, 106, 0.35);
+
+  --color-emerald: #00d68f;
+  --color-emerald-dim: #00805a;
+  --color-emerald-glow: rgba(0, 214, 143, 0.35);
+
+  --color-gold: #ffcc00;
+  --color-gold-dim: #b8940a;
+  --color-gold-glow: rgba(255, 204, 0, 0.35);
+
+  --color-azure: #3b82f6;
+  --color-azure-glow: rgba(59, 130, 246, 0.35);
+
+  --color-purple: #a855f7;
+  --color-purple-glow: rgba(168, 85, 247, 0.35);
+
+  --color-board-light: #e8d4b8;
+  --color-board-dark: #b08968;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  background-color: #050508;
+  color-scheme: dark;
+}
+
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
-    sans-serif;
-  margin: auto;
-  max-width: 38rem;
-  padding: 2rem;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: var(--font-body);
+  background-color: #050508;
+  color: #eaeaf2;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  background-color: #050508;
+}
+
+::selection {
+  background: var(--color-crimson);
+  color: var(--color-snow);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-ash);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-smoke);
+}
+
+.app-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #050508;
+}
+
+.app-header {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background-color: #08080c;
+  border-bottom: 1px solid #1e1e2e;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-empty-state {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6a6a82;
 }

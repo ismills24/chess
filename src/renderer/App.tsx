@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MapBuilderApp } from "./mapbuilder/MapBuilderApp";
 import { PlayApp } from "./play/PlayApp";
 import { RogueApp } from "./rogue";
 import { MapDefinition } from "./mapbuilder/types";
 import { AssetManager, AssetInfo } from "../asset-manager";
+import { Button, Select, Stack } from "./ui";
 
 export const App: React.FC = () => {
   const [mode, setMode] = useState<"builder" | "play" | "rogue">("rogue");
@@ -30,77 +31,92 @@ export const App: React.FC = () => {
     setSavedMaps(maps);
   };
 
-  return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <header
-        style={{
-          padding: "8px",
-          borderBottom: "1px solid #ccc",
-          display: "flex",
-          gap: "8px",
-          alignItems: "center",
-        }}
-      >
-        <button
-          onClick={() => setMode("rogue")}
-          style={{ fontWeight: mode === "rogue" ? "bold" : "normal" }}
-        >
-          🎮 Roguelike
-        </button>
-        <button
-          onClick={() => setMode("builder")}
-          style={{ fontWeight: mode === "builder" ? "bold" : "normal" }}
-        >
-          Map Builder
-        </button>
-        <button
-          onClick={() => setMode("play")}
-          style={{ fontWeight: mode === "play" ? "bold" : "normal" }}
-        >
-          Play
-        </button>
+  const onPlayFromBuilder = useCallback((map: MapDefinition, name: string) => {
+    setLoadedMap(map);
+    setSelectedMapName(name);
+    setMode("play");
+  }, []);
 
-        {mode === "play" && (
-          <>
-            <span style={{ marginLeft: "16px" }}>Map:</span>
-            <select
-              value={selectedMapName}
-              onChange={(e) => onSelectMap(e.target.value)}
-              style={{ minWidth: "150px" }}
-            >
-              <option value="">-- Select Map --</option>
-              {savedMaps.map((m) => (
-                <option key={m.name} value={m.name}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-            <button onClick={refreshMapList} title="Refresh map list">
-              ↻
-            </button>
-          </>
-        )}
+  const mapOptions = savedMaps.map((m) => ({
+    value: m.name,
+    label: m.name,
+  }));
+
+  if (mode === "rogue") {
+    return (
+      <div className="app-root">
+        <RogueApp onModeChange={setMode} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-root">
+      <header className="app-header">
+        <Stack gap="sm" align="center">
+          <Button
+            onClick={() => setMode("rogue")}
+            variant="ghost"
+            size="sm"
+          >
+            🎮 Roguelike
+          </Button>
+          <Button
+            onClick={() => setMode("builder")}
+            variant={mode === "builder" ? "primary" : "ghost"}
+            size="sm"
+          >
+            🗺️ Map Builder
+          </Button>
+          <Button
+            onClick={() => setMode("play")}
+            variant={mode === "play" ? "primary" : "ghost"}
+            size="sm"
+          >
+            ▶️ Play
+          </Button>
+
+          {mode === "play" && (
+            <Stack gap="sm" align="center" className="ml-6">
+              <Select
+                options={mapOptions}
+                placeholder="-- Select Map --"
+                value={selectedMapName}
+                onChange={(e) => onSelectMap(e.target.value)}
+                size="sm"
+              />
+              <Button
+                onClick={refreshMapList}
+                variant="ghost"
+                size="sm"
+                title="Refresh map list"
+              >
+                ↻
+              </Button>
+            </Stack>
+          )}
+        </Stack>
       </header>
 
-      <div style={{ flex: 1, overflow: "hidden" }}>
-        {mode === "rogue" && <RogueApp />}
+      <main className="app-main">
         {mode === "builder" && (
           <MapBuilderApp
             onMapChanged={(map) => {
               setLoadedMap(map);
               refreshMapList();
             }}
+            onPlayMap={onPlayFromBuilder}
           />
         )}
         {mode === "play" &&
           (loadedMap ? (
             <PlayApp key={selectedMapName} map={loadedMap} />
           ) : (
-            <div style={{ padding: 20, textAlign: "center" }}>
+            <div className="app-empty-state">
               <p>Select a map from the dropdown above to start playing</p>
             </div>
           ))}
-      </div>
+      </main>
     </div>
   );
 };

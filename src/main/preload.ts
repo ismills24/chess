@@ -8,6 +8,10 @@ contextBridge.exposeInMainWorld("maps", {
         const result = await ipcRenderer.invoke("maps:save", JSON.stringify(data, null, 2));
         return result === true;
     },
+    saveToFile: async (fileName: string, data: unknown): Promise<boolean> => {
+        const result = await ipcRenderer.invoke("maps:saveToFile", fileName, JSON.stringify(data, null, 2));
+        return result === true;
+    },
     openJSON: async <T = any>(): Promise<T | null> => {
         const result = await ipcRenderer.invoke("maps:open");
         return result ? (JSON.parse(result) as T) : null;

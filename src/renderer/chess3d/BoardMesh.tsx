@@ -4,6 +4,7 @@ import { Board } from "../../chess-engine/state/Board";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { gridToWorld, SQUARE_SIZE, BoardDimensions } from "./coordinates";
 import { tileIdForInstance } from "../../catalog/registry/Catalog";
+import { Tile } from "../../catalog/tiles/Tile";
 
 const LIGHT_COLOR = new THREE.Color("#e8d4b8");
 const DARK_COLOR = new THREE.Color("#b58863");
@@ -30,10 +31,7 @@ interface SquareData {
   isLegal: boolean;
 }
 
-const BoardMeshInner: React.FC<BoardMeshProps> = ({
-  board,
-  legalMoves,
-}) => {
+const BoardMeshInner: React.FC<BoardMeshProps> = ({ board, legalMoves }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dimensions: BoardDimensions = useMemo(
     () => ({ width: board.width, height: board.height }),
@@ -49,7 +47,7 @@ const BoardMeshInner: React.FC<BoardMeshProps> = ({
         const pos = new Vector2Int(x, y);
         const worldPos = gridToWorld(pos, dimensions);
         const isLight = (x + y) % 2 === 0;
-        const tile = board.getTile(pos);
+        const tile = board.getTile(pos) as Tile;
         const tileId = tileIdForInstance(tile);
         const baseColor = isLight ? LIGHT_COLOR : DARK_COLOR;
         const color = TILE_COLORS[tileId] ?? baseColor;

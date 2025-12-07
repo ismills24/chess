@@ -72,6 +72,24 @@ ipcMain.handle("maps:save", async (_evt, json: string) => {
   return true;
 });
 
+ipcMain.handle("maps:saveToFile", async (_evt, fileName: string, json: string) => {
+  const mapsDir = app.isPackaged
+    ? path.join(process.resourcesPath, "assets", "maps")
+    : path.join(app.getAppPath(), "assets", "maps");
+  
+  const safeName = fileName.replace(/[^a-zA-Z0-9_\-\s]/g, "").trim();
+  if (!safeName) return false;
+  
+  const filePath = path.join(mapsDir, `${safeName}.json`);
+  try {
+    await fs.mkdir(mapsDir, { recursive: true });
+    await fs.writeFile(filePath, json, "utf-8");
+    return true;
+  } catch {
+    return false;
+  }
+});
+
 ipcMain.handle("maps:open", async () => {
   const win = BrowserWindow.getFocusedWindow();
   const { filePaths, canceled } = await dialog.showOpenDialog(win!, {
