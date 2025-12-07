@@ -1,9 +1,9 @@
 import { Piece } from "../pieces/Piece";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
-import { Move } from "../../chess-engine/primitives/Move";
 import { GameState } from "../../chess-engine/state/GameState";
-import { CandidateMoves, MovementRestrictions } from "../../chess-engine/rules/MovementPatterns";
+import { CandidateMoves } from "../../chess-engine/rules/MovementPatterns";
+import { MovementRestrictions } from "../../chess-engine";
 
 /**
  * Abstract base for abilities that wrap another Piece.
@@ -23,6 +23,11 @@ export abstract class AbilityBase implements Piece {
 
     get name(): string {
         return this.inner.name;
+    }
+
+    get entityId(): string {
+        // Delegate to inner; fall back to our own id
+        return (this.inner as any).entityId ?? this.inner.id;
     }
 
     get owner(): PlayerColor {
@@ -74,6 +79,30 @@ export abstract class AbilityBase implements Piece {
 
     public getRestrictedSquares(state: GameState): MovementRestrictions | null {
         return this.inner.getRestrictedSquares?.(state) ?? null;
+    }
+
+    /**
+    * Returns true if the provided piece (possibly decorated) contains the given entityId
+    * somewhere in its decorator chain.
+    */
+    protected chainContainsEntity(piece: any, entityId: string): boolean {
+        let current: any = piece;
+        while (current) {
+            if ((current as any).entityId === entityId || (current as any).id === entityId) return true;
+            if ((current as any).innerPiece) {
+                current = (current as any).innerPiece;
+            } else {
+                break;
+            }
+        }
+        return false;
+    }
+
+    /**
+    * Helper to get the stable entity id from any piece/decorator.
+    */
+    protected getEntityId(piece: any): string {
+        return piece?.entityId ?? piece?.id;
     }
 
     private generateDescriptiveId(): string {

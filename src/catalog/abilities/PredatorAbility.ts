@@ -1,7 +1,7 @@
 import { AbilityBase } from "./AbilityBase";
 import { Piece } from "../pieces/Piece";
 import { Listener, ListenerContext } from "../../chess-engine/listeners";
-import { GameEvent, MoveEvent, CaptureEvent, PieceChangedEvent } from "../../chess-engine/events/EventRegistry";
+import { GameEvent, MoveEvent, CaptureEvent, DestroyEvent, PieceChangedEvent } from "../../chess-engine/events/EventRegistry";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { Pawn } from "../pieces/standard/Pawn";
 import { Knight } from "../pieces/standard/Knight";
@@ -28,71 +28,105 @@ function createPieceByName(name: EvolvableName, owner: PlayerColor, position: an
  * Pawn → Knight → Bishop → Rook → Queen.
  */
 export class PredatorAbility extends AbilityBase implements Listener {
-    readonly priority = 1;
+    readonly priority = 2;
     protected readonly abilityValue = 3;
+    private readonly baseEntityId: string;
 
     constructor(inner: Piece, id?: string) {
         super(inner, id);
+        this.baseEntityId = (inner as any).entityId ?? inner.id;
     }
 
     /**
-     * After a capturing move, evolve to the next piece in the chain.
-     * Trigger after the MoveEvent so the piece is already on its destination.
+     * Evolve after any kill:
+     * - Melee: after the MoveEvent if a CaptureEvent by this piece occurred earlier in the resolution.
+     * - Ranged (Marksman conversion): immediately on DestroyEvent with sourceId === this.id.
      */
     onAfterEvent(ctx: ListenerContext, event: GameEvent): GameEvent[] {
-        if (!(event instanceof MoveEvent)) return [];
+        // Ranged kill path: DestroyEvent tagged with attacker id (Marksman conversion)
+        if (event instanceof DestroyEvent) {
+            const attacker = ctx.state.board.getAllPieces().find((p) => this.getEntityId(p) === event.sourceId);
+            if (attacker && this.chainContainsEntity(attacker, this.id)) {
+                console.log("[Predator] evolve on destroy", {
+                    attackerId: this.getEntityId(attacker),
+                    pos: attacker.position.toString(),
+                    eventActor: event.actor,
+                });
+                return this.evolve(attacker, attacker.position, event.actor, event.isPlayerAction);
+            }
+        }
 
-        // Is this our piece that just moved?
-        const movedPiece = ctx.state.board.getPieceAt(event.to);
-        if (!movedPiece || movedPiece.id !== this.id) return [];
+        // Melee path: evolve on the MoveEvent that followed a CaptureEvent by this attacker
+        if (event instanceof MoveEvent && this.chainContainsEntity(event.piece, this.id)) {
+            const moverEntityId = this.getEntityId(event.piece);
+            const wasCapture = ctx.eventLog.some(
+                (e) =>
+                    e instanceof CaptureEvent &&
+                    this.getEntityId(e.attacker) === moverEntityId &&
+                    e.target.position.equals(event.to)
+            );
+            if (!wasCapture) return [];
 
-        // Did this move perform a capture earlier in the same resolution?
-        const captured = ctx.eventLog.some(
-            (e) =>
-                e instanceof CaptureEvent &&
-                e.attacker.id === this.id &&
-                e.target.position.equals(event.to)
-        );
-        if (!captured) return [];
+            const topPiece = ctx.state.board.getPieceAt(event.to) as any;
+            if (!topPiece) return [];
 
+            console.log("[Predator] evolve on move", {
+                moverEntityId,
+                to: event.to.toString(),
+                actor: event.actor,
+            });
+            return this.evolve(topPiece, event.to, event.actor, event.isPlayerAction);
+        }
+
+        return [];
+    }
+
+    private replaceBaseInChain(piece: any, newBase: Piece): Piece {
+        if (piece instanceof AbilityDecorator) {
+            const innerRebuilt = this.replaceBaseInChain((piece as any).innerPiece, newBase);
+            return this.cloneAbilityLayer(piece as any, innerRebuilt);
+        }
+        return newBase;
+    }
+
+    private findSelfOnBoard(ctx: ListenerContext): Piece | null {
+        for (const p of ctx.state.board.getAllPieces()) {
+            if (this.chainContainsEntity(p, this.id)) return p as any;
+        }
+        return null;
+    }
+
+    private evolve(topPiece: any, pos: any, actor: PlayerColor, isPlayerAction: boolean): GameEvent[] {
         const currentName = this.name as EvolvableName;
         const currentIndex = EVOLUTION_CHAIN.indexOf(currentName);
         const nextName = EVOLUTION_CHAIN[currentIndex + 1];
-        if (!nextName) return []; // already at top of chain
+        if (!nextName) return []; // already at top
 
-        // Build the new base piece
-        const nextBase = createPieceByName(nextName, this.owner, event.to);
-        nextBase.movesMade = this.movesMade;
-        nextBase.capturesMade = this.capturesMade;
+        const nextBase = createPieceByName(nextName, topPiece.owner, pos);
+        nextBase.movesMade = topPiece.movesMade;
+        nextBase.capturesMade = topPiece.capturesMade;
 
-        // Rebuild decorator chain replacing the base with the upgraded piece, keeping other abilities intact.
-        const rebuilt = this.rebuildChain(this.innerPiece, nextBase);
-        const upgraded = new PredatorAbility(rebuilt, this.id);
+        const upgradedTop = this.replaceBaseInChain(topPiece, nextBase);
 
         return [
             new PieceChangedEvent(
-                this,
-                upgraded,
-                event.to,
-                event.actor,
+                topPiece,
+                upgradedTop,
+                pos,
+                actor,
                 this.id,
-                event.isPlayerAction,
+                isPlayerAction,
                 "predator-evolve"
             ),
         ];
     }
 
-    private rebuildChain(piece: Piece, newBase: Piece): Piece {
-        // Replace deepest base piece while preserving existing decorators inside this ability.
-        if (piece instanceof AbilityDecorator) {
-            const innerRebuilt = this.rebuildChain(piece.innerPiece, newBase);
-            return piece.createAbilityClone(innerRebuilt);
-        }
-        return newBase;
-    }
-
     protected createAbilityClone(inner: Piece): Piece {
         return new PredatorAbility(inner, this.id);
+    }
+
+    private cloneAbilityLayer(layer: AbilityDecorator, inner: Piece): Piece {
+        return (layer as any).createAbilityClone(inner);
     }
 }
 
