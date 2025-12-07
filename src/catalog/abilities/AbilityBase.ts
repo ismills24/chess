@@ -24,6 +24,11 @@ export abstract class AbilityBase implements Piece {
         return this.inner.name;
     }
 
+    get entityId(): string {
+        // Delegate to inner; fall back to our own id
+        return (this.inner as any).entityId ?? this.inner.id;
+    }
+
     get owner(): PlayerColor {
         return this.inner.owner;
     }
@@ -73,6 +78,30 @@ export abstract class AbilityBase implements Piece {
 
     public getRestrictedSquares(state: GameState): MovementRestrictions | null {
         return this.inner.getRestrictedSquares?.(state) ?? null;
+    }
+
+    /**
+    * Returns true if the provided piece (possibly decorated) contains the given entityId
+    * somewhere in its decorator chain.
+    */
+    protected chainContainsEntity(piece: any, entityId: string): boolean {
+        let current: any = piece;
+        while (current) {
+            if ((current as any).entityId === entityId || (current as any).id === entityId) return true;
+            if ((current as any).innerPiece) {
+                current = (current as any).innerPiece;
+            } else {
+                break;
+            }
+        }
+        return false;
+    }
+
+    /**
+    * Helper to get the stable entity id from any piece/decorator.
+    */
+    protected getEntityId(piece: any): string {
+        return piece?.entityId ?? piece?.id;
     }
 
     private generateDescriptiveId(): string {

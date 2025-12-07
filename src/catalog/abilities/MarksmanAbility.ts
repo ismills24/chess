@@ -47,18 +47,24 @@ export class MarksmanAbility extends AbilityBase implements Listener {
         // Check if this marksman has attacks left
         if (this.rangedAttacksLeft <= 0) return event;
 
-        // Check if the attacker is this marksman piece
+        // Check if this marksman exists in the attacker's chain (order-agnostic)
         const attackerAtPosition = ctx.state.board.getPieceAt(event.attacker.position);
-        if (!attackerAtPosition || attackerAtPosition.id !== this.id) return event;
+        if (!attackerAtPosition || !this.chainContainsEntity(attackerAtPosition as any, this.id)) return event;
 
         // Convert to ranged destroy (EventQueue will cancel the associated MoveEvent)
         const targetFromState = ctx.state.board.getPieceAt(event.target.position);
         if (!targetFromState) return event; // Target already gone
         
         this.rangedAttacksLeft--;
-        return new DestroyEvent(targetFromState, "Marksman ranged attack", event.actor, this.id, "marksman");
+        // Tag sourceId with the attacking piece's stable id so other abilities can react.
+        const attackerId = this.getEntityId(this.inner);
+        console.log("[Marksman] ranged convert", {
+            attackerId,
+            targetId: targetFromState.id,
+            actor: event.actor,
+        });
+        return new DestroyEvent(targetFromState, "Marksman ranged attack", event.actor, attackerId, "marksman");
     }
-
     protected createAbilityClone(inner: Piece): Piece {
         return new MarksmanAbility(inner, this.id, this.rangedAttacksLeft);
     }

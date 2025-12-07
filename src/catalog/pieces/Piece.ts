@@ -1,6 +1,5 @@
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
-import { Move } from "../../chess-engine/primitives/Move";
 import { GameState } from "../../chess-engine/state/GameState";
 import { CandidateMoves, MovementRestrictions } from "../../chess-engine";
 
@@ -12,6 +11,8 @@ import { CandidateMoves, MovementRestrictions } from "../../chess-engine";
  */
 export interface Piece {
     readonly id: string;
+    /** Stable identity for the underlying base piece (order-agnostic across decorators) */
+    readonly entityId?: string;
     readonly name: string;
     readonly owner: PlayerColor;
     position: Vector2Int;

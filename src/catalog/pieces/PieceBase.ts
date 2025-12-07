@@ -10,6 +10,9 @@ import { CandidateMoves, MovementRestrictions } from "../../chess-engine";
  */
 export abstract class PieceBase implements Piece {
     readonly id: string;
+    get entityId(): string {
+        return this.id;
+    }
     readonly name: string;
     readonly owner: PlayerColor;
     position: Vector2Int;
