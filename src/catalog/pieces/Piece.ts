@@ -3,7 +3,6 @@ import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { GameState } from "../../chess-engine/state/GameState";
 import { CandidateMoves, MovementRestrictions } from "../../chess-engine";
 
-
 /**
  * Full Piece interface for Catalog pieces.
  * This extends the minimal Piece interface used by ChessEngine state management.

@@ -2,8 +2,7 @@ import { Piece } from "../pieces/Piece";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { GameState } from "../../chess-engine/state/GameState";
-import { CandidateMoves } from "../../chess-engine/rules/MovementPatterns";
-import { MovementRestrictions } from "../../chess-engine";
+import { CandidateMoves, MovementRestrictions } from "../../chess-engine";
 
 /**
  * Abstract base for abilities that wrap another Piece.

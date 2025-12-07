@@ -121,6 +121,15 @@ export class PredatorAbility extends AbilityBase implements Listener {
         ];
     }
 
+    private rebuildChain(piece: Piece, newBase: Piece): Piece {
+        // Replace deepest base piece while preserving existing decorators inside this ability.
+        if (piece instanceof AbilityDecorator) {
+            const innerRebuilt = this.rebuildChain(piece.innerPiece, newBase);
+            return (piece as PredatorAbility).createAbilityClone(innerRebuilt);
+        }
+        return newBase;
+    }
+
     protected createAbilityClone(inner: Piece): Piece {
         return new PredatorAbility(inner, this.id);
     }
