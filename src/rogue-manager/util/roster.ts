@@ -5,6 +5,12 @@ import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { createPiece, applyAbility, PieceId, AbilityId, PIECE_IDS, ABILITY_IDS } from "../../catalog/registry/Catalog";
 
+const BLACKLISTED_ABILITIES: ReadonlySet<AbilityId> = new Set([
+    "Cannibal",
+    "Piercing",
+    "Bouncer",
+]);
+
 /**
  * Lazy-computed cache for piece values
  */
@@ -35,6 +41,7 @@ function getAbilityValues(): Record<AbilityId, number> {
         const baseValue = basePiece.getValue();
         
         for (const abilityId of ABILITY_IDS) {
+            if (BLACKLISTED_ABILITIES.has(abilityId)) continue;
             // Apply ability and get the difference
             const pieceWithAbility = applyAbility(abilityId, basePiece);
             _abilityValuesCache[abilityId] = pieceWithAbility.getValue() - baseValue;
@@ -59,7 +66,9 @@ function selectRandomPieceWithinBudget(maxValue: number): PieceId | null {
 
 function selectRandomAbilityWithinBudget(maxValue: number): AbilityId | null {
     const abilityValues = getAbilityValues();
-    const affordableAbilities = ABILITY_IDS.filter(id => abilityValues[id] <= maxValue);
+    const affordableAbilities = ABILITY_IDS.filter(
+        id => !BLACKLISTED_ABILITIES.has(id) && abilityValues[id] !== undefined && abilityValues[id] <= maxValue
+    );
     if (affordableAbilities.length === 0) return null;
     return affordableAbilities[Math.floor(Math.random() * affordableAbilities.length)];
 }

@@ -7,6 +7,7 @@ import { CandidateMoves } from "../../../chess-engine/rules/MovementPatterns";
 import { Listener, ListenerContext } from "../../../chess-engine/listeners";
 import { GameEvent, MoveEvent, PieceChangedEvent } from "../../../chess-engine/events/EventRegistry";
 import { Queen } from "./Queen";
+import { AbilityBase } from "../../abilities/AbilityBase";
 
 /**
  * Standard chess pawn piece.
@@ -63,31 +64,61 @@ export class Pawn extends PieceBase implements Listener {
     readonly priority = 0;
 
     onAfterEvent(ctx: ListenerContext, event: GameEvent): GameEvent[] {
-        // Auto-promote when pawn reaches last rank
-        if (event instanceof MoveEvent) {
-            // Check if this pawn is the mover
-            const movedPiece = ctx.state.board.getPieceAt(event.to);
-            if (!movedPiece || movedPiece.id !== this.id) {
-                return [];
-            }
+        // Auto-promote when pawn reaches last rank (works even when wrapped by abilities)
+        if (!(event instanceof MoveEvent)) return [];
 
-            const lastRank = this.owner === PlayerColor.White ? ctx.state.board.height - 1 : 0;
-            if (event.to.y === lastRank) {
-                // Promote to Queen
-                const newQueen = new Queen(this.owner, event.to);
-                return [
-                    new PieceChangedEvent(
-                        this,
-                        newQueen,
-                        event.to,
-                        event.actor,
-                        this.id,
-                        event.isPlayerAction
-                    )
-                ];
+        const movedPiece = ctx.state.board.getPieceAt(event.to);
+        if (!movedPiece) return [];
+
+        // Ensure this pawn (possibly wrapped) is the mover
+        if (!this.chainContainsThisPawn(movedPiece)) return [];
+
+        const lastRank = this.owner === PlayerColor.White ? ctx.state.board.height - 1 : 0;
+        if (event.to.y !== lastRank) return [];
+
+        // Build promoted base
+        const newQueen = new Queen(this.owner, event.to);
+        newQueen.movesMade = movedPiece.movesMade;
+        newQueen.capturesMade = movedPiece.capturesMade;
+
+        // Rebuild wrapper chain, replacing the base pawn with a queen
+        const upgraded = this.replaceBasePiece(movedPiece, newQueen);
+
+        return [
+            new PieceChangedEvent(
+                movedPiece,
+                upgraded,
+                event.to,
+                event.actor,
+                this.id,
+                event.isPlayerAction
+            )
+        ];
+    }
+
+    private chainContainsThisPawn(piece: Piece): boolean {
+        let current: Piece | undefined = piece;
+        while (current) {
+            if (current.id === this.id && current.constructor === Pawn) {
+                return true;
+            }
+            if (current instanceof AbilityBase) {
+                current = (current as AbilityBase).innerPiece;
+            } else {
+                break;
             }
         }
-        return [];
+        return false;
+    }
+
+    private replaceBasePiece(piece: Piece, newBase: Piece): Piece {
+        if (piece instanceof AbilityBase) {
+            const innerReplaced = this.replaceBasePiece((piece as AbilityBase).innerPiece, newBase);
+            // preserve ability identity by reusing the same id
+            return (piece as AbilityBase).createAbilityClone(innerReplaced);
+        }
+        // At base (pawn) -> replace with new base piece
+        return newBase;
     }
 }
 

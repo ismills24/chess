@@ -82,18 +82,19 @@ export class MoveEvent extends Event {
         }
         
         // Check tile restrictions
-        const { allRestrictedSquares, obstacleSquares } = MovementPatterns.collectTileRestrictions(state);
+        const { targetSquares, obstacleSquares } = MovementPatterns.collectTileRestrictions(state);
         
-        // Never allow landing on any restricted square (obstacle or target)
-        if (allRestrictedSquares.has(`${this.to.x},${this.to.y}`)) {
+        // Never allow landing on target/both restricted squares
+        if (targetSquares.has(`${this.to.x},${this.to.y}`)) {
             return false;
         }
         
-        // For slide moves, check if path passes through obstacles
+        // For slide moves, check if path (excluding destination) passes through obstacles
         if (this.subtype === "slide") {
             const path = MovementPatterns.getLinearPath(this.from, this.to);
-            // Check if any square along the path is an obstacle
-            if (path.some((pos) => obstacleSquares.has(`${pos.x},${pos.y}`))) {
+            const pathWithoutDestination = path.slice(0, -1);
+            // Check if any square along the path (before destination) is an obstacle
+            if (pathWithoutDestination.some((pos) => obstacleSquares.has(`${pos.x},${pos.y}`))) {
                 return false;
             }
         }
@@ -297,6 +298,34 @@ export class PieceChangedEvent extends Event {
         }
         // Check that it's the same piece (by ID)
         if (pieceAtPos.id !== this.oldPiece.id) {
+            return false;
+        }
+        return true;
+    }
+}
+
+export class PiecePlacedEvent extends Event {
+    readonly piece: Piece;
+    readonly position: Vector2Int;
+
+    constructor(piece: Piece, position: Vector2Int, actor: PlayerColor, sourceId: string, subtype?: string) {
+        super({
+            actor,
+            isPlayerAction: false,
+            description: `Place ${piece.name} at ${position.toString()}`,
+            sourceId,
+            subtype,
+        });
+        this.piece = piece;
+        this.position = position;
+    }
+
+    isStillValid(state: GameState): boolean {
+        // Position must be in bounds and empty
+        if (!state.board.isInBounds(this.position)) {
+            return false;
+        }
+        if (state.board.getPieceAt(this.position)) {
             return false;
         }
         return true;

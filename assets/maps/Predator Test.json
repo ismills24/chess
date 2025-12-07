@@ -1,0 +1,59 @@
+{
+  "width": 8,
+  "height": 8,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "Pawn",
+      "color": "White",
+      "x": 6,
+      "y": 1,
+      "decorators": [
+        "Predator"
+      ]
+    },
+    {
+      "type": "King",
+      "color": "White",
+      "x": 6,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Rook",
+      "color": "Black",
+      "x": 5,
+      "y": 2,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 6,
+      "y": 5,
+      "decorators": []
+    },
+    {
+      "type": "Rook",
+      "color": "Black",
+      "x": 3,
+      "y": 3,
+      "decorators": []
+    },
+    {
+      "type": "Knight",
+      "color": "Black",
+      "x": 4,
+      "y": 4,
+      "decorators": []
+    },
+    {
+      "type": "Queen",
+      "color": "Black",
+      "x": 0,
+      "y": 4,
+      "decorators": []
+    }
+  ],
+  "tiles": []
+}

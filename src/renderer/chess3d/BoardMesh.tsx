@@ -15,6 +15,7 @@ const TILE_COLORS: Record<string, THREE.Color> = {
   GuardianTile: new THREE.Color("#c9a227"),
   FogTile: new THREE.Color("#888888"),
   WallTile: new THREE.Color("#5c4033"),
+  TombTile: new THREE.Color("#6b5b95"),
 };
 
 interface BoardMeshProps {
@@ -157,10 +158,12 @@ const TILE_INDICATOR_COLORS: Record<string, string> = {
   GuardianTile: "#ffd700",
   FogTile: "#666666",
   WallTile: "#5c4033",
+  TombTile: "#8b6f9c",
 };
 
 const TileIndicator: React.FC<TileIndicatorProps> = React.memo(
   ({ position, tileId }) => {
+    console.log("TileIndicator", tileId);
     const color = TILE_INDICATOR_COLORS[tileId];
     if (!color) return null;
 
@@ -195,6 +198,29 @@ const TileIndicator: React.FC<TileIndicatorProps> = React.memo(
           <mesh position={[0, 0.05, 0]}>
             <boxGeometry args={[0.3, 0.1, 0.1]} />
             <meshStandardMaterial color="#5c4033" />
+          </mesh>
+        </group>
+      );
+    }
+
+    if (tileId === "TombTile") {
+      console.log("TombTile", position);
+      return (
+        <group position={position}>
+          {/* Base mound */}
+          <mesh position={[0, 0.03, 0]}>
+            <cylinderGeometry args={[0.28, 0.32, 0.06, 12]} />
+            <meshStandardMaterial color="#5a4b66" />
+          </mesh>
+          {/* Cross upright */}
+          <mesh position={[0, 0.18, 0]} castShadow>
+            <boxGeometry args={[0.08, 0.3, 0.06]} />
+            <meshStandardMaterial color="#d0c6d8" />
+          </mesh>
+          {/* Cross bar */}
+          <mesh position={[0, 0.18, 0]} castShadow>
+            <boxGeometry args={[0.2, 0.06, 0.06]} />
+            <meshStandardMaterial color="#d0c6d8" />
           </mesh>
         </group>
       );

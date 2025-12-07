@@ -12,6 +12,7 @@ import {
     TurnEndEvent,
     TileChangedEvent,
     PieceChangedEvent,
+    PiecePlacedEvent,
     TimeOutEvent,
     GameOverEvent,
 } from "./Event";
@@ -25,6 +26,7 @@ export type GameEvent =
     | TurnEndEvent
     | TileChangedEvent
     | PieceChangedEvent
+    | PiecePlacedEvent
     | TimeOutEvent
     | GameOverEvent;
 

@@ -4,6 +4,7 @@ export * from "./StandardTile";
 export * from "./GuardianTile";
 export * from "./SlipperyTile";
 export * from "./FogTile";
+export * from "./TombTile";
 
 
 

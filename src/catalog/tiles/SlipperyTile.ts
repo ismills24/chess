@@ -1,13 +1,13 @@
 import { BaseTile } from "./BaseTile";
 import { Tile } from "./Tile";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
-import { Listener, ListenerContext } from "../../chess-engine/listeners";
+import { ListenerContext } from "../../chess-engine/listeners";
 import { GameEvent, MoveEvent } from "../../chess-engine/events/EventRegistry";
 
 /**
  * Forces a piece to slide one extra step in its movement direction on entering.
  */
-export class SlipperyTile extends BaseTile implements Listener {
+export class SlipperyTile extends BaseTile {
     readonly priority = 0;
 
     constructor(position?: Vector2Int, id?: string) {
@@ -18,16 +18,7 @@ export class SlipperyTile extends BaseTile implements Listener {
         return new SlipperyTile(this.position, this.id);
     }
 
-    onAfterEvent(ctx: ListenerContext, event: GameEvent): GameEvent[] {
-        // Only handle MoveEvents
-        if (!(event instanceof MoveEvent)) return [];
-
-        // If this move was already emitted by us, ignore it to prevent recursion
-        if (event.sourceId === this.id) return [];
-
-        // Only trigger when the piece lands on this tile
-        if (!event.to.equals(this.position)) return [];
-
+    protected onPieceEntered(ctx: ListenerContext, event: MoveEvent): GameEvent[] {
         const dir = new Vector2Int(event.to.x - event.from.x, event.to.y - event.from.y);
         const step = new Vector2Int(Math.sign(dir.x), Math.sign(dir.y));
         const next = event.to.add(step);

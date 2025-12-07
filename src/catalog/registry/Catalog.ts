@@ -19,6 +19,8 @@ import { ScapegoatAbility } from "../abilities/ScapegoatAbility";
 import { PiercingAbility } from "../abilities/PiercingAbility";
 import { BouncerAbility } from "../abilities/BouncerAbility";
 import { CannibalAbility } from "../abilities/CannibalAbility";
+import { RevenantAbility } from "../abilities/RevenantAbility";
+import { PredatorAbility } from "../abilities/PredatorAbility";
 
 // Tiles
 import { StandardTile } from "../tiles/StandardTile";
@@ -26,6 +28,7 @@ import { GuardianTile } from "../tiles/GuardianTile";
 import { SlipperyTile } from "../tiles/SlipperyTile";
 import { FogTile } from "../tiles/FogTile";
 import { WallTile } from "../tiles/WallTile";
+import { TombTile } from "../tiles/TombTile";
 
 type PieceConstructor<T extends Piece = Piece> = new (owner: PlayerColor, position: Vector2Int) => T;
 type AbilityConstructor<T extends AbilityBase = AbilityBase> = new (innerPiece: Piece, id?: string, ...args: any[]) => T;
@@ -107,6 +110,18 @@ const abilityDefinitions = [
         apply: (piece: Piece) => new CannibalAbility(piece),
         klass: CannibalAbility as AbilityConstructor,
     },
+    {
+        id: "Revenant",
+        icon: "🪦",
+        apply: (piece: Piece) => new RevenantAbility(piece),
+        klass: RevenantAbility as AbilityConstructor,
+    },
+    {
+        id: "Predator",
+        icon: "🐆",
+        apply: (piece: Piece) => new PredatorAbility(piece),
+        klass: PredatorAbility as AbilityConstructor,
+    },
 ] as const;
 
 const tileDefinitions = [
@@ -140,6 +155,15 @@ const tileDefinitions = [
         create: (position?: Vector2Int, id?: string) => new WallTile(position, id),
         klass: WallTile as TileConstructor,
     },
+    {
+        id: "TombTile",
+        icon: "🪦",
+        // TombTile requires an entombed piece; cannot be created via generic factory.
+        create: (_position?: Vector2Int, _id?: string) => {
+            throw new Error("TombTile requires an entombed Piece instance. Use TombTile constructor directly.");
+        },
+        klass: TombTile as unknown as TileConstructor,
+    }
 ] as const;
 
 export type PieceDefinition = (typeof pieceDefinitions)[number];
@@ -196,7 +220,13 @@ export function iconForTile(id: TileId): string {
 
 export function tileIdForInstance(tile: Tile): TileId {
     for (const def of tileDefinitions) {
+        // Primary: direct instanceof
         if (tile instanceof def.klass) {
+            return def.id;
+        }
+        // Fallback: cross-bundle/class-name match to handle duplicated module instances
+        const ctorName = (tile as any)?.constructor?.name;
+        if (ctorName && (ctorName === def.klass.name || ctorName === def.id)) {
             return def.id;
         }
     }

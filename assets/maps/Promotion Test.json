@@ -4,36 +4,38 @@
   "startingPlayer": "White",
   "pieces": [
     {
-      "type": "Queen",
+      "type": "Pawn",
       "color": "White",
-      "x": 2,
+      "x": 7,
+      "y": 1,
+      "decorators": [
+        "Cannibal"
+      ]
+    },
+    {
+      "type": "Pawn",
+      "color": "White",
+      "x": 6,
       "y": 1,
       "decorators": []
     },
     {
-      "type": "Knight",
+      "type": "Pawn",
       "color": "White",
-      "x": 0,
-      "y": 2,
+      "x": 5,
+      "y": 1,
       "decorators": []
     },
     {
-      "type": "Knight",
+      "type": "King",
       "color": "White",
-      "x": 1,
-      "y": 2,
+      "x": 6,
+      "y": 0,
       "decorators": []
     },
     {
       "type": "King",
       "color": "Black",
-      "x": 2,
-      "y": 5,
-      "decorators": []
-    },
-    {
-      "type": "King",
-      "color": "White",
       "x": 0,
       "y": 0,
       "decorators": []
@@ -41,19 +43,9 @@
   ],
   "tiles": [
     {
-      "type": "WallTile",
-      "x": 2,
-      "y": 3
-    },
-    {
       "type": "SlipperyTile",
-      "x": 3,
-      "y": 1
-    },
-    {
-      "type": "WallTile",
-      "x": 4,
-      "y": 1
+      "x": 5,
+      "y": 6
     }
   ]
 }

@@ -11,7 +11,8 @@ import {
     PieceChangedEvent,
     TimeOutEvent,
     GameOverEvent,
-} from "../events/EventRegistry";
+    } from "../events/EventRegistry";
+import { PiecePlacedEvent } from "../events/Event";
 
 /**
  * Applies a single event to a GameState, producing a new immutable GameState.
@@ -57,6 +58,11 @@ export class EventApplier {
             const pos = event.target.position;
             if (board.getPieceAt(pos)) {
                 board.removePiece(pos);
+            }
+        } else if (event instanceof PiecePlacedEvent) {
+            // Place a new piece on an empty square
+            if (!board.getPieceAt(event.position)) {
+                board.placePiece(event.piece, event.position);
             }
         } else if (event instanceof TurnAdvancedEvent) {
             nextPlayer = event.nextPlayer;
