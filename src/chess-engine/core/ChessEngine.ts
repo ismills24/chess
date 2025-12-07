@@ -125,19 +125,21 @@ export class ChessEngine {
         ruleset: RuleSet
     ): Move[] {
         const baseMoves = ruleset.getLegalMoves(state, piece);
-        const { allRestrictedSquares, obstacleSquares } = MovementPatterns.collectTileRestrictions(state);
+        const { targetSquares, obstacleSquares } = MovementPatterns.collectTileRestrictions(state);
         
         const restrictedMoves = baseMoves.filter((move) => {
-            // Never allow landing on any restricted square (obstacle or target)
-            if (allRestrictedSquares.has(`${move.to.x},${move.to.y}`)) {
+            const landingKey = `${move.to.x},${move.to.y}`;
+            // Disallow landing on target/both restricted squares
+            if (targetSquares.has(landingKey)) {
                 return false;
             }
             
-            // Sliding moves stop at obstacle squares along the path
+            // Sliding moves stop at obstacle/both squares along the path (but can land on obstacle)
             if (move.type === MoveType.SLIDE) {
                 const path = MovementPatterns.getLinearPath(move.from, move.to);
-                // Check if any square along the path is an obstacle
-                return !path.some((pos) => obstacleSquares.has(`${pos.x},${pos.y}`));
+                const pathWithoutDestination = path.slice(0, -1);
+                // Check if any square along the path (before destination) is an obstacle
+                return !pathWithoutDestination.some((pos) => obstacleSquares.has(`${pos.x},${pos.y}`));
             }
             
             // Jumping moves can pass through restricted squares, but not land on them

@@ -4,6 +4,7 @@ import { Move } from "../../chess-engine/primitives/Move";
 import { Piece } from "../pieces/Piece";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { King } from "../pieces/standard/King";
+import { AbilityBase } from "../abilities/AbilityBase";
 
 /**
  * Simple ruleset where the game ends when a king is captured.
@@ -16,12 +17,17 @@ export class LastPieceStandingRuleSet implements RuleSet {
     }
 
     isGameOver(state: GameState): { over: boolean; winner: PlayerColor | null } {
-        const whiteKingAlive = state.board
-            .getAllPieces(PlayerColor.White)
-            .some((p) => p instanceof King);
-        const blackKingAlive = state.board
-            .getAllPieces(PlayerColor.Black)
-            .some((p) => p instanceof King);
+        const hasKing = (pieces: readonly any[]) =>
+            pieces.some((p) => {
+                let current: any = p;
+                while (current instanceof AbilityBase) {
+                    current = current.innerPiece;
+                }
+                return current instanceof King;
+            });
+
+        const whiteKingAlive = hasKing(state.board.getAllPieces(PlayerColor.White));
+        const blackKingAlive = hasKing(state.board.getAllPieces(PlayerColor.Black));
 
         if (!whiteKingAlive && !blackKingAlive) {
             return { over: true, winner: null }; // both kings gone -> draw

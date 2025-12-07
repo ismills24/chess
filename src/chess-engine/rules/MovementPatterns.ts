@@ -14,7 +14,7 @@ export class MovementPatterns {
      */
     private static readonly tileRestrictionCache = new WeakMap<
         Board,
-        { rev: number; allRestrictedSquares: Set<string>; obstacleSquares: Set<string> }
+        { rev: number; allRestrictedSquares: Set<string>; obstacleSquares: Set<string>; targetSquares: Set<string> }
     >();
 
     /**
@@ -116,6 +116,7 @@ export class MovementPatterns {
     static collectTileRestrictions(state: GameState): {
         allRestrictedSquares: Set<string>;
         obstacleSquares: Set<string>;
+        targetSquares: Set<string>;
     } {
         // Memoize per Board instance; GameState cloning yields a new Board so cache stays accurate.
         const rev = state.board.getTileRevision?.() ?? 0;
@@ -129,17 +130,26 @@ export class MovementPatterns {
         // Collect all restricted squares (both obstacle and target types)
         const allRestrictedSquares = new Set<string>();
         const obstacleSquares = new Set<string>();
+        const targetSquares = new Set<string>();
         for (const restriction of tileRestrictions) {
             for (const restrictedSquare of restriction.restrictedSquares) {
                 const squareKey = `${restrictedSquare.square.x},${restrictedSquare.square.y}`;
-                allRestrictedSquares.add(squareKey);
-                if (restrictedSquare.type === "obstacle") {
+                if (restrictedSquare.type === "target") {
+                    targetSquares.add(squareKey);
+                } else if (restrictedSquare.type === "obstacle") {
+                    obstacleSquares.add(squareKey);
+                } else {
+                    // both
+                    targetSquares.add(squareKey);
                     obstacleSquares.add(squareKey);
                 }
             }
         }
+        // Keep combined set for callers that need a union
+        for (const key of targetSquares) allRestrictedSquares.add(key);
+        for (const key of obstacleSquares) allRestrictedSquares.add(key);
         
-        const result = { rev, allRestrictedSquares, obstacleSquares };
+        const result = { rev, allRestrictedSquares, obstacleSquares, targetSquares };
         this.tileRestrictionCache.set(state.board, result);
         return result;
     }
@@ -162,11 +172,6 @@ export class CandidateMoves {
         this.movesOnEnemyPieces = movesOnEnemyPieces;
         this.movesOnIllegalTiles = movesOnIllegalTiles;
     }
-}
-
-export interface RestrictedMove {
-    move: Move;
-    sourceId: string;
 }
 
 

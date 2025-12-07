@@ -37,7 +37,7 @@ export class FogTile extends BaseTile implements Listener {
         if (!this.position) return null;
         if (!state.board.getPieceAt(this.position)) return null;
         return {
-            restrictedSquares: [this.position],
+            restrictedSquares: [{ square: this.position, type: "target" }],
             sourceId: this.id,
         };
     }

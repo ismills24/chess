@@ -100,6 +100,18 @@ function getDecoratorConfig(id: AbilityId): DecoratorConfig {
         spin: false,
         labelColor: "#ffbb66",
       };
+    case "Revenant":
+      return {
+        render: () => <RevenantIndicator />,
+        spin: false,
+        labelColor: "#b8a7ff",
+      };
+    case "Predator":
+      return {
+        render: () => <PredatorIndicator />,
+        spin: true,
+        labelColor: "#66ff88",
+      };
     default:
       return {
         render: () => <DefaultIndicator />,
@@ -497,6 +509,87 @@ const CannibalIndicator: React.FC = () => {
           color="#d4a56a"
           emissive="#8b6914"
           emissiveIntensity={0.2}
+        />
+      </mesh>
+    </group>
+  );
+};
+
+const RevenantIndicator: React.FC = () => {
+  const glowRef = useRef<THREE.Mesh>(null);
+  useFrame((state) => {
+    if (glowRef.current) {
+      const pulse = 0.5 + Math.sin(state.clock.elapsedTime * 3) * 0.2;
+      const mat = glowRef.current.material as THREE.MeshStandardMaterial;
+      mat.emissiveIntensity = 0.6 + pulse * 0.6;
+    }
+  });
+  return (
+    <group scale={0.12}>
+      <mesh>
+        <cylinderGeometry args={[0.45, 0.5, 0.18, 12]} />
+        <meshStandardMaterial color="#5a4b66" />
+      </mesh>
+      <mesh ref={glowRef} position={[0, 0.16, 0]}>
+        <boxGeometry args={[0.14, 0.35, 0.12]} />
+        <meshStandardMaterial
+          color="#d0c6d8"
+          emissive="#a6a1ff"
+          emissiveIntensity={1}
+          metalness={0.1}
+          roughness={0.4}
+        />
+      </mesh>
+      <mesh position={[0, 0.16, 0]}>
+        <boxGeometry args={[0.28, 0.08, 0.12]} />
+        <meshStandardMaterial color="#d0c6d8" />
+      </mesh>
+    </group>
+  );
+};
+
+const PredatorIndicator: React.FC = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 1.5;
+    }
+  });
+  return (
+    <group ref={groupRef} scale={0.11}>
+      <mesh position={[0, 0.25, 0]}>
+        <octahedronGeometry args={[0.32, 0]} />
+        <meshStandardMaterial
+          color="#44ff88"
+          emissive="#22cc66"
+          emissiveIntensity={0.7}
+          metalness={0.4}
+          roughness={0.3}
+        />
+      </mesh>
+      {[0, 1, 2].map((i) => {
+        const angle = (i * Math.PI * 2) / 3;
+        return (
+          <mesh
+            key={i}
+            position={[Math.cos(angle) * 0.4, -0.05, Math.sin(angle) * 0.4]}
+            rotation={[0, -angle, Math.PI / 4]}
+          >
+            <coneGeometry args={[0.12, 0.28, 4]} />
+            <meshStandardMaterial
+              color="#99ffcc"
+              emissive="#55dd99"
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+        );
+      })}
+      <mesh position={[0, -0.25, 0]} rotation={[Math.PI, 0, 0]}>
+        <octahedronGeometry args={[0.24, 0]} />
+        <meshStandardMaterial
+          color="#33dd77"
+          emissive="#22bb66"
+          emissiveIntensity={0.6}
         />
       </mesh>
     </group>

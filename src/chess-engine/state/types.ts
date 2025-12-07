@@ -9,7 +9,7 @@ import { GameState } from "./GameState";
 
 export interface MovementRestriction {
     square: Vector2Int;
-    type: "obstacle" | "target"
+    type: "obstacle" | "target" | "both"
 }
 
 export interface MovementRestrictions {

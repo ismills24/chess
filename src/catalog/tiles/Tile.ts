@@ -1,6 +1,6 @@
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { GameState } from "../../chess-engine/state/GameState";
-import { MovementRestrictions } from "../../chess-engine/rules/MovementPatterns";
+import { MovementRestrictions } from "../../chess-engine";
 
 /**
  * Full Tile interface for Catalog tiles.
