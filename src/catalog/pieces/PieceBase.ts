@@ -2,7 +2,7 @@ import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { GameState } from "../../chess-engine/state/GameState";
 import { Piece } from "./Piece";
-import { CandidateMoves, MovementRestrictions } from "../../chess-engine/rules/MovementPatterns";
+import { CandidateMoves, MovementRestrictions } from "../../chess-engine";
 
 /**
  * Base class for all pieces providing default behavior.
@@ -10,6 +10,9 @@ import { CandidateMoves, MovementRestrictions } from "../../chess-engine/rules/M
  */
 export abstract class PieceBase implements Piece {
     readonly id: string;
+    get entityId(): string {
+        return this.id;
+    }
     readonly name: string;
     readonly owner: PlayerColor;
     position: Vector2Int;

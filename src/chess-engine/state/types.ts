@@ -19,6 +19,7 @@ export interface MovementRestrictions {
 
 export interface Piece {
     id: string;
+    entityId?: string;
     name: string;
     owner: PlayerColor;
     position: Vector2Int;
