@@ -58,5 +58,5 @@ export function getCameraPosition(
   const boardSize = Math.max(dimensions.width, dimensions.height);
   const distance = boardSize * 1.1;
   const height = boardSize * 0.9;
-  return [-distance * 0.5, height, -distance];
+  return [0, height, -distance];
 }
