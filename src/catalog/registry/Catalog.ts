@@ -23,6 +23,9 @@ import { RevenantAbility } from "../abilities/RevenantAbility";
 import { PredatorAbility } from "../abilities/PredatorAbility";
 import { WallPlacementAbility } from "../abilities/WallPlacementAbility";
 
+import { PhantomAbility } from "../abilities/PhantomAbility";
+
+
 // Tiles
 import { StandardTile } from "../tiles/StandardTile";
 import { GuardianTile } from "../tiles/GuardianTile";
@@ -128,6 +131,12 @@ const abilityDefinitions = [
         icon: "🧱",
         apply: (piece: Piece) => new WallPlacementAbility(piece),
         klass: WallPlacementAbility as AbilityConstructor,
+
+        id: "Phantom",
+        icon: "👻",
+        apply: (piece: Piece) => new PhantomAbility(piece),
+        klass: PhantomAbility as AbilityConstructor,
+
     },
 ] as const;
 
