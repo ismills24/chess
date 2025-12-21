@@ -1,0 +1,37 @@
+{
+  "width": 8,
+  "height": 8,
+  "startingPlayer": "White",
+  "pieces": [
+    {
+      "type": "Bishop",
+      "color": "White",
+      "x": 3,
+      "y": 3,
+      "decorators": ["WallPlacement"]
+    },
+    {
+      "type": "King",
+      "color": "White",
+      "x": 0,
+      "y": 0,
+      "decorators": []
+    },
+    {
+      "type": "Pawn",
+      "color": "Black",
+      "x": 5,
+      "y": 5,
+      "decorators": []
+    },
+    {
+      "type": "King",
+      "color": "Black",
+      "x": 7,
+      "y": 7,
+      "decorators": []
+    }
+  ],
+  "tiles": []
+}
+
