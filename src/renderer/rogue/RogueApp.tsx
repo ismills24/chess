@@ -17,13 +17,13 @@ import {
   RogueActor,
   RogueSnapshot,
 } from "../../rogue-manager/rogueMachine";
-import { EngineProvider } from "../chess/EngineContext";
+import { EngineProvider } from "../chess3d/EngineContext";
 import { Board3DView } from "../chess3d";
-import { DebugPanel } from "../chess/DebugPanel";
+import { DebugPanel } from "../chess3d/DebugPanel";
 import {
   ChessManagerBundle,
   notifySubscribers,
-} from "../chess/chessManagerAdapter";
+} from "../chess3d/chessManagerAdapter";
 import { Move } from "../../chess-engine/primitives/Move";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
 import { LastPieceStandingRuleSet } from "../../catalog/rulesets/LastPieceStanding";

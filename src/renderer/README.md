@@ -7,10 +7,9 @@ The **Renderer** directory contains all React UI components for the chess game a
 The renderer is organized into several application modes and shared components:
 
 1. **Main App** (`App.tsx`) - Root application with mode switching (builder/play)
-2. **Play Mode** (`play/`) - Game playing interface with 2D/3D views
+2. **Play Mode** (`play/`) - Game playing interface (3D only)
 3. **Map Builder** (`mapbuilder/`) - Visual map editor for creating custom boards
-4. **Chess Components** (`chess/`) - Reusable 2D board view and game state management
-5. **3D Renderer** (`chess3d/`) - React Three Fiber-based 3D board visualization
+4. **3D Renderer** (`chess3d/`) - React Three Fiber-based 3D board visualization and game state management
 6. **Map Loader** (`maploader/`) - Utilities for loading map definitions into game state
 
 ### Key Design Principles
@@ -89,7 +88,7 @@ const map: MapDefinition = { /* ... */ };
 
 ## Chess Components
 
-### `chess/EngineContext.tsx`
+### `chess3d/EngineContext.tsx`
 
 React context provider for game state management. Provides reactive access to `ChessManager` and game state.
 
@@ -145,7 +144,7 @@ function YourComponent() {
 - Global subscriber system for state change notifications
 - Wraps `submitHumanMove`, `undo`, `redo` to notify subscribers
 
-### `chess/chessManagerAdapter.ts`
+### `chess3d/chessManagerAdapter.ts`
 
 Adapter that creates and manages `ChessManager` instances for React components.
 
@@ -196,7 +195,7 @@ const bundle = createChessManagerBundleFromState(gameState, PlayerColor.White);
 // Use bundle.manager, bundle.submitHumanMove, etc.
 ```
 
-### `chess/BoardView.tsx`
+### `chess3d/Board3DView.tsx`
 
 2D board view component for displaying and interacting with the chess board.
 
@@ -231,7 +230,7 @@ import { EngineProvider } from "./chess/EngineContext";
 - Catalog registry for icons (`iconForAbility`, `iconForTile`, `abilityIdsForPiece`)
 - Piece SVG assets in `/public/assets/`
 
-### `chess/DebugPanel.tsx`
+### `chess3d/DebugPanel.tsx`
 
 Debug panel for inspecting game history and events.
 
@@ -269,7 +268,7 @@ const [open, setOpen] = useState(false);
 - `TurnAdvancedEvent`: Next turn and player
 - `TileChangedEvent` / `PieceChangedEvent`: Position
 
-### `chess/ClockView.tsx`
+### `chess3d/ClockView.tsx`
 
 Clock display component for timed games (legacy support).
 
@@ -293,7 +292,7 @@ import { EngineProvider } from "./chess/EngineContext";
 
 **Note**: Currently requires legacy engine with `gameClock` property. May not work with new `ChessManager` architecture.
 
-### `chess/App.tsx`
+### `chess3d/Board3DView.tsx`
 
 Legacy chess app component (simple wrapper around `BoardView` and `DebugPanel`).
 
@@ -646,7 +645,7 @@ const icon = iconForTile(tileId); // "🛡️"
 renderer/
 ├── App.tsx                    # Root app with mode switching
 ├── renderer.tsx              # React DOM entry point
-├── chess/                     # 2D chess components
+├── chess3d/                   # 3D chess components and game state management
 │   ├── App.tsx               # Legacy chess app
 │   ├── BoardView.tsx         # 2D board view
 │   ├── EngineContext.tsx     # React context for game state

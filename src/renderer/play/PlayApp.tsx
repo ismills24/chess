@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { EngineProvider, useEngineState } from "../chess/EngineContext";
-import { BoardView } from "../chess/BoardView";
+import { EngineProvider, useEngineState } from "../chess3d/EngineContext";
 import { Board3DView } from "../chess3d";
-import { loadMap } from "../maploader/maploader";
-import { createChessManagerBundleFromState } from "../chess/chessManagerAdapter";
+import { loadMap } from "../chess3d/maploader";
+import { createChessManagerBundleFromState } from "../chess3d/chessManagerAdapter";
 import { MapDefinition } from "../mapbuilder/types";
 import { PlayerColor } from "../../chess-engine/primitives/PlayerColor";
-import { DebugPanel } from "../chess/DebugPanel";
+import { DebugPanel } from "../chess3d/DebugPanel";
 import { ChessManager } from "../../chess-manager/ChessManager";
 import { Button, Stack, Text, Card } from "../ui";
 import "./play.css";
 
 export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
   const [mode, setMode] = useState<"hva" | "hvh">("hva");
-  const [viewMode, setViewMode] = useState<"2d" | "3d">("3d");
   const [gameKey, setGameKey] = useState(0);
   const [debugPanelOpen, setDebugPanelOpen] = useState(false);
 
@@ -59,25 +57,11 @@ export const PlayApp: React.FC<{ map: MapDefinition }> = ({ map }) => {
               </button>
             </div>
 
-            <div className="play-toggle-group">
-              <button
-                className={`play-toggle ${viewMode === "2d" ? "play-toggle--active" : ""}`}
-                onClick={() => setViewMode("2d")}
-              >
-                2D
-              </button>
-              <button
-                className={`play-toggle ${viewMode === "3d" ? "play-toggle--active" : ""}`}
-                onClick={() => setViewMode("3d")}
-              >
-                3D
-              </button>
-            </div>
           </Stack>
         </header>
 
         <main className="play-board">
-          {viewMode === "2d" ? <BoardView /> : <Board3DView />}
+          <Board3DView />
           <GameOverPopupWrapper manager={bundle.manager} humanPlayer={humanPlayer} />
           <DebugPanel isOpen={debugPanelOpen} onToggle={() => setDebugPanelOpen(!debugPanelOpen)} />
         </main>
