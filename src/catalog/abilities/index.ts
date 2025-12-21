@@ -7,6 +7,7 @@ export * from "./BouncerAbility";
 export * from "./CannibalAbility";
 export * from "./RevenantAbility";
 export * from "./PredatorAbility";
+export * from "./WallPlacementAbility";
 
 
 

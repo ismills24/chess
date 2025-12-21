@@ -21,6 +21,7 @@ import { BouncerAbility } from "../abilities/BouncerAbility";
 import { CannibalAbility } from "../abilities/CannibalAbility";
 import { RevenantAbility } from "../abilities/RevenantAbility";
 import { PredatorAbility } from "../abilities/PredatorAbility";
+import { WallPlacementAbility } from "../abilities/WallPlacementAbility";
 
 // Tiles
 import { StandardTile } from "../tiles/StandardTile";
@@ -121,6 +122,12 @@ const abilityDefinitions = [
         icon: "🐆",
         apply: (piece: Piece) => new PredatorAbility(piece),
         klass: PredatorAbility as AbilityConstructor,
+    },
+    {
+        id: "WallPlacement",
+        icon: "🧱",
+        apply: (piece: Piece) => new WallPlacementAbility(piece),
+        klass: WallPlacementAbility as AbilityConstructor,
     },
 ] as const;
 
