@@ -8,7 +8,7 @@ import React, {
 import * as THREE from "three";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { useEngine, useEngineState } from "../chess/EngineContext";
+import { useEngine, useEngineState } from "./EngineContext";
 import "./board3d.css";
 import { Vector2Int } from "../../chess-engine/primitives/Vector2Int";
 import { Piece } from "../../catalog/pieces/Piece";
