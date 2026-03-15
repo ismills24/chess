@@ -17,19 +17,22 @@ export class Move {
     readonly piece: Piece;
     readonly isCapture: boolean;
     readonly type: MoveType = MoveType.SLIDE;
+    readonly isCastMove: boolean = false;
 
     constructor(
         from: Vector2Int,
         to: Vector2Int,
         piece: Piece,
         isCapture: boolean = false,
-        type: MoveType = MoveType.SLIDE
+        type: MoveType = MoveType.SLIDE,
+        isCastMove: boolean = false
     ) {
         this.from = from;
         this.to = to;
         this.piece = piece;
         this.isCapture = isCapture;
         this.type = type;
+        this.isCastMove = isCastMove;
     }
 }
 

@@ -156,7 +156,28 @@ export const Board3DView: React.FC = () => {
     const moves = manager.getLegalMovesForPiece(piece);
     const map = new Map<string, Move>();
     for (const move of moves) {
-      map.set(`${move.to.x},${move.to.y}`, move);
+      // Only include regular moves (not cast moves)
+      if (!move.isCastMove) {
+        map.set(`${move.to.x},${move.to.y}`, move);
+      }
+    }
+    return map;
+  }, [selected, state, manager]);
+
+  const tilePlacementMovesMap = useMemo(() => {
+    if (!selected) return new Map<string, Move>();
+    const piece = state.board.getPieceAt(
+      new Vector2Int(selected.x, selected.y)
+    );
+    if (!piece) return new Map<string, Move>();
+    if (piece.owner !== state.currentPlayer) return new Map<string, Move>();
+    const moves = manager.getLegalMovesForPiece(piece);
+    const map = new Map<string, Move>();
+    for (const move of moves) {
+      // Only include cast moves (tile placements)
+      if (move.isCastMove) {
+        map.set(`${move.to.x},${move.to.y}`, move);
+      }
     }
     return map;
   }, [selected, state, manager]);
@@ -165,12 +186,26 @@ export const Board3DView: React.FC = () => {
     return new Set(legalMovesMap.keys());
   }, [legalMovesMap]);
 
+  const tilePlacementTargets = useMemo(() => {
+    return new Set(tilePlacementMovesMap.keys());
+  }, [tilePlacementMovesMap]);
+
   const handleSquareClick = useCallback(
     (pos: Vector2Int) => {
       const piece = state.board.getPieceAt(pos);
 
       if (selected) {
         const moveKey = `${pos.x},${pos.y}`;
+        // Check for tile placement moves first (cast moves)
+        if (tilePlacementMovesMap.has(moveKey)) {
+          const tilePlacementMove = tilePlacementMovesMap.get(moveKey);
+          if (tilePlacementMove) {
+            submitHumanMove(tilePlacementMove);
+            setSelected(null);
+          }
+          return;
+        }
+        // Check for regular moves
         if (legalMovesMap.has(moveKey)) {
           const actualMove = legalMovesMap.get(moveKey);
           if (actualMove) {
@@ -190,7 +225,7 @@ export const Board3DView: React.FC = () => {
         }
       }
     },
-    [selected, legalMovesMap, state, submitHumanMove]
+    [selected, legalMovesMap, tilePlacementMovesMap, state, submitHumanMove]
   );
 
   const pieces = state.board.getAllPieces() as Piece[];
@@ -294,7 +329,7 @@ export const Board3DView: React.FC = () => {
         />
 
         <GeometryProvider>
-          <BoardMesh board={state.board} legalMoves={legalTargets} />
+          <BoardMesh board={state.board} legalMoves={legalTargets} tilePlacementTargets={tilePlacementTargets} />
 
           {pieces.map((piece) => (
             <Piece3D

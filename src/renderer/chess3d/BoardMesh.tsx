@@ -21,6 +21,7 @@ const TILE_COLORS: Record<string, THREE.Color> = {
 interface BoardMeshProps {
   board: Board;
   legalMoves: Set<string>;
+  tilePlacementTargets?: Set<string>;
 }
 
 interface SquareData {
@@ -32,7 +33,7 @@ interface SquareData {
   isLegal: boolean;
 }
 
-const BoardMeshInner: React.FC<BoardMeshProps> = ({ board, legalMoves }) => {
+const BoardMeshInner: React.FC<BoardMeshProps> = ({ board, legalMoves, tilePlacementTargets = new Set() }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dimensions: BoardDimensions = useMemo(
     () => ({ width: board.width, height: board.height }),
@@ -90,8 +91,13 @@ const BoardMeshInner: React.FC<BoardMeshProps> = ({ board, legalMoves }) => {
   const frameHeight = board.height * SQUARE_SIZE + 0.4;
 
   const legalIndicators = useMemo(
-    () => squareData.filter((sq) => sq.isLegal),
-    [squareData]
+    () => squareData.filter((sq) => sq.isLegal && !tilePlacementTargets.has(`${sq.pos.x},${sq.pos.y}`)),
+    [squareData, tilePlacementTargets]
+  );
+
+  const tilePlacementIndicators = useMemo(
+    () => squareData.filter((sq) => tilePlacementTargets.has(`${sq.pos.x},${sq.pos.y}`)),
+    [squareData, tilePlacementTargets]
   );
 
   const tileIndicators = useMemo(
@@ -113,6 +119,13 @@ const BoardMeshInner: React.FC<BoardMeshProps> = ({ board, legalMoves }) => {
       {legalIndicators.map((sq) => (
         <LegalMoveIndicator
           key={`legal-${sq.pos.x}-${sq.pos.y}`}
+          position={[sq.worldX, 0.11, sq.worldZ]}
+        />
+      ))}
+
+      {tilePlacementIndicators.map((sq) => (
+        <TilePlacementIndicator
+          key={`tile-placement-${sq.pos.x}-${sq.pos.y}`}
           position={[sq.worldX, 0.11, sq.worldZ]}
         />
       ))}
@@ -144,6 +157,19 @@ const LegalMoveIndicator: React.FC<LegalMoveIndicatorProps> = React.memo(
     <mesh position={position}>
       <sphereGeometry args={[0.12, 16, 16]} />
       <meshBasicMaterial color="#20a020" transparent opacity={0.7} />
+    </mesh>
+  )
+);
+
+interface TilePlacementIndicatorProps {
+  position: [number, number, number];
+}
+
+const TilePlacementIndicator: React.FC<TilePlacementIndicatorProps> = React.memo(
+  ({ position }) => (
+    <mesh position={position}>
+      <sphereGeometry args={[0.12, 16, 16]} />
+      <meshBasicMaterial color="#4080ff" transparent opacity={0.7} />
     </mesh>
   )
 );

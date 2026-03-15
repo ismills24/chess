@@ -1,12 +1,13 @@
 import { GameState } from "../state/GameState";
 import { Move, MoveType } from "../primitives/Move";
 import { PlayerColor } from "../primitives/PlayerColor";
-import { GameEvent, MoveEvent, CaptureEvent, TurnStartEvent, TurnEndEvent, TurnAdvancedEvent } from "../events/EventRegistry";
+import { GameEvent, MoveEvent, CaptureEvent, TurnStartEvent, TurnEndEvent, TurnAdvancedEvent, TileChangedEvent } from "../events/EventRegistry";
 import { Listener } from "../listeners";
 import { EventQueue } from "./EventQueue";
 import { RuleSet } from "../rules/RuleSet";
 import { MovementPatterns } from "../rules/MovementPatterns";
 import { Piece } from "../state/types";
+import { createTile } from "../../catalog/registry/Catalog";
 
 /**
  * Pure, stateless chess engine.
@@ -185,6 +186,23 @@ export class ChessEngine {
         // Use move.piece.owner as actor - ChessEngine is turn-agnostic
         const actor = move.piece.owner;
 
+        // Handle cast moves (tile placement) - similar to RevenantAbility pattern
+        if (move.isCastMove) {
+            // Check if piece has WallPlacementAbility in its ability chain
+            // We check by looking for the ability ID or class name in the chain
+            const hasWallPlacement = this.pieceHasAbilityClass(mover, "WallPlacementAbility");
+            if (hasWallPlacement) {
+                const oldTile = state.board.getTile(move.to);
+                const newTile = createTile("WallTile", move.to);
+                events.push(new TileChangedEvent(move.to, oldTile, newTile, actor, "wall-placement"));
+                // Don't create MoveEvent for cast moves - piece doesn't move
+                return events;
+            }
+            // If isCastMove is true but ability not found, return empty (invalid cast move)
+            console.warn(`[ChessEngine] Cast move detected but WallPlacementAbility not found on piece ${mover.id}`);
+            return [];
+        }
+
         const target = state.board.getPieceAt(move.to);
         if (target) {
             // Capture event
@@ -204,6 +222,28 @@ export class ChessEngine {
         );
 
         return events;
+    }
+
+    /**
+     * Check if a piece (or any ability in its chain) has a specific ability class.
+     * Uses constructor name matching to avoid circular dependencies.
+     */
+    private static pieceHasAbilityClass(piece: Piece, abilityClassName: string): boolean {
+        let current: any = piece;
+        while (current) {
+            // Check constructor name (works across bundles/modules)
+            const ctorName = current.constructor?.name;
+            if (ctorName === abilityClassName) {
+                return true;
+            }
+            // Traverse ability chain
+            if (current.innerPiece) {
+                current = current.innerPiece;
+            } else {
+                break;
+            }
+        }
+        return false;
     }
 }
 
